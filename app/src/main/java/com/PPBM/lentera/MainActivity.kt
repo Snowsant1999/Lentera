@@ -42,6 +42,12 @@ enum class ScreenState {
     BANTUAN,
     TENTANG_APLIKASI
 }
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
+import com.PPBM.lentera.navigation.LenteraNavGraph
+import com.PPBM.lentera.ui.theme.LenteraTheme
+import com.PPBM.lentera.ui.theme.ScreenBackground
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -161,5 +167,15 @@ fun LenteraApp() {
 fun AppPreview() {
     LenteraTheme {
         LenteraApp()
+    }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = ScreenBackground
+                ) {
+                    val navController = rememberNavController()
+                    LenteraNavGraph(navController = navController)
+                }
+            }
+        }
     }
 }
