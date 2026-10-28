@@ -36,7 +36,7 @@ class LoginScreen {
 
     @Composable
     fun login(){
-        
+
         //PARENTS
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
@@ -307,7 +307,7 @@ class LoginScreen {
                                 .height(15.dp)
                         )
                     }
-                    
+
                     //button login
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
