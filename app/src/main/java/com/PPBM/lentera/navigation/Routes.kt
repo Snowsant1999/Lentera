@@ -23,6 +23,19 @@ object Routes {
     const val INFORMASI_TERKIRIM = "informasi_terkirim"
     const val HASIL_PENANGANAN = "hasil_penanganan"
     const val RIWAYAT_LAPORAN = "riwayat_laporan"
+    
+    // Magang Hub Routes
+    const val MAGANG = "magang"
+    const val LOWONGAN_MAGANG = "lowongan_magang"
+    const val DETAIL_MAGANG = "detail_magang"
+    const val FORMULIR_LAMARAN = "formulir_lamaran"
+    const val LAMARAN_SAYA = "lamaran_saya"
+    const val STATUS_LAMARAN = "status_lamaran"
+    const val STATUS_LAMARAN_FINAL = "status_lamaran_final"
+    const val INFORMASI_PENERIMAAN = "informasi_penerimaan"
+    const val INFORMASI_PENERIMAAN_FINAL = "informasi_penerimaan_final"
+    const val PERBAIKAN_DOKUMEN = "perbaikan_dokumen"
+    const val PERBAIKAN_TERKIRIM = "perbaikan_terkirim"
 
     // Helper untuk route dengan argumen
     fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"

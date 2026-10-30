@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -100,9 +101,7 @@ fun LoginScreen(
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-
-    @Composable
-    fun login(){
+        }
 
         //PARENTS
         Column(
@@ -402,40 +401,11 @@ fun LoginScreen(
                                 indication = null
                             ) { passwordVisible = !passwordVisible }
                     ) {
-                        Text(
-                            text = "Lupa password?",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(R.font.plus_jakarta_sans)),
-                                fontWeight = FontWeight(700),
-                                color = Color(0xFF23496E),
-                            ),
-                            modifier = Modifier
-                                .width(96.dp)
-                                .height(15.dp)
-                        )
-                    }
-
-                    //button login
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .width(324.dp)
-                            .height(56.dp)
-                            .background(color = Color(0xFF23496E), shape = RoundedCornerShape(size = 16.dp))
-                    ) {
-                        Text(
-                            text = "Masuk",
-                            style = TextStyle(
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(R.font.plus_jakarta_sans)),
-                                fontWeight = FontWeight(700),
-                                color = Color(0xFFFFFFFF),
-                            ),
-                            modifier = Modifier
-                                .width(45.dp)
-                                .height(18.dp)
+                        Icon(
+                            painter = painterResource(id = R.drawable.eye_off),
+                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
+                            tint = SlateGray,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
