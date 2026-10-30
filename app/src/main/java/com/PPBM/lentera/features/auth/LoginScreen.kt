@@ -101,20 +101,10 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Tagline
-            Text(
-                text = "Satu akses untuk kehidupan kampusmu.",
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    fontFamily = plusJakarta,
-                    fontWeight = FontWeight.Normal,
-                    color = SlateGray,
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
+    @Composable
+    fun login(){
 
-        // ========== BODY ==========
+        //PARENTS
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -412,11 +402,40 @@ fun LoginScreen(
                                 indication = null
                             ) { passwordVisible = !passwordVisible }
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.eye_off),
-                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
-                            colorFilter = ColorFilter.tint(if (passwordVisible) NavyMedium else SlateGray),
-                            modifier = Modifier.size(20.dp)
+                        Text(
+                            text = "Lupa password?",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(R.font.plus_jakarta_sans)),
+                                fontWeight = FontWeight(700),
+                                color = Color(0xFF23496E),
+                            ),
+                            modifier = Modifier
+                                .width(96.dp)
+                                .height(15.dp)
+                        )
+                    }
+
+                    //button login
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .width(324.dp)
+                            .height(56.dp)
+                            .background(color = Color(0xFF23496E), shape = RoundedCornerShape(size = 16.dp))
+                    ) {
+                        Text(
+                            text = "Masuk",
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = FontFamily(Font(R.font.plus_jakarta_sans)),
+                                fontWeight = FontWeight(700),
+                                color = Color(0xFFFFFFFF),
+                            ),
+                            modifier = Modifier
+                                .width(45.dp)
+                                .height(18.dp)
                         )
                     }
                 }
