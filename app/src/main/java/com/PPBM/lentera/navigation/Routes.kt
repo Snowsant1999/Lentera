@@ -23,6 +23,9 @@ object Routes {
     const val INFORMASI_TERKIRIM = "informasi_terkirim"
     const val HASIL_PENANGANAN = "hasil_penanganan"
     const val RIWAYAT_LAPORAN = "riwayat_laporan"
+    const val MAGANG = "magang"
+    const val LOWONGAN_MAGANG = "lowongan_magang"
+    const val DETAIL_MAGANG = "detail_magang"
 
     // Helper untuk route dengan argumen
     fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"

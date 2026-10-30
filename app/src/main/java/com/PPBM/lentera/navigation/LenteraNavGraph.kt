@@ -24,6 +24,7 @@ import androidx.navigation.navArgument
 import com.PPBM.lentera.R
 import com.PPBM.lentera.features.auth.*
 import com.PPBM.lentera.features.siaga.*
+import com.PPBM.lentera.features.magang.*
 import com.PPBM.lentera.ui.theme.*
 
 /**
@@ -155,6 +156,9 @@ fun LenteraNavGraph(navController: NavHostController) {
                 },
                 onOpenSiaga = {
                     navController.navigate(Routes.SIAGA)
+                },
+                onOpenMagang = {
+                    navController.navigate(Routes.MAGANG)
                 }
             )
         }
@@ -176,7 +180,11 @@ fun LenteraNavGraph(navController: NavHostController) {
                     }
                 },
                 onNavTabClick = { tab ->
-                    // Navigasi antar tab
+                    when (tab) {
+                        SiagaNavTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        SiagaNavTab.BERANDA -> navController.navigate(Routes.DASHBOARD_PLACEHOLDER)
+                        else -> {}
+                    }
                 }
             )
         }
@@ -323,13 +331,52 @@ fun LenteraNavGraph(navController: NavHostController) {
                 }
             )
         }
+
+        // ====================================================================
+        // Fitur Magang
+        // ====================================================================
+
+        // Halaman Utama Magang
+        composable(Routes.MAGANG) {
+            MagangScreen(
+                onSearchClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
+                onViewAllLowonganClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
+                onLowonganClick = { navController.navigate(Routes.DETAIL_MAGANG) },
+                onNavTabClick = { tab ->
+                    when (tab) {
+                        MagangNavTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        MagangNavTab.BERANDA -> navController.navigate(Routes.DASHBOARD_PLACEHOLDER)
+                        else -> {}
+                    }
+                }
+            )
+        }
+
+        // Halaman Daftar Lowongan Magang
+        composable(Routes.LOWONGAN_MAGANG) {
+            LowonganScreen(
+                onBackClick = { navController.popBackStack() },
+                onLowonganClick = { navController.navigate(Routes.DETAIL_MAGANG) }
+            )
+        }
+
+        // Halaman Detail Magang
+        composable(Routes.DETAIL_MAGANG) {
+            DetailMagangScreen(
+                onBackClick = { navController.popBackStack() },
+                onLamarSekarangClick = {
+                    // Tindakan saat tombol Lamar Sekarang ditekan
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun DashboardPlaceholderScreen(
     onLogout: () -> Unit = {},
-    onOpenSiaga: () -> Unit = {}
+    onOpenSiaga: () -> Unit = {},
+    onOpenMagang: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -371,6 +418,15 @@ fun DashboardPlaceholderScreen(
                 )
             ) {
                 Text("Buka Lentera Siaga")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onOpenMagang,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MagangAmberPrimary
+                )
+            ) {
+                Text("Buka Magang Hub", color = NavyDark)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Button(
