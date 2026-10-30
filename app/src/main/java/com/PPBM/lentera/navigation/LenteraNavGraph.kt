@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.PPBM.lentera.R
 import com.PPBM.lentera.features.auth.*
+import com.PPBM.lentera.features.siaga.*
 import com.PPBM.lentera.ui.theme.*
 
 /**
@@ -151,6 +152,174 @@ fun LenteraNavGraph(navController: NavHostController) {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.DASHBOARD_PLACEHOLDER) { inclusive = true }
                     }
+                },
+                onOpenSiaga = {
+                    navController.navigate(Routes.SIAGA)
+                }
+            )
+        }
+
+        // Lentera Siaga Mahasiswa
+        composable(Routes.SIAGA) {
+            MahasiswaSiagaScreen(
+                onCreateReportClick = {
+                    navController.navigate(Routes.BUAT_LAPORAN)
+                },
+                onViewAllReportsClick = {
+                    navController.navigate(Routes.RIWAYAT_LAPORAN)
+                },
+                onReportClick = { item ->
+                    if (item.status == LaporanStatus.SELESAI) {
+                        navController.navigate(Routes.DETAIL_LAPORAN)
+                    } else {
+                        navController.navigate(Routes.DETAIL_LAPORAN_TRACKING)
+                    }
+                },
+                onNavTabClick = { tab ->
+                    // Navigasi antar tab
+                }
+            )
+        }
+
+        // Halaman Buat Laporan (Langkah 2 dari 4)
+        composable(Routes.BUAT_LAPORAN) {
+            BuatLaporanScreen(
+                onBackClick = { navController.popBackStack() },
+                onKembaliKeKategoriClick = { navController.popBackStack() },
+                onLanjutKeBuktiClick = { data ->
+                    navController.navigate(Routes.UPLOAD_BUKTI)
+                }
+            )
+        }
+
+        // Halaman Upload Bukti (Langkah 3 dari 4)
+        composable(Routes.UPLOAD_BUKTI) {
+            UploadBuktiScreen(
+                onBackClick = { navController.popBackStack() },
+                onKembaliClick = { navController.popBackStack() },
+                onLanjutClick = { files ->
+                    navController.navigate(Routes.TINJAU_LAPORAN)
+                }
+            )
+        }
+
+        // Halaman Tinjau Laporan (Langkah 4 dari 4)
+        composable(Routes.TINJAU_LAPORAN) {
+            TinjauLaporanScreen(
+                onBackClick = { navController.popBackStack() },
+                onUbahKategori = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
+                onUbahJudul = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
+                onUbahTanggal = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
+                onUbahLokasi = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
+                onUbahDeskripsi = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
+                onUbahBukti = { navController.popBackStack(Routes.UPLOAD_BUKTI, false) },
+                onKirimLaporan = { finalData ->
+                    navController.navigate(Routes.LAPORAN_TERKIRIM) {
+                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        // Halaman Konfirmasi Laporan Terkirim
+        composable(Routes.LAPORAN_TERKIRIM) {
+            LaporanTerkirimScreen(
+                onLihatStatusClick = {
+                    navController.navigate(Routes.DETAIL_LAPORAN_TRACKING) {
+                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    }
+                },
+                onKembaliKeBerandaClick = {
+                    navController.navigate(Routes.SIAGA) {
+                        popUpTo(Routes.SIAGA) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Halaman Detail Laporan Tracking (Sedang Ditindaklanjuti)
+        composable(Routes.DETAIL_LAPORAN_TRACKING) {
+            DetailLaporanTrackingScreen(
+                onBackClick = { navController.popBackStack() },
+                onLengkapiInformasiClick = {
+                    navController.navigate(Routes.LENGKAPI_INFORMASI)
+                }
+            )
+        }
+
+        // Halaman Lengkapi Informasi Tambahan
+        composable(Routes.LENGKAPI_INFORMASI) {
+            LengkapiInformasiScreen(
+                onBackClick = { navController.popBackStack() },
+                onKembaliClick = { navController.popBackStack() },
+                onKirimInformasiClick = { tambahan ->
+                    navController.navigate(Routes.INFORMASI_TERKIRIM) {
+                        popUpTo(Routes.DETAIL_LAPORAN_TRACKING) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        // Halaman Konfirmasi Informasi Tambahan Berhasil Dikirim
+        composable(Routes.INFORMASI_TERKIRIM) {
+            InformasiTerkirimScreen(
+                onBackClick = { navController.popBackStack() },
+                onLihatStatusClick = {
+                    navController.navigate(Routes.DETAIL_LAPORAN_TRACKING) {
+                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    }
+                },
+                onKembaliKeLaporanClick = {
+                    navController.navigate(Routes.SIAGA) {
+                        popUpTo(Routes.SIAGA) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Halaman Dokumentasi Penanganan Laporan
+        composable(Routes.DOKUMENTASI) {
+            DokumentasiScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Halaman Hasil Penanganan
+        composable(Routes.HASIL_PENANGANAN) {
+            HasilPenangananScreen(
+                onBackClick = { navController.popBackStack() },
+                onTinjauDokumentasiClick = {
+                    navController.navigate(Routes.DOKUMENTASI)
+                },
+                onKembaliKeRiwayatClick = { navController.popBackStack() }
+            )
+        }
+
+        // Halaman Riwayat Laporan (Laporan Saya)
+        composable(Routes.RIWAYAT_LAPORAN) {
+            RiwayatLaporanScreen(
+                onBackClick = { navController.popBackStack() },
+                onReportClick = { item ->
+                    if (item.isSelesai) {
+                        navController.navigate(Routes.DETAIL_LAPORAN)
+                    } else {
+                        navController.navigate(Routes.DETAIL_LAPORAN_TRACKING)
+                    }
+                },
+                onKembaliKeDashboard = {
+                    navController.navigate(Routes.SIAGA) {
+                        popUpTo(Routes.SIAGA) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Halaman Detail Laporan Lengkap (Scrollable)
+        composable(Routes.DETAIL_LAPORAN) {
+            DetailLaporanScreen(
+                onBackClick = { navController.popBackStack() },
+                onLihatHasilPenangananClick = {
+                    navController.navigate(Routes.HASIL_PENANGANAN)
                 }
             )
         }
@@ -158,7 +327,10 @@ fun LenteraNavGraph(navController: NavHostController) {
 }
 
 @Composable
-fun DashboardPlaceholderScreen(onLogout: () -> Unit = {}) {
+fun DashboardPlaceholderScreen(
+    onLogout: () -> Unit = {},
+    onOpenSiaga: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -192,6 +364,15 @@ fun DashboardPlaceholderScreen(onLogout: () -> Unit = {}) {
                 )
             )
             Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onOpenSiaga,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SiagaTealPrimary
+                )
+            ) {
+                Text("Buka Lentera Siaga")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(
