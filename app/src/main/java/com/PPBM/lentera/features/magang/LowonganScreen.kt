@@ -52,7 +52,7 @@ data class LowonganItem(
     val status: String = "Available",
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.iconamoon_profile_circle_fill,
+    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
     val isBookmarked: Boolean = false
 )
 
@@ -89,7 +89,7 @@ fun LowonganScreen(
                 lokasi = "Bontang",
                 durasi = "3 Bulan",
                 kategori = "Desain",
-                logoDrawable = R.drawable.iconamoon_profile_circle_fill
+                logoDrawable = R.drawable.ic_company_maju_mundur
             ),
             LowonganItem(
                 id = "2",
@@ -107,7 +107,7 @@ fun LowonganScreen(
                 lokasi = "Samarinda",
                 durasi = "3 Bulan",
                 kategori = "Bisnis",
-                logoDrawable = R.drawable.iconamoon_profile_circle_fill
+                logoDrawable = R.drawable.ic_company_maju_mundur
             ),
             LowonganItem(
                 id = "4",
@@ -238,30 +238,7 @@ private fun LowonganTopBar(
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Tombol Kembali Bulat
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .shadow(1.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color.White)
-                .border(1.dp, CardBorder, CircleShape)
-                .clickable(onClick = onBackClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.size(14.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width * 0.7f, size.height * 0.1f)
-                    lineTo(size.width * 0.3f, size.height * 0.5f)
-                    lineTo(size.width * 0.7f, size.height * 0.9f)
-                }
-                drawPath(
-                    path = path,
-                    color = NavyDark,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
-            }
-        }
+        Image(painter = painterResource(id = R.drawable.ic_back_button), contentDescription = "Kembali", modifier = Modifier.size(44.dp).clickable(onClick = onBackClick))
 
         Spacer(modifier = Modifier.width(18.dp))
 
@@ -297,7 +274,7 @@ private fun LowonganSearchBar(
             .background(Color.White)
             .border(1.dp, CardBorder, RoundedCornerShape(24.dp))
             .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.CenterStart
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -448,8 +425,9 @@ private fun LowonganItemCard(
                         .clickable(onClick = onBookmarkClick),
                     contentAlignment = Alignment.Center
                 ) {
-                    BookmarkIconCanvas(
-                        isBookmarked = item.isBookmarked,
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = "Bookmark",
                         tint = NavyDark,
                         modifier = Modifier.size(15.dp)
                     )
@@ -466,23 +444,7 @@ private fun LowonganItemCard(
             ) {
                 // Lokasi dengan pin icon
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Canvas(modifier = Modifier.size(13.dp)) {
-                        val path = Path().apply {
-                            moveTo(size.width * 0.5f, 0f)
-                            cubicTo(
-                                size.width * 0.8f, 0f,
-                                size.width, size.height * 0.25f,
-                                size.width * 0.5f, size.height
-                            )
-                            cubicTo(
-                                0f, size.height * 0.25f,
-                                size.width * 0.2f, 0f,
-                                size.width * 0.5f, 0f
-                            )
-                            close()
-                        }
-                        drawPath(path = path, color = SlateGrayLight)
-                    }
+                    Icon(painter = painterResource(id = R.drawable.ic_map_pin), contentDescription = null, tint = SlateGrayLight, modifier = Modifier.size(13.dp))
 
                     Spacer(modifier = Modifier.width(5.dp))
 

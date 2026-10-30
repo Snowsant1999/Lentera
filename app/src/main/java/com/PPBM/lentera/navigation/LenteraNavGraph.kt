@@ -336,12 +336,15 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Fitur Magang
         // ====================================================================
 
-        // Halaman Utama Magang
+        // Halaman Utama Magang (Magang.png)
         composable(Routes.MAGANG) {
             MagangScreen(
                 onSearchClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
                 onViewAllLowonganClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
                 onLowonganClick = { navController.navigate(Routes.DETAIL_MAGANG) },
+                onLihatLamaranClick = { navController.navigate(Routes.LAMARAN_SAYA) },
+                onStatusClick = { navController.navigate(Routes.LAMARAN_SAYA) },
+                onLamaranItemClick = { navController.navigate(Routes.STATUS_LAMARAN) },
                 onNavTabClick = { tab ->
                     when (tab) {
                         MagangNavTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
@@ -352,7 +355,7 @@ fun LenteraNavGraph(navController: NavHostController) {
             )
         }
 
-        // Halaman Daftar Lowongan Magang
+        // Halaman Daftar Lowongan Magang (Lowongan.png)
         composable(Routes.LOWONGAN_MAGANG) {
             LowonganScreen(
                 onBackClick = { navController.popBackStack() },
@@ -360,12 +363,93 @@ fun LenteraNavGraph(navController: NavHostController) {
             )
         }
 
-        // Halaman Detail Magang
+        // Halaman Detail Magang (Detail Magang.png)
         composable(Routes.DETAIL_MAGANG) {
             DetailMagangScreen(
                 onBackClick = { navController.popBackStack() },
-                onLamarSekarangClick = {
-                    // Tindakan saat tombol Lamar Sekarang ditekan
+                onLamarSekarangClick = { navController.navigate(Routes.FORMULIR_LAMARAN) }
+            )
+        }
+
+        // Formulir Lamaran Magang (Step 1, 2, 3, 4)
+        composable(Routes.FORMULIR_LAMARAN) {
+            FormulirLamaranScreen(
+                onBackClick = { navController.popBackStack() },
+                onCekStatusLamaran = { navController.navigate(Routes.STATUS_LAMARAN) },
+                onKembaliKeBeranda = {
+                    navController.navigate(Routes.MAGANG) {
+                        popUpTo(Routes.MAGANG) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Riwayat Lamaran Saya (Lamaran Saya.png)
+        composable(Routes.LAMARAN_SAYA) {
+            LamaranSayaScreen(
+                onBackClick = { navController.popBackStack() },
+                onStatusClick = { item ->
+                    if (item.status == "Diterima") {
+                        navController.navigate(Routes.STATUS_LAMARAN_FINAL)
+                    } else {
+                        navController.navigate(Routes.STATUS_LAMARAN)
+                    }
+                }
+            )
+        }
+
+        // Status Lamaran - Butuh Perbaikan Dokumen (Status Lamaran.png)
+        composable(Routes.STATUS_LAMARAN) {
+            StatusLamaranScreen(
+                needsCorrection = true,
+                isFinalAccepted = false,
+                onBackClick = { navController.popBackStack() },
+                onPerbaikiDokumenClick = { navController.navigate(Routes.PERBAIKAN_DOKUMEN) },
+                onInformasiPenerimaanClick = { navController.navigate(Routes.INFORMASI_PENERIMAAN) }
+            )
+        }
+
+        // Status Lamaran - Final Diterima (Status Lamaran Final.png)
+        composable(Routes.STATUS_LAMARAN_FINAL) {
+            StatusLamaranScreen(
+                needsCorrection = false,
+                isFinalAccepted = true,
+                onBackClick = { navController.popBackStack() },
+                onInformasiPenerimaanClick = { navController.navigate(Routes.INFORMASI_PENERIMAAN_FINAL) }
+            )
+        }
+
+        // Informasi Penerimaan Sementara (Informasi Penerimaan.png)
+        composable(Routes.INFORMASI_PENERIMAAN) {
+            InformasiPenerimaanScreen(
+                isFinal = false,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Informasi Penerimaan Final (Informasi Penerimaan Final.png)
+        composable(Routes.INFORMASI_PENERIMAAN_FINAL) {
+            InformasiPenerimaanScreen(
+                isFinal = true,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Perbaikan Dokumen (Perbaikan Dokumen.png)
+        composable(Routes.PERBAIKAN_DOKUMEN) {
+            PerbaikanDokumenScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmitSuccess = { navController.navigate(Routes.PERBAIKAN_TERKIRIM) }
+            )
+        }
+
+        // Perbaikan Dokumen Terkirim (Perbaikan Terkirim.png)
+        composable(Routes.PERBAIKAN_TERKIRIM) {
+            PerbaikanTerkirimScreen(
+                onKembaliKeStatus = {
+                    navController.navigate(Routes.STATUS_LAMARAN) {
+                        popUpTo(Routes.STATUS_LAMARAN) { inclusive = true }
+                    }
                 }
             )
         }

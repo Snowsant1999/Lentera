@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -48,7 +49,7 @@ data class DetailMagangData(
     val status: String = "Available",
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.iconamoon_profile_circle_fill,
+    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
     val isBookmarked: Boolean = false,
     val deskripsiPekerjaan: String = "Bertanggung jawab dalam merancang antarmuka pengguna (UI) dan alur pengalaman pengguna (UX) untuk produk digital, berkolaborasi dengan tim pengembang dan product manager.",
     val persyaratan: List<String> = listOf(
@@ -237,30 +238,7 @@ private fun DetailMagangTopBar(
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Tombol Kembali Bulat
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .shadow(1.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color.White)
-                .border(1.dp, CardBorder, CircleShape)
-                .clickable(onClick = onBackClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.size(14.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width * 0.7f, size.height * 0.1f)
-                    lineTo(size.width * 0.3f, size.height * 0.5f)
-                    lineTo(size.width * 0.7f, size.height * 0.9f)
-                }
-                drawPath(
-                    path = path,
-                    color = NavyDark,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
-            }
-        }
+        Image(painter = painterResource(id = R.drawable.ic_back_button), contentDescription = "Kembali", modifier = Modifier.size(44.dp).clickable(onClick = onBackClick))
 
         Spacer(modifier = Modifier.width(18.dp))
 
@@ -329,8 +307,9 @@ private fun HeaderLowonganCard(
                         .clickable(onClick = onBookmarkToggle),
                     contentAlignment = Alignment.Center
                 ) {
-                    BookmarkIconCanvas(
-                        isBookmarked = data.isBookmarked,
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = "Bookmark",
                         tint = NavyDark,
                         modifier = Modifier.size(18.dp)
                     )
@@ -550,26 +529,7 @@ private fun ChecklistItemRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Kotak Ceklis Amber Lembut
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MagangAmberPillBg),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.size(13.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width * 0.15f, size.height * 0.5f)
-                    lineTo(size.width * 0.42f, size.height * 0.8f)
-                    lineTo(size.width * 0.85f, size.height * 0.2f)
-                }
-                drawPath(
-                    path = path,
-                    color = NavyDark,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
-            }
-        }
+        Image(painter = painterResource(id = R.drawable.ic_requirement_check), contentDescription = null, modifier = Modifier.size(28.dp))
 
         Spacer(modifier = Modifier.width(14.dp))
 

@@ -69,7 +69,7 @@ data class LowonganCardData(
     val tipe: String,
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.iconamoon_profile_circle_fill,
+    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
     val isBookmarked: Boolean = false
 )
 
@@ -136,7 +136,7 @@ fun MagangScreen(
                 tipe = "Penuh Waktu",
                 persentaseCocok = 92,
                 batasHari = 5,
-                logoDrawable = R.drawable.iconamoon_profile_circle_fill
+                logoDrawable = R.drawable.ic_company_maju_mundur
             ),
             LowonganCardData(
                 id = "2",
@@ -491,7 +491,7 @@ private fun MagangSearchBar(
             .border(1.dp, CardBorder, RoundedCornerShape(24.dp))
             .clickable(onClick = onSearchClick)
             .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.CenterStart
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -601,18 +601,12 @@ private fun TotalLamaranCard(
                         )
                     )
 
-                    Canvas(modifier = Modifier.size(10.dp)) {
-                        val path = Path().apply {
-                            moveTo(size.width * 0.2f, size.height * 0.1f)
-                            lineTo(size.width * 0.8f, size.height * 0.5f)
-                            lineTo(size.width * 0.2f, size.height * 0.9f)
-                        }
-                        drawPath(
-                            path = path,
-                            color = NavyDark,
-                            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_status_chevron),
+                        contentDescription = null,
+                        tint = NavyDark,
+                        modifier = Modifier.size(10.dp)
+                    )
                 }
             }
         }
@@ -718,18 +712,12 @@ private fun StatusPillButton(
                 )
             )
 
-            Canvas(modifier = Modifier.size(8.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width * 0.2f, size.height * 0.1f)
-                    lineTo(size.width * 0.8f, size.height * 0.5f)
-                    lineTo(size.width * 0.2f, size.height * 0.9f)
-                }
-                drawPath(
-                    path = path,
-                    color = textColor,
-                    style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
-                )
-            }
+            Icon(
+                painter = painterResource(id = R.drawable.ic_status_chevron),
+                contentDescription = null,
+                tint = textColor,
+                modifier = Modifier.size(8.dp)
+            )
         }
     }
 }
@@ -907,8 +895,9 @@ private fun LowonganHorizontalCard(
                             .clickable(onClick = onBookmarkClick),
                         contentAlignment = Alignment.Center
                     ) {
-                        BookmarkIconCanvas(
-                            isBookmarked = data.isBookmarked,
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_bookmark),
+                            contentDescription = "Bookmark",
                             tint = NavyDark,
                             modifier = Modifier.size(16.dp)
                         )
@@ -1158,40 +1147,7 @@ private fun NavTabIconMagang(
     }
 }
 
-// ============================================================================
-// Canvas Helper: Bookmark Icon
-// ============================================================================
 
-@Composable
-fun BookmarkIconCanvas(
-    isBookmarked: Boolean,
-    tint: Color,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-
-        val path = Path().apply {
-            moveTo(w * 0.15f, h * 0.05f)
-            lineTo(w * 0.85f, h * 0.05f)
-            lineTo(w * 0.85f, h * 0.95f)
-            lineTo(w * 0.5f, h * 0.70f)
-            lineTo(w * 0.15f, h * 0.95f)
-            close()
-        }
-
-        if (isBookmarked) {
-            drawPath(path = path, color = tint)
-        } else {
-            drawPath(
-                path = path,
-                color = tint,
-                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-            )
-        }
-    }
-}
 
 // ============================================================================
 // Preview
