@@ -1,15 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Info / circle-i icon - tintable via Compose Icon tint -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="18dp"
-    android:height="18dp"
-    android:viewportWidth="18"
-    android:viewportHeight="18">
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
     <path
-        android:pathData="M9,7.5V13.5M9,4.5V6M9,16.5C13.1423,16.5 16.5,13.1423 16.5,9C16.5,4.85775 13.1423,1.5 9,1.5C4.85775,1.5 1.5,4.85775 1.5,9C1.5,13.1423 4.85775,16.5 9,16.5Z"
-        android:strokeColor="#FF2F7078"
-        android:strokeWidth="2"
-        android:fillColor="#00000000"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M11,9.167 V16.5 M11,5.5 V7.333 M11,20.167 C16.062,20.167 20.166,16.063 20.166,11 C20.166,5.937 16.062,1.833 11,1.833 C5.937,1.833 1.833,5.937 1.833,11 C1.833,16.063 5.937,20.167 11,20.167 Z"
+        android:strokeColor="#173B57"
+        android:strokeWidth="2"/>
 </vector>
+
