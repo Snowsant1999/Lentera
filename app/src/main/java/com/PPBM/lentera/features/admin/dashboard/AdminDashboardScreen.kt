@@ -166,7 +166,7 @@ fun GridStatistik() {
             StatCard(
                 modifier = Modifier.weight(1f),
                 bgColor = Color(0xFFE3F0EC),
-                iconId = com.PPBM.lentera.R.drawable.shield_alert,
+                iconId = com.PPBM.lentera.R.drawable.shield,
                 count = "24",
                 title = "LENTERA SIAGA",
                 subtitle = "3 baru · 5 proses · 16 selesai"
