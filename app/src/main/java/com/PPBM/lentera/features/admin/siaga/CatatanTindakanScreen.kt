@@ -180,7 +180,7 @@ fun CatatanTindakanScreen(
                                 painter = painterResource(
                                     id = if (hasNext) R.drawable.ic_timeline_marker else R.drawable.ic_timeline_marker_dot
                                 ),
-                                contentDescription = null,
+                                contentDescription = "Status: $judul",
                                 tint = Color.Unspecified,
                                 modifier = Modifier.size(16.dp, if (hasNext) 48.dp else 22.dp)
                             )
