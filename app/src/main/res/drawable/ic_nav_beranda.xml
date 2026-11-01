@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- House / Home - Beranda nav icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M2.75,9.166L11,2.75L19.25,9.166V19.25C19.25,19.734 19.057,20.199 18.713,20.543C18.369,20.887 17.904,21.083 17.417,21.083H13.75V15.583H8.25V21.083H4.583C4.097,21.083 3.631,20.887 3.287,20.543C2.943,20.199 2.75,19.734 2.75,19.25V9.166Z"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

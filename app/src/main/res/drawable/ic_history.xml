@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- History / clock-rotate icon - tintable via Compose Icon tint -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <path
+        android:pathData="M1.667,10C1.667,5.398 5.398,1.667 10,1.667C14.602,1.667 18.333,5.398 18.333,10C18.333,14.602 14.602,18.333 10,18.333C7.444,18.333 5.163,17.194 3.62,15.393"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M3.333,10L1.667,12.5L4.167,12.5"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M10,6.667V10L12.5,11.667"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

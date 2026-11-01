@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Briefcase - Magang nav icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M14.667,5.5V3.667C14.667,3.18 14.474,2.714 14.13,2.37C13.786,2.026 13.32,1.833 12.834,1.833H9.167C8.68,1.833 8.214,2.026 7.87,2.37C7.526,2.714 7.334,3.18 7.334,3.667V5.5M1.833,5.5H20.167C20.671,5.5 21.083,5.912 21.083,6.417V18.333C21.083,18.82 20.89,19.286 20.546,19.63C20.202,19.974 19.737,20.167 19.25,20.167H2.75C2.263,20.167 1.798,19.974 1.454,19.63C1.11,19.286 0.917,18.82 0.917,18.333V6.417C0.917,5.912 1.329,5.5 1.833,5.5Z"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M21.083,11.917C18.146,13.67 14.813,14.598 11.417,14.599C8.021,14.599 4.688,13.671 1.751,11.917"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
