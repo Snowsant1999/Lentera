@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -123,7 +125,7 @@ fun PilihKategoriBottomSheet(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    SiagaCloseIcon(
+                    CloseIcon(
                         modifier = Modifier.size(16.dp),
                         tint = NavyDark
                     )
@@ -196,7 +198,7 @@ fun PilihKategoriBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SiagaShieldCheckIcon(
+                ShieldCheckIcon(
                     modifier = Modifier.size(18.dp),
                     tint = SiagaTealPrimary
                 )
@@ -244,7 +246,7 @@ fun PilihKategoriBottomSheet(
 
                     Spacer(modifier = Modifier.width(10.dp))
 
-                    SiagaArrowForwardIcon(
+                    ArrowForwardIcon(
                         modifier = Modifier.size(16.dp),
                         tint = Color.White
                     )
@@ -309,7 +311,7 @@ private fun CategoryItemCard(
                         .background(SiagaTealPrimary),
                     contentAlignment = Alignment.Center
                 ) {
-                    SiagaCheckIcon(
+                    CheckIcon(
                         modifier = Modifier.size(12.dp),
                         tint = Color.White
                     )
@@ -326,12 +328,12 @@ private fun KategoriIcon(
 ) {
     val mod = Modifier.size(22.dp)
     when (type) {
-        KategoriLaporanType.PERUNDUNGAN -> SiagaPeopleIcon(modifier = mod, tint = tint)
-        KategoriLaporanType.PELECEHAN_VERBAL -> SiagaChatOutlineIcon(modifier = mod, tint = tint)
-        KategoriLaporanType.PELECEHAN_FISIK -> SiagaHandStopIcon(modifier = mod, tint = tint)
-        KategoriLaporanType.KEKERASAN -> SiagaShieldAlertIcon(modifier = mod, tint = tint)
-        KategoriLaporanType.DISKRIMINASI -> SiagaScaleIcon(modifier = mod, tint = tint)
-        KategoriLaporanType.LAINNYA -> SiagaMoreDotsIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.PERUNDUNGAN -> PeopleIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.PELECEHAN_VERBAL -> ChatOutlineIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.PELECEHAN_FISIK -> HandStopIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.KEKERASAN -> ShieldAlertIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.DISKRIMINASI -> ScaleIcon(modifier = mod, tint = tint)
+        KategoriLaporanType.LAINNYA -> MoreDotsIcon(modifier = mod, tint = tint)
     }
 }
 
@@ -428,245 +430,12 @@ private fun StepperProgressSectionKategori(
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
-@Composable
-fun SiagaCloseIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = NavyDark
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 2.dp.toPx()
 
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.20f, h * 0.20f),
-            end = Offset(w * 0.80f, h * 0.80f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.80f, h * 0.20f),
-            end = Offset(w * 0.20f, h * 0.80f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
-@Composable
-fun SiagaArrowForwardIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = Color.White
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 2.dp.toPx()
 
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.15f, h * 0.50f),
-            end = Offset(w * 0.85f, h * 0.50f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.55f, h * 0.20f),
-            end = Offset(w * 0.85f, h * 0.50f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.55f, h * 0.80f),
-            end = Offset(w * 0.85f, h * 0.50f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
-@Composable
-fun SiagaPeopleIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 1.8.dp.toPx()
 
-        // Figur depan
-        drawCircle(
-            color = tint,
-            radius = w * 0.15f,
-            center = Offset(w * 0.50f, h * 0.32f),
-            style = Stroke(width = strokeW)
-        )
-        drawArc(
-            color = tint,
-            startAngle = 10f,
-            sweepAngle = 160f,
-            useCenter = false,
-            topLeft = Offset(w * 0.20f, h * 0.50f),
-            size = Size(w * 0.60f, h * 0.40f),
-            style = Stroke(width = strokeW, cap = StrokeCap.Round)
-        )
-    }
-}
 
-@Composable
-fun SiagaHandStopIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 1.8.dp.toPx()
-
-        // Telapak tangan
-        val path = Path().apply {
-            moveTo(w * 0.30f, h * 0.80f)
-            lineTo(w * 0.30f, h * 0.50f)
-            lineTo(w * 0.30f, h * 0.32f)
-            cubicTo(w * 0.30f, h * 0.26f, w * 0.38f, h * 0.26f, w * 0.38f, h * 0.32f)
-            lineTo(w * 0.38f, h * 0.48f)
-
-            // Jari tengah
-            moveTo(w * 0.38f, h * 0.30f)
-            lineTo(w * 0.38f, h * 0.22f)
-            cubicTo(w * 0.38f, h * 0.16f, w * 0.46f, h * 0.16f, w * 0.46f, h * 0.22f)
-            lineTo(w * 0.46f, h * 0.48f)
-
-            // Jari manis
-            moveTo(w * 0.46f, h * 0.32f)
-            lineTo(w * 0.46f, h * 0.24f)
-            cubicTo(w * 0.46f, h * 0.18f, w * 0.54f, h * 0.18f, w * 0.54f, h * 0.24f)
-            lineTo(w * 0.54f, h * 0.50f)
-
-            // Jari kelingking
-            moveTo(w * 0.54f, h * 0.38f)
-            lineTo(w * 0.54f, h * 0.32f)
-            cubicTo(w * 0.54f, h * 0.26f, w * 0.62f, h * 0.26f, w * 0.62f, h * 0.32f)
-            lineTo(w * 0.62f, h * 0.60f)
-
-            // Telapak bawah & jempol
-            cubicTo(w * 0.62f, h * 0.74f, w * 0.54f, h * 0.84f, w * 0.44f, h * 0.84f)
-            lineTo(w * 0.30f, h * 0.84f)
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
-
-@Composable
-fun SiagaShieldAlertIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 1.8.dp.toPx()
-
-        val shield = Path().apply {
-            moveTo(w * 0.50f, h * 0.14f)
-            lineTo(w * 0.82f, h * 0.24f)
-            cubicTo(w * 0.82f, h * 0.56f, w * 0.72f, h * 0.78f, w * 0.50f, h * 0.88f)
-            cubicTo(w * 0.28f, h * 0.78f, w * 0.18f, h * 0.56f, w * 0.18f, h * 0.24f)
-            close()
-        }
-        drawPath(
-            path = shield,
-            color = tint,
-            style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Tanda seru
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.50f, h * 0.34f),
-            end = Offset(w * 0.50f, h * 0.54f),
-            strokeWidth = strokeW * 1.1f,
-            cap = StrokeCap.Round
-        )
-        drawCircle(
-            color = tint,
-            radius = strokeW * 0.8f,
-            center = Offset(w * 0.50f, h * 0.66f)
-        )
-    }
-}
-
-@Composable
-fun SiagaScaleIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 1.8.dp.toPx()
-
-        // Tiang tengah
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.50f, h * 0.18f),
-            end = Offset(w * 0.50f, h * 0.82f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        // Alas bawah
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.32f, h * 0.82f),
-            end = Offset(w * 0.68f, h * 0.82f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        // Palang timbangan atas
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.18f, h * 0.32f),
-            end = Offset(w * 0.82f, h * 0.32f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-
-        // Mangkuk timbangan kiri
-        drawLine(color = tint, start = Offset(w * 0.18f, h * 0.32f), end = Offset(w * 0.12f, h * 0.56f), strokeWidth = strokeW * 0.8f)
-        drawLine(color = tint, start = Offset(w * 0.18f, h * 0.32f), end = Offset(w * 0.24f, h * 0.56f), strokeWidth = strokeW * 0.8f)
-        drawArc(color = tint, startAngle = 0f, sweepAngle = 180f, useCenter = false, topLeft = Offset(w * 0.12f, h * 0.46f), size = Size(w * 0.12f, h * 0.16f), style = Stroke(width = strokeW * 0.8f))
-
-        // Mangkuk timbangan kanan
-        drawLine(color = tint, start = Offset(w * 0.82f, h * 0.32f), end = Offset(w * 0.76f, h * 0.56f), strokeWidth = strokeW * 0.8f)
-        drawLine(color = tint, start = Offset(w * 0.82f, h * 0.32f), end = Offset(w * 0.88f, h * 0.56f), strokeWidth = strokeW * 0.8f)
-        drawArc(color = tint, startAngle = 0f, sweepAngle = 180f, useCenter = false, topLeft = Offset(w * 0.76f, h * 0.46f), size = Size(w * 0.12f, h * 0.16f), style = Stroke(width = strokeW * 0.8f))
-    }
-}
-
-@Composable
-fun SiagaMoreDotsIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val r = 2.2.dp.toPx()
-
-        drawCircle(color = tint, radius = r, center = Offset(w * 0.25f, h * 0.50f))
-        drawCircle(color = tint, radius = r, center = Offset(w * 0.50f, h * 0.50f))
-        drawCircle(color = tint, radius = r, center = Offset(w * 0.75f, h * 0.50f))
-    }
-}
 
 // ============================================================================
 // Preview

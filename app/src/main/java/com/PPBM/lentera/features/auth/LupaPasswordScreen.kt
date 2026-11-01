@@ -13,9 +13,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import com.PPBM.lentera.core.designsystem.components.BackArrowIcon
-import com.PPBM.lentera.core.designsystem.components.InfoIcon
-import com.PPBM.lentera.core.designsystem.components.MailIcon
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
+import com.PPBM.lentera.core.designsystem.icons.InfoIcon
+import com.PPBM.lentera.core.designsystem.icons.MailIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier

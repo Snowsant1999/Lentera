@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -111,7 +113,7 @@ fun LengkapiInformasiScreen(
                             .padding(18.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            SiagaExclamationCircleIcon(
+                            ExclamationCircleIcon(
                                 modifier = Modifier.size(22.dp)
                             )
 
@@ -183,7 +185,7 @@ fun LengkapiInformasiScreen(
                             )
                         }
 
-                        SiagaCalendarIcon(
+                        CalendarIcon(
                             modifier = Modifier.size(24.dp),
                             tint = SiagaTealPrimary
                         )
@@ -214,7 +216,7 @@ fun LengkapiInformasiScreen(
                                 .background(NavyDark),
                             contentAlignment = Alignment.Center
                         ) {
-                            SiagaAvatarIcon(
+                            AvatarIcon(
                                 modifier = Modifier.size(28.dp),
                                 tint = Color.White
                             )
@@ -356,7 +358,7 @@ fun LengkapiInformasiScreen(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 // Ikon Awan Upload Hitam Outline
-                                SiagaCloudUploadIcon(
+                                CloudUploadIcon(
                                     modifier = Modifier.size(42.dp),
                                     tint = Color.Black
                                 )
@@ -423,7 +425,7 @@ private fun TopBarLengkapiInformasi(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -520,40 +522,6 @@ private fun BottomActionBarLengkapi(
 /**
  * Ikon tanda seru di dalam lingkaran hitam
  */
-@Composable
-fun SiagaExclamationCircleIcon(
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val r = size.minDimension / 2f
-        val center = Offset(size.width / 2f, size.height / 2f)
-
-        // Lingkaran hitam fill
-        drawCircle(
-            color = Color.Black,
-            radius = r,
-            center = center,
-            style = Fill
-        )
-
-        // Batang tanda seru putih
-        val strokeW = 2.2.dp.toPx()
-        drawLine(
-            color = Color.White,
-            start = Offset(center.x, center.y - (r * 0.45f)),
-            end = Offset(center.x, center.y + (r * 0.12f)),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-
-        // Titik tanda seru putih
-        drawCircle(
-            color = Color.White,
-            radius = strokeW * 0.75f,
-            center = Offset(center.x, center.y + (r * 0.45f))
-        )
-    }
-}
 
 // ============================================================================
 // Preview

@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -200,7 +202,7 @@ private fun TopBarHasilPenanganan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -300,7 +302,7 @@ private fun HeaderHasilLaporanCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SiagaCalendarIcon(
+                CalendarIcon(
                     modifier = Modifier.size(22.dp),
                     tint = NavyDark
                 )
@@ -341,7 +343,7 @@ private fun HeaderHasilLaporanCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SiagaListIcon(
+                ListIcon(
                     modifier = Modifier.size(22.dp),
                     tint = NavyDark
                 )
@@ -428,7 +430,7 @@ private fun DetailHasilPenangananCard(
                             .background(Color(0xFF28A745)),
                         contentAlignment = Alignment.Center
                     ) {
-                        SiagaCheckIcon(
+                        CheckIcon(
                             modifier = Modifier.size(14.dp),
                             tint = Color.White
                         )
@@ -516,7 +518,7 @@ private fun DetailHasilPenangananCard(
                                 .background(item.placeholderColor),
                             contentAlignment = Alignment.Center
                         ) {
-                            SiagaImagePlaceholderIcon(
+                            ImagePlaceholderIcon(
                                 modifier = Modifier.size(24.dp),
                                 tint = Color.White.copy(alpha = 0.8f)
                             )
@@ -584,7 +586,7 @@ private fun DetailHasilPenangananCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SiagaCalendarIcon(
+                CalendarIcon(
                     modifier = Modifier.size(22.dp),
                     tint = NavyDark
                 )
@@ -620,36 +622,6 @@ private fun DetailHasilPenangananCard(
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
-@Composable
-fun SiagaListIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = NavyDark
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 2.dp.toPx()
-
-        val rows = listOf(0.28f, 0.50f, 0.72f)
-        for (yRel in rows) {
-            val y = h * yRel
-            // Titik / bullet
-            drawCircle(
-                color = tint,
-                radius = strokeW * 0.9f,
-                center = Offset(w * 0.22f, y)
-            )
-            // Baris garis teks
-            drawLine(
-                color = tint,
-                start = Offset(w * 0.38f, y),
-                end = Offset(w * 0.84f, y),
-                strokeWidth = strokeW,
-                cap = StrokeCap.Round
-            )
-        }
-    }
-}
 
 // ============================================================================
 // Preview

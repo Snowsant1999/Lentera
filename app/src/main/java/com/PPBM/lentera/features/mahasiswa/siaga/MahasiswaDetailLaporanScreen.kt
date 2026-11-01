@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -253,7 +255,7 @@ fun MahasiswaDetailLaporanScreen(
                         // Box 1: Anonim
                         InfoDetailSubBox(
                             icon = {
-                                SiagaAvatarIcon(
+                                AvatarIcon(
                                     modifier = Modifier.size(24.dp),
                                     tint = NavyDark
                                 )
@@ -268,7 +270,7 @@ fun MahasiswaDetailLaporanScreen(
                         // Box 2: Kategori
                         InfoDetailSubBox(
                             icon = {
-                                SiagaListIcon(
+                                ListIcon(
                                     modifier = Modifier.size(22.dp),
                                     tint = NavyDark
                                 )
@@ -283,7 +285,7 @@ fun MahasiswaDetailLaporanScreen(
                         // Box 3: Tanggal Kejadian
                         InfoDetailSubBox(
                             icon = {
-                                SiagaCalendarIcon(
+                                CalendarIcon(
                                     modifier = Modifier.size(22.dp),
                                     tint = NavyDark
                                 )
@@ -298,7 +300,7 @@ fun MahasiswaDetailLaporanScreen(
                         // Box 4: Lokasi Kejadian
                         InfoDetailSubBox(
                             icon = {
-                                SiagaLocationPinIcon(
+                                LocationPinIcon(
                                     modifier = Modifier.size(22.dp),
                                     tint = NavyDark
                                 )
@@ -401,15 +403,15 @@ fun MahasiswaDetailLaporanScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         when (lampiran.tipe) {
-                                            "PHOTO" -> SiagaImagePlaceholderIcon(
+                                            "PHOTO" -> ImagePlaceholderIcon(
                                                 modifier = Modifier.size(18.dp),
                                                 tint = Color.White
                                             )
-                                            "AUDIO" -> SiagaMusicNoteIcon(
+                                            "AUDIO" -> MusicNoteIcon(
                                                 modifier = Modifier.size(18.dp),
                                                 tint = Color.White
                                             )
-                                            else -> SiagaFileDocIcon(
+                                            else -> FileDocIcon(
                                                 modifier = Modifier.size(18.dp),
                                                 tint = Color.White
                                             )
@@ -440,7 +442,7 @@ fun MahasiswaDetailLaporanScreen(
                                     }
                                 }
 
-                                SiagaChevronRightIcon(
+                                ChevronRightIcon(
                                     modifier = Modifier.size(16.dp),
                                     tint = SlateGrayLight
                                 )
@@ -646,7 +648,7 @@ private fun TopBarDetailLaporanLengkap(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -671,43 +673,6 @@ private fun TopBarDetailLaporanLengkap(
 // Ikon & Aset Visual
 // ============================================================================
 
-@Composable
-fun SiagaMusicNoteIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = Color.White
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 1.8.dp.toPx()
-
-        // Batang not musik
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.65f, h * 0.20f),
-            end = Offset(w * 0.65f, h * 0.68f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-
-        // Kepala not musik
-        drawCircle(
-            color = tint,
-            radius = w * 0.16f,
-            center = Offset(w * 0.52f, h * 0.68f)
-        )
-
-        // Bendera not musik atas
-        val flag = Path().apply {
-            moveTo(w * 0.65f, h * 0.20f)
-            lineTo(w * 0.82f, h * 0.28f)
-            lineTo(w * 0.82f, h * 0.42f)
-            lineTo(w * 0.65f, h * 0.34f)
-            close()
-        }
-        drawPath(path = flag, color = tint)
-    }
-}
 
 // ============================================================================
 // Preview

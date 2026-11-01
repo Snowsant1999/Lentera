@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -181,7 +183,7 @@ fun BuatLaporanScreen(
                     placeholder = "Pilih tanggal & waktu kejadian",
                     fontFamily = plusJakarta,
                     trailingIcon = {
-                        SiagaCalendarIcon(
+                        CalendarIcon(
                             modifier = Modifier
                                 .size(22.dp)
                                 .clickable(
@@ -205,7 +207,7 @@ fun BuatLaporanScreen(
                     placeholder = "Masukkan lokasi kejadian",
                     fontFamily = plusJakarta,
                     trailingIcon = {
-                        SiagaLocationPinIcon(
+                        LocationPinIcon(
                             modifier = Modifier
                                 .size(22.dp)
                                 .clickable(
@@ -296,7 +298,7 @@ private fun TopBarBuatLaporan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -377,7 +379,7 @@ private fun StepperProgressSection(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isCompleted) {
-                            SiagaCheckIcon(
+                            CheckIcon(
                                 modifier = Modifier.size(16.dp),
                                 tint = Color.White
                             )
@@ -478,7 +480,7 @@ private fun KategoriTerpilihCard(
                         .background(SiagaTealPrimary),
                     contentAlignment = Alignment.Center
                 ) {
-                    SiagaCheckIcon(
+                    CheckIcon(
                         modifier = Modifier.size(18.dp),
                         tint = Color.White
                     )
@@ -734,169 +736,9 @@ private fun BottomActionBar(
 // jika aset SVG / PNG resmi sudah siap.
 // ============================================================================
 
-@Composable
-fun SiagaBackArrowIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = NavyDark
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.2.dp.toPx()
-        val midY = h / 2f
-        val startX = w * 0.25f
-        val endX = w * 0.75f
-        val arrowSize = w * 0.20f
 
-        // Garis panah horizontal
-        drawLine(
-            color = tint,
-            start = Offset(startX, midY),
-            end = Offset(endX, midY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        // Sayap panah atas
-        drawLine(
-            color = tint,
-            start = Offset(startX, midY),
-            end = Offset(startX + arrowSize, midY - arrowSize),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        // Sayap panah bawah
-        drawLine(
-            color = tint,
-            start = Offset(startX, midY),
-            end = Offset(startX + arrowSize, midY + arrowSize),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
-@Composable
-fun SiagaCheckIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = Color.White
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
 
-        val checkPath = Path().apply {
-            moveTo(w * 0.22f, h * 0.50f)
-            lineTo(w * 0.42f, h * 0.70f)
-            lineTo(w * 0.78f, h * 0.32f)
-        }
-        drawPath(
-            path = checkPath,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
-
-@Composable
-fun SiagaCalendarIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        val top = h * 0.22f
-        val bottom = h * 0.88f
-        val left = w * 0.14f
-        val right = w * 0.86f
-        val r = 3.dp.toPx()
-
-        // Kotak kalender
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(left, top),
-            size = Size(right - left, bottom - top),
-            cornerRadius = CornerRadius(r, r),
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Cincin penjepit atas (kiri & kanan)
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.34f, h * 0.10f),
-            end = Offset(w * 0.34f, h * 0.28f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.66f, h * 0.10f),
-            end = Offset(w * 0.66f, h * 0.28f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-
-        // Garis pemisah header kalender
-        drawLine(
-            color = tint,
-            start = Offset(left, h * 0.42f),
-            end = Offset(right, h * 0.42f),
-            strokeWidth = strokeWidth * 0.85f
-        )
-
-        // Titik-titik tanggal di dalam kalender
-        val dotR = strokeWidth * 0.65f
-        val cols = listOf(0.32f, 0.50f, 0.68f)
-        val rows = listOf(0.58f, 0.74f)
-        for (col in cols) {
-            for (row in rows) {
-                drawCircle(
-                    color = tint,
-                    radius = dotR,
-                    center = Offset(w * col, h * row)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SiagaLocationPinIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        // Kontur pin lokasi
-        val pinPath = Path().apply {
-            moveTo(w * 0.5f, h * 0.88f)
-            cubicTo(w * 0.36f, h * 0.64f, w * 0.20f, h * 0.48f, w * 0.20f, h * 0.36f)
-            cubicTo(w * 0.20f, h * 0.18f, w * 0.34f, h * 0.12f, w * 0.5f, h * 0.12f)
-            cubicTo(w * 0.66f, h * 0.12f, w * 0.80f, h * 0.18f, w * 0.80f, h * 0.36f)
-            cubicTo(w * 0.80f, h * 0.48f, w * 0.64f, h * 0.64f, w * 0.5f, h * 0.88f)
-            close()
-        }
-        drawPath(
-            path = pinPath,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Titik lingkaran di tengah pin
-        drawCircle(
-            color = tint,
-            radius = w * 0.10f,
-            center = Offset(w * 0.5f, h * 0.36f),
-            style = Stroke(width = strokeWidth)
-        )
-    }
-}
 
 // ============================================================================
 // Preview

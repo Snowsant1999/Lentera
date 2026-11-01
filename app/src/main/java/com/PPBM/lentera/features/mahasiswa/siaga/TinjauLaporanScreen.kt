@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -204,7 +206,7 @@ private fun TopBarTinjauLaporan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -283,7 +285,7 @@ private fun StepperProgressSectionTinjau(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isCompleted) {
-                            SiagaCheckIcon(
+                            CheckIcon(
                                 modifier = Modifier.size(16.dp),
                                 tint = Color.White
                             )
@@ -565,7 +567,7 @@ private fun ConfirmationCheckboxRow(
             contentAlignment = Alignment.Center
         ) {
             if (isChecked) {
-                SiagaCheckIcon(
+                CheckIcon(
                     modifier = Modifier.size(15.dp),
                     tint = SiagaTealPrimary
                 )
@@ -619,7 +621,7 @@ private fun BottomSendActionBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                SiagaSendIcon(
+                SendIcon(
                     modifier = Modifier.size(20.dp),
                     tint = Color.White
                 )
@@ -646,39 +648,6 @@ private fun BottomSendActionBar(
 // jika aset SVG / PNG resmi sudah siap.
 // ============================================================================
 
-@Composable
-fun SiagaSendIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = Color.White
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-
-        val path = Path().apply {
-            moveTo(w * 0.16f, h * 0.50f)
-            lineTo(w * 0.86f, h * 0.14f)
-            lineTo(w * 0.50f, h * 0.86f)
-            lineTo(w * 0.42f, h * 0.56f)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Garis lipatan pesawat kertas
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.42f, h * 0.56f),
-            end = Offset(w * 0.86f, h * 0.14f),
-            strokeWidth = strokeWidth * 0.9f,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
 // ============================================================================
 // Preview

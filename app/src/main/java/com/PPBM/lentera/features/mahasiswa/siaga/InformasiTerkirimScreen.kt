@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -87,7 +89,7 @@ fun InformasiTerkirimScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 2. Ilustrasi Lentera & Perisai
-                SiagaLanternShieldIllustration(
+                LanternShieldIllustration(
                     modifier = Modifier
                         .size(230.dp)
                         .padding(horizontal = 16.dp)
@@ -176,7 +178,7 @@ fun InformasiTerkirimScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                SiagaClockIcon(
+                                ClockIcon(
                                     modifier = Modifier.size(15.dp),
                                     tint = NavyDark
                                 )
@@ -297,7 +299,7 @@ private fun TopBarInformasiTambahan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -322,109 +324,6 @@ private fun TopBarInformasiTambahan(
 // Ilustrasi Lentera & Perisai Pelindung
 // ============================================================================
 
-@Composable
-fun SiagaLanternShieldIllustration(
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-
-        // Cahaya keemasan lentera di latar kiri
-        drawCircle(
-            color = Color(0xFFFFECC8),
-            radius = w * 0.22f,
-            center = Offset(w * 0.32f, h * 0.38f),
-            style = Fill
-        )
-
-        // Perisai pelindung di sebelah kanan
-        val shieldPath = Path().apply {
-            moveTo(w * 0.70f, h * 0.22f)
-            cubicTo(w * 0.88f, h * 0.22f, w * 0.94f, h * 0.28f, w * 0.94f, h * 0.38f)
-            lineTo(w * 0.94f, h * 0.58f)
-            cubicTo(w * 0.94f, h * 0.76f, w * 0.82f, h * 0.86f, w * 0.70f, h * 0.90f)
-            cubicTo(w * 0.58f, h * 0.86f, w * 0.46f, h * 0.76f, w * 0.46f, h * 0.58f)
-            lineTo(w * 0.46f, h * 0.38f)
-            cubicTo(w * 0.46f, h * 0.28f, w * 0.52f, h * 0.22f, w * 0.70f, h * 0.22f)
-            close()
-        }
-        drawPath(
-            path = shieldPath,
-            color = Color(0xFFF1F7FA),
-            style = Fill
-        )
-        drawPath(
-            path = shieldPath,
-            color = Color(0xFF173B57),
-            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Centang hijau teal di dalam perisai
-        val check = Path().apply {
-            moveTo(w * 0.60f, h * 0.54f)
-            lineTo(w * 0.67f, h * 0.64f)
-            lineTo(w * 0.82f, h * 0.42f)
-        }
-        drawPath(
-            path = check,
-            color = Color(0xFF267375),
-            style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Figur Pelapor / Mahasiswa di tengah-kiri
-        // Kepala
-        drawCircle(
-            color = Color(0xFFFFDAB9),
-            radius = w * 0.08f,
-            center = Offset(w * 0.44f, h * 0.24f),
-            style = Fill
-        )
-        // Rambut hitam
-        drawArc(
-            color = Color(0xFF1A2634),
-            startAngle = 180f,
-            sweepAngle = 180f,
-            useCenter = true,
-            topLeft = Offset(w * 0.36f, h * 0.16f),
-            size = Size(w * 0.16f, h * 0.14f),
-            style = Fill
-        )
-
-        // Blazer teal
-        val body = Path().apply {
-            moveTo(w * 0.36f, h * 0.32f)
-            lineTo(w * 0.52f, h * 0.32f)
-            lineTo(w * 0.54f, h * 0.60f)
-            lineTo(w * 0.34f, h * 0.60f)
-            close()
-        }
-        drawPath(path = body, color = Color(0xFF267375), style = Fill)
-        drawPath(path = body, color = Color(0xFF173B57), style = Stroke(width = 1.8.dp.toPx()))
-
-        // Lentera di tangan kiri
-        val lantern = Path().apply {
-            moveTo(w * 0.28f, h * 0.34f)
-            lineTo(w * 0.36f, h * 0.34f)
-            lineTo(w * 0.38f, h * 0.52f)
-            lineTo(w * 0.26f, h * 0.52f)
-            close()
-        }
-        drawPath(path = lantern, color = Color(0xFFFFB74D), style = Fill)
-        drawPath(path = lantern, color = Color(0xFF795548), style = Stroke(width = 1.8.dp.toPx()))
-
-        // Gagang lentera
-        drawArc(
-            color = Color(0xFF795548),
-            startAngle = 180f,
-            sweepAngle = 180f,
-            useCenter = false,
-            topLeft = Offset(w * 0.29f, h * 0.26f),
-            size = Size(w * 0.06f, h * 0.08f),
-            style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
-        )
-    }
-}
 
 // ============================================================================
 // Preview

@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -80,7 +82,7 @@ fun LaporanTerkirimScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             // Ilustrasi Perisai Sukses
-            SiagaSuccessShieldIllustration(
+            SuccessShieldIllustration(
                 modifier = Modifier
                     .size(240.dp)
                     .padding(12.dp)
@@ -152,7 +154,7 @@ fun LaporanTerkirimScreen(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    SiagaCopyIcon(
+                    CopyIcon(
                         modifier = Modifier.size(22.dp),
                         tint = SiagaTealPrimary
                     )
@@ -251,99 +253,10 @@ fun TerkirimScreen(
 /**
  * Ilustrasi Perisai Sukses dengan background biru muda dan centang putih tebal
  */
-@Composable
-fun SiagaSuccessShieldIllustration(
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 3.5.dp.toPx()
-
-        // Garis luar perisai (Dark Navy)
-        val outerShield = Path().apply {
-            moveTo(w * 0.50f, h * 0.12f)
-            cubicTo(w * 0.76f, h * 0.12f, w * 0.82f, h * 0.18f, w * 0.82f, h * 0.28f)
-            lineTo(w * 0.82f, h * 0.52f)
-            cubicTo(w * 0.82f, h * 0.72f, w * 0.68f, h * 0.84f, w * 0.50f, h * 0.90f)
-            cubicTo(w * 0.32f, h * 0.84f, w * 0.18f, h * 0.72f, w * 0.18f, h * 0.52f)
-            lineTo(w * 0.18f, h * 0.28f)
-            cubicTo(w * 0.18f, h * 0.18f, w * 0.24f, h * 0.12f, w * 0.50f, h * 0.12f)
-            close()
-        }
-
-        // Fill perisai biru muda (#8EC5E3)
-        val innerShield = Path().apply {
-            moveTo(w * 0.50f, h * 0.16f)
-            cubicTo(w * 0.72f, h * 0.16f, w * 0.76f, h * 0.22f, w * 0.76f, h * 0.30f)
-            lineTo(w * 0.76f, h * 0.50f)
-            cubicTo(w * 0.76f, h * 0.68f, w * 0.64f, h * 0.78f, w * 0.50f, h * 0.84f)
-            cubicTo(w * 0.36f, h * 0.78f, w * 0.24f, h * 0.68f, w * 0.24f, h * 0.50f)
-            lineTo(w * 0.24f, h * 0.30f)
-            cubicTo(w * 0.24f, h * 0.22f, w * 0.28f, h * 0.16f, w * 0.50f, h * 0.16f)
-            close()
-        }
-
-        // Gambar fill biru
-        drawPath(
-            path = innerShield,
-            color = Color(0xFF8EC5E3),
-            style = Fill
-        )
-
-        // Gambar border luar dark navy
-        drawPath(
-            path = outerShield,
-            color = Color(0xFF173B57),
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Centang putih tebal di tengah
-        val checkPath = Path().apply {
-            moveTo(w * 0.36f, h * 0.50f)
-            cubicTo(w * 0.40f, h * 0.54f, w * 0.44f, h * 0.60f, w * 0.48f, h * 0.64f)
-            cubicTo(w * 0.54f, h * 0.52f, w * 0.60f, h * 0.40f, w * 0.66f, h * 0.34f)
-        }
-        drawPath(
-            path = checkPath,
-            color = Color.White,
-            style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
 
 /**
  * Ikon Salin / Copy (Dua lembar kertas bertumpuk)
  */
-@Composable
-fun SiagaCopyIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        // Lembar belakang
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(w * 0.30f, h * 0.12f),
-            size = Size(w * 0.56f, h * 0.64f),
-            cornerRadius = CornerRadius(3.dp.toPx()),
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Lembar depan
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(w * 0.14f, h * 0.28f),
-            size = Size(w * 0.56f, h * 0.64f),
-            cornerRadius = CornerRadius(3.dp.toPx()),
-            style = Stroke(width = strokeWidth)
-        )
-    }
-}
 
 // ============================================================================
 // Preview

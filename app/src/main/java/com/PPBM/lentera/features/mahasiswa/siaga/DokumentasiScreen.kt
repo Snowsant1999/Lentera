@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -150,7 +152,7 @@ fun DokumentasiScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SiagaCalendarIcon(
+                    CalendarIcon(
                         modifier = Modifier.size(20.dp),
                         tint = SiagaTealPrimary
                     )
@@ -183,7 +185,7 @@ fun DokumentasiScreen(
                             .padding(18.dp),
                         verticalAlignment = Alignment.Top
                     ) {
-                        SiagaLockIcon(
+                        LockIcon(
                             modifier = Modifier.size(24.dp),
                             tint = NavyDark
                         )
@@ -254,7 +256,7 @@ private fun TopBarDokumentasi(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -302,7 +304,7 @@ private fun MainImageCarouselPlaceholder(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            SiagaImagePlaceholderIcon(
+            ImagePlaceholderIcon(
                 modifier = Modifier.size(54.dp),
                 tint = Color.White.copy(alpha = 0.85f)
             )
@@ -364,7 +366,7 @@ private fun MainImageCarouselPlaceholder(
                 .clickable(onClick = onPrevClick),
             contentAlignment = Alignment.Center
         ) {
-            SiagaChevronLeftIcon(
+            ChevronLeftIcon(
                 modifier = Modifier.size(18.dp),
                 tint = SlateGray
             )
@@ -382,7 +384,7 @@ private fun MainImageCarouselPlaceholder(
                 .clickable(onClick = onNextClick),
             contentAlignment = Alignment.Center
         ) {
-            SiagaChevronRightIcon(
+            ChevronRightIcon(
                 modifier = Modifier.size(18.dp),
                 tint = SlateGray
             )
@@ -467,7 +469,7 @@ private fun ThumbnailItemBox(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        SiagaImagePlaceholderIcon(
+        ImagePlaceholderIcon(
             modifier = Modifier.size(26.dp),
             tint = Color.White.copy(alpha = 0.8f)
         )
@@ -478,102 +480,8 @@ private fun ThumbnailItemBox(
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
-@Composable
-fun SiagaImagePlaceholderIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = Color.White
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
 
-        // Kotak foto
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(w * 0.12f, h * 0.16f),
-            size = Size(w * 0.76f, h * 0.68f),
-            cornerRadius = CornerRadius(4.dp.toPx()),
-            style = Stroke(width = strokeWidth)
-        )
 
-        // Matahari di pojok kanan atas
-        drawCircle(
-            color = tint,
-            radius = w * 0.08f,
-            center = Offset(w * 0.64f, h * 0.36f),
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Siluet bukit / gunung
-        val mountain = Path().apply {
-            moveTo(w * 0.12f, h * 0.74f)
-            lineTo(w * 0.36f, h * 0.50f)
-            lineTo(w * 0.52f, h * 0.66f)
-            lineTo(w * 0.68f, h * 0.44f)
-            lineTo(w * 0.88f, h * 0.74f)
-        }
-        drawPath(
-            path = mountain,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
-
-@Composable
-fun SiagaChevronLeftIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SlateGray
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.60f, h * 0.25f),
-            end = Offset(w * 0.35f, h * 0.50f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.35f, h * 0.50f),
-            end = Offset(w * 0.60f, h * 0.75f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaChevronRightIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SlateGray
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.40f, h * 0.25f),
-            end = Offset(w * 0.65f, h * 0.50f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.65f, h * 0.50f),
-            end = Offset(w * 0.40f, h * 0.75f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
 // ============================================================================
 // Preview

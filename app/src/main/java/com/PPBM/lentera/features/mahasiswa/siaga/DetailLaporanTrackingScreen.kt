@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
@@ -194,7 +196,7 @@ private fun TopBarDetailLaporan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -352,7 +354,7 @@ private fun TimelineProsesCard(
                                         .background(SiagaTealPrimary),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    SiagaCheckIcon(
+                                    CheckIcon(
                                         modifier = Modifier.size(16.dp),
                                         tint = Color.White
                                     )
@@ -366,7 +368,7 @@ private fun TimelineProsesCard(
                                         .background(SiagaAmberEmergency),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    SiagaClockIcon(
+                                    ClockIcon(
                                         modifier = Modifier.size(18.dp),
                                         tint = SiagaAmberTextDark
                                     )
@@ -461,7 +463,7 @@ private fun AdminRequestNoticeCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SiagaChatOutlineIcon(
+                ChatOutlineIcon(
                     modifier = Modifier.size(20.dp),
                     tint = NavyDark
                 )
@@ -549,7 +551,7 @@ private fun HasilPenangananCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    SiagaFileDocIcon(
+                    FileDocIcon(
                         modifier = Modifier.size(24.dp),
                         tint = SiagaTealPrimary
                     )
@@ -567,7 +569,7 @@ private fun HasilPenangananCard(
                     )
                 }
 
-                SiagaChevronDownIcon(
+                ChevronDownIcon(
                     modifier = Modifier.size(20.dp),
                     tint = NavyDark,
                     isExpanded = isExpanded
@@ -595,113 +597,8 @@ private fun HasilPenangananCard(
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
-@Composable
-fun SiagaClockIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaAmberTextDark
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-        val r = (size.minDimension / 2f) - (strokeWidth / 2f)
-        val center = Offset(w / 2f, h / 2f)
 
-        // Lingkaran jam
-        drawCircle(
-            color = tint,
-            radius = r,
-            center = center,
-            style = Stroke(width = strokeWidth)
-        )
 
-        // Jarum pendek & jarum panjang
-        drawLine(
-            color = tint,
-            start = center,
-            end = Offset(center.x, center.y - (r * 0.55f)),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = center,
-            end = Offset(center.x + (r * 0.45f), center.y),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaChatOutlineIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = NavyDark
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        val path = Path().apply {
-            val left = w * 0.14f
-            val top = h * 0.16f
-            val right = w * 0.86f
-            val bottom = h * 0.72f
-            val r = 4.dp.toPx()
-
-            moveTo(left + r, top)
-            lineTo(right - r, top)
-            quadraticTo(right, top, right, top + r)
-            lineTo(right, bottom - r)
-            quadraticTo(right, bottom, right - r, bottom)
-            lineTo(w * 0.40f, bottom)
-            lineTo(w * 0.22f, h * 0.88f)
-            lineTo(w * 0.26f, bottom)
-            lineTo(left + r, bottom)
-            quadraticTo(left, bottom, left, bottom - r)
-            lineTo(left, top + r)
-            quadraticTo(left, top, left + r, top)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
-
-@Composable
-fun SiagaChevronDownIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = NavyDark,
-    isExpanded: Boolean = false
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-
-        val startY = if (isExpanded) h * 0.65f else h * 0.35f
-        val midY = if (isExpanded) h * 0.35f else h * 0.65f
-
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.25f, startY),
-            end = Offset(w * 0.50f, midY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.50f, midY),
-            end = Offset(w * 0.75f, startY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
 // Alias composable
 @Composable

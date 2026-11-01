@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -267,7 +269,7 @@ private fun TopBarRiwayatLaporan(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -312,7 +314,7 @@ private fun SearchBarRiwayat(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SiagaSearchIcon(
+            SearchIcon(
                 modifier = Modifier.size(20.dp),
                 tint = SlateGray
             )
@@ -421,7 +423,7 @@ private fun RiwayatLaporanCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Ikon Laporan di sebelah kiri
-            SiagaReportFileIcon(
+            ReportFileIcon(
                 modifier = Modifier.size(36.dp),
                 tint = SiagaTealPrimary
             )
@@ -495,7 +497,7 @@ private fun RiwayatLaporanCard(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 // Chevron Right
-                SiagaChevronRightIcon(
+                ChevronRightIcon(
                     modifier = Modifier.size(16.dp),
                     tint = SiagaTealPrimary
                 )
@@ -508,88 +510,7 @@ private fun RiwayatLaporanCard(
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
-@Composable
-fun SiagaSearchIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SlateGray
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 2.dp.toPx()
-        val r = w * 0.32f
-        val center = Offset(w * 0.42f, h * 0.42f)
 
-        // Lingkaran kaca pembesar
-        drawCircle(
-            color = tint,
-            radius = r,
-            center = center,
-            style = Stroke(width = strokeW)
-        )
-
-        // Gagang kaca pembesar
-        val handleStart = Offset(center.x + (r * 0.707f), center.y + (r * 0.707f))
-        val handleEnd = Offset(w * 0.88f, h * 0.88f)
-        drawLine(
-            color = tint,
-            start = handleStart,
-            end = handleEnd,
-            strokeWidth = strokeW * 1.1f,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaReportFileIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeW = 2.dp.toPx()
-
-        // Balon dokumen persegi
-        val path = Path().apply {
-            val left = w * 0.16f
-            val top = h * 0.16f
-            val right = w * 0.84f
-            val bottom = h * 0.74f
-
-            moveTo(left, top)
-            lineTo(right, top)
-            lineTo(right, bottom)
-            lineTo(w * 0.46f, bottom)
-            lineTo(w * 0.28f, h * 0.88f)
-            lineTo(w * 0.32f, bottom)
-            lineTo(left, bottom)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Garis horizontal teks dokumen
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.30f, h * 0.36f),
-            end = Offset(w * 0.70f, h * 0.36f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.30f, h * 0.52f),
-            end = Offset(w * 0.60f, h * 0.52f),
-            strokeWidth = strokeW,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
 // ============================================================================
 // Preview

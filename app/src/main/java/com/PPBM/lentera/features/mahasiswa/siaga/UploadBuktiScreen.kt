@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.icons.*
+import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -237,7 +239,7 @@ private fun TopBarUploadBukti(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            SiagaBackArrowIcon(
+            BackArrowIcon(
                 modifier = Modifier.size(24.dp),
                 tint = NavyDark
             )
@@ -316,7 +318,7 @@ private fun StepperProgressSectionBukti(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isCompleted) {
-                            SiagaCheckIcon(
+                            CheckIcon(
                                 modifier = Modifier.size(16.dp),
                                 tint = Color.White
                             )
@@ -410,7 +412,7 @@ private fun UploadDropzoneBox(
             verticalArrangement = Arrangement.Center
         ) {
             // Ikon Awan Upload
-            SiagaCloudUploadIcon(
+            CloudUploadIcon(
                 modifier = Modifier.size(46.dp),
                 tint = SiagaTealPrimary
             )
@@ -487,7 +489,7 @@ private fun BuktiFileCard(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                SiagaFileDocIcon(
+                FileDocIcon(
                     modifier = Modifier.size(24.dp),
                     tint = if (isExcluded) SlateGray else SiagaTealPrimary
                 )
@@ -535,7 +537,7 @@ private fun BuktiFileCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    SiagaRestoreIcon(
+                    RestoreIcon(
                         modifier = Modifier.size(22.dp),
                         tint = NavyDark
                     )
@@ -552,7 +554,7 @@ private fun BuktiFileCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    SiagaTrashIcon(
+                    TrashIcon(
                         modifier = Modifier.size(22.dp),
                         tint = SlateGray
                     )
@@ -582,7 +584,7 @@ private fun SecurityNoticeBanner(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Ikon Gembok Terkunci
-            SiagaLockIcon(
+            LockIcon(
                 modifier = Modifier.size(24.dp),
                 tint = SiagaTealBannerText
             )
@@ -678,295 +680,10 @@ private fun BottomNavActionButtons(
 // jika aset SVG / PNG resmi sudah siap.
 // ============================================================================
 
-@Composable
-fun SiagaCloudUploadIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
 
-        // Garis lengkung awan
-        val cloud = Path().apply {
-            moveTo(w * 0.28f, h * 0.64f)
-            cubicTo(w * 0.16f, h * 0.64f, w * 0.16f, h * 0.44f, w * 0.26f, h * 0.40f)
-            cubicTo(w * 0.24f, h * 0.22f, w * 0.48f, h * 0.18f, w * 0.54f, h * 0.28f)
-            cubicTo(w * 0.62f, h * 0.18f, w * 0.82f, h * 0.24f, w * 0.80f, h * 0.42f)
-            cubicTo(w * 0.90f, h * 0.46f, w * 0.90f, h * 0.64f, w * 0.76f, h * 0.64f)
-        }
-        drawPath(
-            path = cloud,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
 
-        // Batang panah ke atas
-        val arrowBaseY = h * 0.78f
-        val arrowTopY = h * 0.48f
-        val arrowMidX = w * 0.50f
-        val arrowHead = w * 0.12f
 
-        drawLine(
-            color = tint,
-            start = Offset(arrowMidX, arrowBaseY),
-            end = Offset(arrowMidX, arrowTopY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        // Sayap panah kiri
-        drawLine(
-            color = tint,
-            start = Offset(arrowMidX, arrowTopY),
-            end = Offset(arrowMidX - arrowHead, arrowTopY + arrowHead),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        // Sayap panah kanan
-        drawLine(
-            color = tint,
-            start = Offset(arrowMidX, arrowTopY),
-            end = Offset(arrowMidX + arrowHead, arrowTopY + arrowHead),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
-@Composable
-fun SiagaFileDocIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealPrimary
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        val left = w * 0.22f
-        val right = w * 0.78f
-        val top = h * 0.14f
-        val bottom = h * 0.86f
-        val fold = w * 0.20f
-
-        val path = Path().apply {
-            moveTo(left, top)
-            lineTo(right - fold, top)
-            lineTo(right, top + fold)
-            lineTo(right, bottom)
-            lineTo(left, bottom)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Lipatan sudut dokumen
-        val foldPath = Path().apply {
-            moveTo(right - fold, top)
-            lineTo(right - fold, top + fold)
-            lineTo(right, top + fold)
-        }
-        drawPath(
-            path = foldPath,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Baris teks dokumen
-        val lineLeft = left + (w * 0.14f)
-        val lineRight = right - (w * 0.14f)
-        drawLine(
-            color = tint,
-            start = Offset(lineLeft, h * 0.48f),
-            end = Offset(lineRight, h * 0.48f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(lineLeft, h * 0.62f),
-            end = Offset(lineRight, h * 0.62f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(lineLeft, h * 0.74f),
-            end = Offset(lineLeft + (w * 0.22f), h * 0.74f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaTrashIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SlateGray
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 1.8.dp.toPx()
-
-        // Tutup tempat sampah
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.20f, h * 0.26f),
-            end = Offset(w * 0.80f, h * 0.26f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-
-        // Gagang tutup
-        val handle = Path().apply {
-            moveTo(w * 0.38f, h * 0.26f)
-            lineTo(w * 0.38f, h * 0.16f)
-            lineTo(w * 0.62f, h * 0.16f)
-            lineTo(w * 0.62f, h * 0.26f)
-        }
-        drawPath(
-            path = handle,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Badan tempat sampah
-        val bin = Path().apply {
-            moveTo(w * 0.28f, h * 0.26f)
-            lineTo(w * 0.32f, h * 0.84f)
-            cubicTo(w * 0.32f, h * 0.88f, w * 0.36f, h * 0.90f, w * 0.40f, h * 0.90f)
-            lineTo(w * 0.60f, h * 0.90f)
-            cubicTo(w * 0.64f, h * 0.90f, w * 0.68f, h * 0.88f, w * 0.68f, h * 0.84f)
-            lineTo(w * 0.72f, h * 0.26f)
-        }
-        drawPath(
-            path = bin,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-
-        // Garis vertikal di badan tempat sampah
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.44f, h * 0.40f),
-            end = Offset(w * 0.44f, h * 0.76f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.56f, h * 0.40f),
-            end = Offset(w * 0.56f, h * 0.76f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaRestoreIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SlateGray
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-        val r = (size.minDimension / 2f) - (strokeWidth * 1.5f)
-        val center = Offset(w / 2f, h / 2f)
-
-        // Busur lingkaran undo
-        drawArc(
-            color = tint,
-            startAngle = 45f,
-            sweepAngle = 270f,
-            useCenter = false,
-            topLeft = Offset(center.x - r, center.y - r),
-            size = Size(r * 2f, r * 2f),
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-        )
-
-        // Kepala panah busur
-        val arrowSize = w * 0.16f
-        val arrowTipX = center.x + (r * 0.707f)
-        val arrowTipY = center.y + (r * 0.707f)
-
-        drawLine(
-            color = tint,
-            start = Offset(arrowTipX, arrowTipY),
-            end = Offset(arrowTipX - arrowSize, arrowTipY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = tint,
-            start = Offset(arrowTipX, arrowTipY),
-            end = Offset(arrowTipX, arrowTipY - arrowSize),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-fun SiagaLockIcon(
-    modifier: Modifier = Modifier,
-    tint: Color = SiagaTealBannerText
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val strokeWidth = 2.dp.toPx()
-
-        // Lengkungan gembok atas
-        val shackle = Path().apply {
-            moveTo(w * 0.32f, h * 0.46f)
-            lineTo(w * 0.32f, h * 0.30f)
-            cubicTo(w * 0.32f, h * 0.14f, w * 0.68f, h * 0.14f, w * 0.68f, h * 0.30f)
-            lineTo(w * 0.68f, h * 0.46f)
-        }
-        drawPath(
-            path = shackle,
-            color = tint,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-        )
-
-        // Badan kotak gembok
-        val bodyLeft = w * 0.22f
-        val bodyRight = w * 0.78f
-        val bodyTop = h * 0.44f
-        val bodyBottom = h * 0.88f
-        val r = 4.dp.toPx()
-
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(bodyLeft, bodyTop),
-            size = Size(bodyRight - bodyLeft, bodyBottom - bodyTop),
-            cornerRadius = CornerRadius(r, r),
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Titik lubang kunci
-        drawCircle(
-            color = tint,
-            radius = strokeWidth * 0.9f,
-            center = Offset(w * 0.50f, h * 0.62f)
-        )
-        // Garis lubang kunci
-        drawLine(
-            color = tint,
-            start = Offset(w * 0.50f, h * 0.62f),
-            end = Offset(w * 0.50f, h * 0.74f),
-            strokeWidth = strokeWidth * 0.8f,
-            cap = StrokeCap.Round
-        )
-    }
-}
 
 // ============================================================================
 // Preview
