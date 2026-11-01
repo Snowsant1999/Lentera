@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,7 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.LenteraNavy
+import com.PPBM.lentera.core.designsystem.theme.MagangAmberPrimary
+import com.PPBM.lentera.core.designsystem.theme.NavyDark
 import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
+import com.PPBM.lentera.core.designsystem.theme.SiagaNavBg
+import com.PPBM.lentera.core.designsystem.theme.SiagaNavUnselected
+import com.PPBM.lentera.core.designsystem.theme.SiagaTealPrimary
 
 enum class LenteraTab {
     BERANDA,
@@ -41,119 +49,119 @@ fun MahasiswaBottomBar(
     onTabSelected: (LenteraTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFFDCE6EE))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+            .background(SiagaNavBg)
+            .navigationBarsPadding()
+            .padding(vertical = 8.dp, horizontal = 12.dp)
     ) {
-        BottomNavItem(
-            label = "Beranda",
-            iconRes = R.drawable.ic_house,
-            isSelected = currentTab == LenteraTab.BERANDA,
-            onClick = { onTabSelected(LenteraTab.BERANDA) }
-        )
-        BottomNavItem(
-            label = "Pengaduan",
-            iconRes = R.drawable.ic_message_square_plus,
-            isSelected = currentTab == LenteraTab.PENGADUAN,
-            onClick = { onTabSelected(LenteraTab.PENGADUAN) }
-        )
-        BottomNavItem(
-            label = "Magang Hub",
-            iconRes = R.drawable.ic_briefcase_business,
-            isSelected = currentTab == LenteraTab.MAGANG_HUB,
-            onClick = { onTabSelected(LenteraTab.MAGANG_HUB) }
-        )
-        BottomNavItem(
-            label = "Profil",
-            iconRes = R.drawable.ic_profile_circle_thin,
-            isSelected = currentTab == LenteraTab.PROFIL,
-            onClick = { onTabSelected(LenteraTab.PROFIL) }
-        )
-    }
-}
-
-@Composable
-private fun BottomNavItem(
-    label: String,
-    iconRes: Int,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-
-    if (isSelected) {
-        Box(
-            modifier = modifier
-                .clip(RoundedCornerShape(18.dp))
-                .background(LenteraNavy)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick
-                )
-                .padding(horizontal = 18.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-                Text(
-                    text = label,
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
+            LenteraTab.entries.forEach { tab ->
+                val isSelected = tab == currentTab
+                val label = when (tab) {
+                    LenteraTab.BERANDA -> "Beranda"
+                    LenteraTab.PENGADUAN -> "Pengaduan"
+                    LenteraTab.MAGANG_HUB -> "Magang Hub"
+                    LenteraTab.PROFIL -> "Profil"
+                }
+                val iconRes = when (tab) {
+                    LenteraTab.BERANDA -> R.drawable.ic_house
+                    LenteraTab.PENGADUAN -> R.drawable.ic_message_square_plus
+                    LenteraTab.MAGANG_HUB -> R.drawable.ic_briefcase_business
+                    LenteraTab.PROFIL -> R.drawable.ic_profile_circle_thin
+                }
+                val activeBgColor = when (tab) {
+                    LenteraTab.BERANDA -> LenteraNavy
+                    LenteraTab.PENGADUAN -> SiagaTealPrimary
+                    LenteraTab.MAGANG_HUB -> MagangAmberPrimary
+                    LenteraTab.PROFIL -> LenteraNavy
+                }
+                val activeContentColor = when (tab) {
+                    LenteraTab.MAGANG_HUB -> NavyDark
+                    else -> Color.White
+                }
+
+                val interactionSource = remember { MutableInteractionSource() }
+
+                if (isSelected) {
+                    // Pill tab aktif dengan warna aksen fitur
+                    Box(
+                        modifier = Modifier
+                            .height(54.dp)
+                            .width(88.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(activeBgColor)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                                onClick = { onTabSelected(tab) }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = label,
+                                tint = activeContentColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = label,
+                                fontFamily = PlusJakartaSans,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = activeContentColor
+                            )
+                        }
+                    }
+                } else {
+                    // Tab tidak aktif
+                    Box(
+                        modifier = Modifier
+                            .height(54.dp)
+                            .width(76.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                                onClick = { onTabSelected(tab) }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = label,
+                                tint = SiagaNavUnselected,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = label,
+                                fontFamily = PlusJakartaSans,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 11.sp,
+                                color = SiagaNavUnselected
+                            )
+                        }
+                    }
+                }
             }
         }
-    } else {
-        Box(
-            modifier = modifier
-                .clip(RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = LenteraNavy,
-                    modifier = Modifier.size(22.dp)
-                )
-                Text(
-                    text = label,
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.sp,
-                    color = LenteraNavy,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
-            }
-        }
     }
 }
-
 
 @Composable
 fun LenteraBottomBar(

@@ -18,7 +18,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun PeopleIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -47,7 +47,7 @@ fun PeopleIcon(
 
 @Composable
 fun HandStopIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -95,7 +95,7 @@ fun HandStopIcon(
 
 @Composable
 fun ScaleIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {

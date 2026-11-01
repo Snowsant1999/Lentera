@@ -1,5 +1,8 @@
 package com.PPBM.lentera.features.mahasiswa.notifikasi
 
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
+
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -82,13 +85,9 @@ fun MahasiswaNotifikasiScreen(
                     .clickable(onClick = onBackClick)
                     .padding(vertical = 8.dp)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_open_answer),
-                    contentDescription = "Kembali",
-                    tint = LenteraNavy,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(180f)
+                BackArrowIcon(
+                    modifier = Modifier.size(20.dp),
+                    tint = LenteraNavy
                 )
             }
 

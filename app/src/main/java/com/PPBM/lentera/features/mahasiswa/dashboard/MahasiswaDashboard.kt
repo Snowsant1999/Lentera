@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,7 +62,14 @@ class MahasiswaDashboard {
     fun mhsDashboard(
         modifier: Modifier = Modifier,
         onNotificationClick: () -> Unit = {},
-        onTabSelected: (LenteraTab) -> Unit = {}
+        onTabSelected: (LenteraTab) -> Unit = {},
+        onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
+        onSiagaClick: () -> Unit = { onTabSelected(LenteraTab.PENGADUAN) },
+        onMagangClick: () -> Unit = { onTabSelected(LenteraTab.MAGANG_HUB) },
+        onAktivitasLihatSemuaClick: () -> Unit = { onTabSelected(LenteraTab.PENGADUAN) },
+        onAktivitasItemClick: (String) -> Unit = { onTabSelected(LenteraTab.PENGADUAN) },
+        onLowonganLihatSemuaClick: () -> Unit = { onTabSelected(LenteraTab.MAGANG_HUB) },
+        onLowonganItemClick: (String) -> Unit = { onTabSelected(LenteraTab.MAGANG_HUB) }
     ) {
         val scrollState = rememberScrollState()
 
@@ -83,14 +91,14 @@ class MahasiswaDashboard {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 0.dp, topEnd =0.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
-                        .height(76.dp)
+                        .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(LenteraBlueDark, LenteraBlueLight)
                             )
                         )
-                        .padding(horizontal = 24.dp)
+                        .statusBarsPadding()
+                        .padding(horizontal = 24.dp, vertical = 18.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -101,6 +109,8 @@ class MahasiswaDashboard {
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(48.dp)
+                                .clip(CircleShape)
+                                .clickable { onProfileClick() }
                                 .background(Color.White, CircleShape)
                         ) {
                             Image(
@@ -196,6 +206,8 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable { onSiagaClick() }
                                 .background(
                                     color = LenteraTealBg,
                                     shape = RoundedCornerShape(20.dp)
@@ -246,6 +258,8 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable { onMagangClick() }
                                 .background(
                                     color = LenteraYellowBg,
                                     shape = RoundedCornerShape(20.dp)
@@ -331,7 +345,8 @@ class MahasiswaDashboard {
                                     fontFamily = PlusJakartaSans,
                                     fontWeight = FontWeight.SemiBold,
                                     color = LenteraTextSecondary
-                                )
+                                ),
+                                modifier = Modifier.clickable { onAktivitasLihatSemuaClick() }
                             )
                         }
 
@@ -341,7 +356,8 @@ class MahasiswaDashboard {
                             date = "12 Okt 2026",
                             status = "Diperiksa",
                             statusBg = LenteraYellowBg,
-                            statusColor = LenteraNavy
+                            statusColor = LenteraNavy,
+                            onClick = { onAktivitasItemClick("Keracunan Makanan") }
                         )
 
                         // Item 2: Pintu Mau Roboh (Selesai)
@@ -350,7 +366,8 @@ class MahasiswaDashboard {
                             date = "10 Okt 2026",
                             status = "Selesai",
                             statusBg = LenteraGreenBg,
-                            statusColor = LenteraGreen
+                            statusColor = LenteraGreen,
+                            onClick = { onAktivitasItemClick("Pintu Mau Roboh") }
                         )
 
                         // Item 3: Pelecehan Verbal (Selesai)
@@ -359,7 +376,8 @@ class MahasiswaDashboard {
                             date = "08 Okt 2026",
                             status = "Selesai",
                             statusBg = LenteraGreenBg,
-                            statusColor = LenteraGreen
+                            statusColor = LenteraGreen,
+                            onClick = { onAktivitasItemClick("Pelecehan Verbal") }
                         )
                     }
 
@@ -389,7 +407,8 @@ class MahasiswaDashboard {
                                     fontFamily = PlusJakartaSans,
                                     fontWeight = FontWeight.SemiBold,
                                     color = LenteraTextSecondary
-                                )
+                                ),
+                                modifier = Modifier.clickable { onLowonganLihatSemuaClick() }
                             )
                         }
 
@@ -436,13 +455,15 @@ class MahasiswaDashboard {
         date: String,
         status: String,
         statusBg: Color,
-        statusColor: Color
+        statusColor: Color,
+        onClick: () -> Unit = {}
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { onClick() }
                 .padding(vertical = 4.dp)
         ) {
             Column(
@@ -491,12 +512,14 @@ class MahasiswaDashboard {
     private fun MagangCard(
         title: String,
         company: String,
-        location: String
+        location: String,
+        onClick: () -> Unit = {}
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .width(160.dp)
+                .clickable { onClick() }
                 .shadow(
                     elevation = 8.dp,
                     spotColor = Color(0x09173B57),

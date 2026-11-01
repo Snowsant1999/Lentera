@@ -1,7 +1,7 @@
 package com.PPBM.lentera.features.admin.dashboard
-import com.PPBM.lentera.core.designsystem.components.*
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -10,56 +10,93 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
+
+import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
-fun AdminDashboardScreen() {
+fun AdminDashboardScreen(
+    onNavigateToMahasiswa: () -> Unit = {},
+    onNavigateToSiaga: () -> Unit = {},
+    onNavigateToMagang: () -> Unit = {},
+    onNavigateToProfil: () -> Unit = {},
+    onNavigateToNotifikasi: () -> Unit = {},
+    onTambahMahasiswa: () -> Unit = onNavigateToMahasiswa,
+    onTambahTempatMagang: () -> Unit = onNavigateToMagang,
+    onNavClick: (LenteraNavItem) -> Unit = {}
+) {
     Scaffold(
-        containerColor = Color(0xFFF5F7FA),
-        bottomBar = { AdminDashboardBottomBar() }
+        containerColor = ScreenBackground,
+        bottomBar = {
+            AdminBottomBar(
+                selected = LenteraNavItem.BERANDA,
+                onItemClick = onNavClick
+            )
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF5F7FA))
+                .background(ScreenBackground)
                 .padding(innerPadding)
         ) {
-            // 1. Header Profil Biru Lengkung
-            item { HeaderAdmin() }
+            // 1. Header Profil Biru Lengkung Konsisten dengan Mahasiswa Dashboard
+            item {
+                HeaderAdmin(
+                    onProfileClick = onNavigateToProfil,
+                    onNotificationClick = onNavigateToNotifikasi
+                )
+            }
 
             // Area Konten Utama
             item {
-                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Spacer(modifier = Modifier.height(20.dp))
-
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
                     // 2. Judul Dashboard
                     JudulDashboard()
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // 3. Grid Statistik
-                    GridStatistik()
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // 4. Tombol Aksi Cepat
-                    TombolAksiCepat()
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // 5. Kartu Laporan Masuk
-                    KartuLaporanMasuk()
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // 3. Grid Statistik
+                    GridStatistik(
+                        onMahasiswaClick = onNavigateToMahasiswa,
+                        onSiagaClick = onNavigateToSiaga,
+                        onTempatMagangClick = onNavigateToMagang,
+                        onLowonganClick = onNavigateToMagang
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 4. Tombol Aksi Cepat
+                    TombolAksiCepat(
+                        onTambahMahasiswa = onTambahMahasiswa,
+                        onTambahTempatMagang = onTambahTempatMagang
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 5. Kartu Laporan Masuk
+                    KartuLaporanMasuk(onClick = onNavigateToSiaga)
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     // 6. Kartu Kelola Magang
-                    KartuKelolaMagang()
-                    Spacer(modifier = Modifier.height(24.dp))
+                    KartuKelolaMagang(onClick = onNavigateToMagang)
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
         }
@@ -67,54 +104,75 @@ fun AdminDashboardScreen() {
 }
 
 @Composable
-fun HeaderAdmin() {
-    Box(
+fun HeaderAdmin(
+    onProfileClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {}
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
             .background(
-                color = Color(0xFF1E3A5F),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                brush = Brush.horizontalGradient(
+                    colors = listOf(LenteraBlueDark, LenteraBlueLight)
+                )
             )
-            .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable { onProfileClick() }
                     .background(Color.White, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_profile_circle_fill),
+                    painter = painterResource(id = R.drawable.ic_profile_circle_fill),
                     contentDescription = "Profile",
-                    tint = Color(0xFF1E3A5F),
-                    modifier = Modifier.size(36.dp)
+                    tint = NavyDark,
+                    modifier = Modifier.size(34.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = "Halo, Rina Wulandari",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 )
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Admin Kampus · LENTERA",
-                    fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.8f)
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Normal,
+                        color = Color(0xFFE6F1E9)
+                    )
                 )
             }
+        }
 
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .clickable { onNotificationClick() }
+        ) {
             Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_notification_badge),
-                contentDescription = "Notification",
+                painter = painterResource(id = R.drawable.ic_bell_outline),
+                contentDescription = "Notifikasi",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
@@ -124,75 +182,94 @@ fun HeaderAdmin() {
 
 @Composable
 fun JudulDashboard() {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color(0xFF1E3A5F))) {
+                withStyle(style = SpanStyle(color = NavyDark)) {
                     append("KELOLA KAMPUS\nBERSAMA ")
                 }
-                withStyle(style = SpanStyle(color = Color(0xFFEEB042))) {
+                withStyle(style = SpanStyle(color = LenteraYellow)) {
                     append("LENTERA")
                 }
             },
-            fontSize = 26.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 32.sp
+            style = TextStyle(
+                fontSize = 28.sp,
+                lineHeight = 35.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.ExtraBold
+            )
         )
-        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = "Ringkasan layanan · 17 Oktober 2026",
-            fontSize = 13.sp,
-            color = Color(0xFF7A8B9B)
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Normal,
+                color = SlateGray
+            )
         )
     }
 }
 
 @Composable
-fun GridStatistik() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+fun GridStatistik(
+    onMahasiswaClick: () -> Unit = {},
+    onSiagaClick: () -> Unit = {},
+    onTempatMagangClick: () -> Unit = {},
+    onLowonganClick: () -> Unit = {}
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Baris 1: Mahasiswa & Lentera Siaga
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                bgColor = Color(0xFFE6F3F0),
-                iconId = com.PPBM.lentera.R.drawable.ic_student_accounts,
+                bgColor = LenteraTealBg,
+                iconId = R.drawable.ic_student_accounts,
+                iconTint = LenteraTeal,
                 count = "128",
                 title = "MAHASISWA",
-                subtitle = "124 aktif · 4 belum aktivasi"
+                subtitle = "124 aktif · 4 draf",
+                onClick = onMahasiswaClick
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                bgColor = Color(0xFFE3F0EC),
-                iconId = com.PPBM.lentera.R.drawable.ic_shield,
+                bgColor = LenteraTealBg,
+                iconId = R.drawable.ic_shield,
+                iconTint = LenteraTeal,
                 count = "24",
                 title = "LENTERA SIAGA",
-                subtitle = "3 baru · 5 proses · 16 selesai"
+                subtitle = "3 baru · 16 selesai",
+                onClick = onSiagaClick
             )
         }
 
         // Baris 2: Tempat Magang & Lowongan
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                bgColor = Color(0xFFFEF3E2),
-                iconId = com.PPBM.lentera.R.drawable.logo_company,
+                bgColor = LenteraYellowBg,
+                iconId = R.drawable.logo_company,
+                iconTint = LenteraYellow,
                 count = "12",
                 title = "TEMPAT MAGANG",
-                subtitle = "9 aktif · 2 draf · 1 arsip"
+                subtitle = "9 aktif · 2 draf",
+                onClick = onTempatMagangClick
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                bgColor = Color(0xFFFEF3E2),
-                iconId = com.PPBM.lentera.R.drawable.ic_folder_open,
+                bgColor = LenteraYellowBg,
+                iconId = R.drawable.ic_folder_open,
+                iconTint = LenteraYellow,
                 count = "8",
                 title = "LOWONGAN",
-                subtitle = "4 terbit · 3 draf · 1 ditutup"
+                subtitle = "4 terbit · 3 draf",
+                onClick = onLowonganClick
             )
         }
     }
@@ -203,221 +280,247 @@ fun StatCard(
     modifier: Modifier = Modifier,
     bgColor: Color,
     iconId: Int,
+    iconTint: Color = NavyDark,
     count: String,
     title: String,
-    subtitle: String
+    subtitle: String,
+    onClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .background(color = bgColor, shape = RoundedCornerShape(20.dp))
+            .padding(14.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(id = iconId),
-                    contentDescription = title,
-                    tint = Color(0xFF1E3A5F),
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = count,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF1E3A5F)
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A5F)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconId),
+                contentDescription = title,
+                tint = iconTint,
+                modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = subtitle,
-                fontSize = 11.sp,
-                color = Color(0xFF627D98)
+                text = count,
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = NavyDark
+                )
             )
         }
+        Text(
+            text = title,
+            style = TextStyle(
+                fontSize = 13.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.ExtraBold,
+                color = NavyDark
+            )
+        )
+        Text(
+            text = subtitle,
+            style = TextStyle(
+                fontSize = 11.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Normal,
+                color = SlateGray
+            )
+        )
     }
 }
 
 @Composable
-fun TombolAksiCepat() {
+fun TombolAksiCepat(
+    onTambahMahasiswa: () -> Unit = {},
+    onTambahTempatMagang: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Tombol 1: Tambah Mahasiswa
         Button(
-            onClick = { },
+            onClick = onTambahMahasiswa,
             modifier = Modifier
                 .weight(1f)
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A5F)),
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NavyDark),
             shape = RoundedCornerShape(14.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = 10.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_pencil_outline),
-                    contentDescription = "Tambah Mahasiswa",
+                    painter = painterResource(id = R.drawable.ic_pencil_outline),
+                    contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Tambah Mahasiswa",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
+                    text = "Tambah Mhs",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = Color.White
+                    )
                 )
             }
         }
 
         // Tombol 2: Tambah Tempat Magang
         Button(
-            onClick = { },
+            onClick = onTambahTempatMagang,
             modifier = Modifier
                 .weight(1f)
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEB042)),
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = LenteraYellow),
             shape = RoundedCornerShape(14.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = 10.dp)
         ) {
             Text(
-                text = "Tambah Tempat Magang",
-                color = Color(0xFF1E3A5F),
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp
+                text = "Tambah Magang",
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = NavyDark
+                )
             )
         }
     }
 }
 
 @Composable
-fun KartuLaporanMasuk() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Laporan Masuk",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A5F)
-                )
-                Text(
-                    text = "Lihat Semua",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1E3A5F)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Pelecehan Verbal",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E3A5F)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "LTR-2026-00123 · 15 Okt 2026",
-                        fontSize = 12.sp,
-                        color = Color(0xFF7A8B9B)
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFFEF3E2), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "Diperiksa",
-                        color = Color(0xFFB57A00),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun KartuKelolaMagang() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Kelola Magang",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A5F)
-                )
-                Text(
-                    text = "Kelola",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1E3A5F)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "PT. Cahaya Digital",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A5F)
+fun KartuLaporanMasuk(onClick: () -> Unit = {}) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                spotColor = Color(0x09173B57),
+                ambientColor = Color(0x09173B57),
+                shape = RoundedCornerShape(20.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .background(Color.White, shape = RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "Data tempat & dokumen dikelola admin",
+                text = "Laporan Masuk",
+                style = TextStyle(
+                    fontSize = 17.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+            Text(
+                text = "Kelola →",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SlateGray
+                )
+            )
+        }
+        Text(
+            text = "LTR-2026-00126 · Lampu Koridor Padam",
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Bold,
+                color = NavyDark
+            )
+        )
+        Text(
+            text = "Perlu verifikasi kelengkapan dan penugasan",
+            style = TextStyle(
                 fontSize = 12.sp,
-                color = Color(0xFF7A8B9B)
+                fontFamily = PlusJakartaSans,
+                color = SlateGray
             )
-        }
+        )
     }
 }
 
 @Composable
-fun AdminDashboardBottomBar() {
-    AdminBottomBar(selected = LenteraNavItem.BERANDA)
+fun KartuKelolaMagang(onClick: () -> Unit = {}) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                spotColor = Color(0x09173B57),
+                ambientColor = Color(0x09173B57),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .background(Color.White, shape = RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Kelola Tempat Magang",
+                style = TextStyle(
+                    fontSize = 17.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+            Text(
+                text = "Kelola →",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SlateGray
+                )
+            )
+        }
+        Text(
+            text = "PT. Cahaya Digital · 4 Lowongan Terbit",
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Bold,
+                color = NavyDark
+            )
+        )
+        Text(
+            text = "Data tempat & dokumen divalidasi admin",
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontFamily = PlusJakartaSans,
+                color = SlateGray
+            )
+        )
+    }
 }
 
 @Preview(showBackground = true)

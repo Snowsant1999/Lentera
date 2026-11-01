@@ -20,13 +20,16 @@ import androidx.compose.ui.tooling.preview.Preview
  * 7. HasilPenyelesaianScreen.kt (Frame: Hasil & Penyelesaian)
  */
 @Composable
-fun AdminSiagaFlowScreen() {
+fun AdminSiagaFlowScreen(
+    onBackToDashboard: () -> Unit = {}
+) {
     var currentScreen by remember { mutableStateOf(AdminSiagaRoute.LAPORAN_MASUK) }
 
     when (currentScreen) {
         AdminSiagaRoute.LAPORAN_MASUK -> {
             LaporanMasukScreen(
-                onNavigateToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN }
+                onNavigateToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
+                onBack = onBackToDashboard
             )
         }
         AdminSiagaRoute.DETAIL_LAPORAN -> {

@@ -52,6 +52,8 @@ import com.PPBM.lentera.core.designsystem.theme.*
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
+    onLoginMahasiswa: () -> Unit = onLoginSuccess,
+    onLoginAdmin: () -> Unit = onLoginSuccess,
     onForgotPassword: () -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
@@ -63,7 +65,7 @@ fun LoginScreen(
     var showError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Simulasi login
+    // Simulasi login dummy tanpa backend
     fun doLogin() {
         if (nimOrEmail.isBlank() || password.isBlank()) {
             showError = true
@@ -71,8 +73,11 @@ fun LoginScreen(
         }
         isLoading = true
         showError = false
-        // Untuk saat ini, login selalu berhasil jika field terisi
-        onLoginSuccess()
+        if (nimOrEmail.contains("admin", ignoreCase = true)) {
+            onLoginAdmin()
+        } else {
+            onLoginMahasiswa()
+        }
     }
 
     Column(
@@ -455,6 +460,67 @@ fun LoginScreen(
                             color = CardWhite
                         )
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Demo Accounts Fast Login
+                Text(
+                    text = "— Masuk Cepat untuk Demo —",
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        fontFamily = plusJakarta,
+                        fontWeight = FontWeight.Medium,
+                        color = SlateGray,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .border(1.dp, NavyMedium, RoundedCornerShape(12.dp))
+                            .background(Color.White, RoundedCornerShape(12.dp))
+                            .clickable { onLoginMahasiswa() }
+                    ) {
+                        Text(
+                            text = "Demo Mahasiswa",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = plusJakarta,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyMedium
+                            )
+                        )
+                    }
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .background(Color(0xFFEEB042), RoundedCornerShape(12.dp))
+                            .clickable { onLoginAdmin() }
+                    ) {
+                        Text(
+                            text = "Demo Admin",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = plusJakarta,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                    }
                 }
             }
 

@@ -1,5 +1,9 @@
 package com.PPBM.lentera.features.admin.magang.components
 
+import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -247,56 +251,27 @@ fun AdminMagangBottomBar(
     currentRoute: String = "Magang",
     onTabSelected: (String) -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .border(width = 1.dp, color = Color(0xFFE2E8F0))
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // 1. Beranda: ic_nav_beranda
-        MagangBottomNavItem(
-            iconRes = R.drawable.ic_nav_beranda,
-            label = "Beranda",
-            isSelected = currentRoute == "Beranda",
-            onClick = { onTabSelected("Beranda") }
-        )
-
-        // 2. Mahasiswa: ic_nav_mahasiswa
-        MagangBottomNavItem(
-            iconRes = R.drawable.ic_nav_mahasiswa,
-            label = "Mahasiswa",
-            isSelected = currentRoute == "Mahasiswa",
-            onClick = { onTabSelected("Mahasiswa") }
-        )
-
-        // 3. Laporan: ic_nav_laporan
-        MagangBottomNavItem(
-            iconRes = R.drawable.ic_nav_laporan,
-            label = "Laporan",
-            isSelected = currentRoute == "Laporan",
-            onClick = { onTabSelected("Laporan") }
-        )
-
-        // 4. Magang: ic_nav_magang (Briefcase, Active with Navy Pill)
-        MagangBottomNavItem(
-            iconRes = R.drawable.ic_nav_magang,
-            label = "Magang",
-            isSelected = currentRoute == "Magang",
-            isHighlightPill = true,
-            onClick = { onTabSelected("Magang") }
-        )
-
-        // 5. Profil: ic_nav_profil
-        MagangBottomNavItem(
-            iconRes = R.drawable.ic_nav_profil,
-            label = "Profil",
-            isSelected = currentRoute == "Profil",
-            onClick = { onTabSelected("Profil") }
-        )
+    val selectedItem = when (currentRoute) {
+        "Beranda" -> LenteraNavItem.BERANDA
+        "Mahasiswa" -> LenteraNavItem.MAHASISWA
+        "Laporan" -> LenteraNavItem.LAPORAN
+        "Profil" -> LenteraNavItem.PROFIL
+        else -> LenteraNavItem.MAGANG
     }
+    AdminBottomBar(
+        selected = selectedItem,
+        onItemClick = { item ->
+            onTabSelected(
+                when (item) {
+                    LenteraNavItem.BERANDA -> "Beranda"
+                    LenteraNavItem.MAHASISWA -> "Mahasiswa"
+                    LenteraNavItem.LAPORAN -> "Laporan"
+                    LenteraNavItem.MAGANG -> "Magang"
+                    LenteraNavItem.PROFIL -> "Profil"
+                }
+            )
+        }
+    )
 }
 
 @Composable

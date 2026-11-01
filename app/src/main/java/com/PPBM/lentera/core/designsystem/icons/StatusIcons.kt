@@ -18,7 +18,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun CheckIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = Color.White
 ) {
     Canvas(modifier = modifier) {
@@ -41,7 +41,7 @@ fun CheckIcon(
 
 @Composable
 fun ClockIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -79,7 +79,7 @@ fun ClockIcon(
 
 @Composable
 fun CalendarIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -144,7 +144,7 @@ fun CalendarIcon(
 
 @Composable
 fun LocationPinIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -179,7 +179,7 @@ fun LocationPinIcon(
 
 @Composable
 fun LockIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -234,7 +234,7 @@ fun LockIcon(
 
 @Composable
 fun ShieldCheckIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = Color.White
 ) {
     Canvas(modifier = modifier) {
@@ -272,7 +272,7 @@ fun ShieldCheckIcon(
 
 @Composable
 fun ShieldAlertIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -311,7 +311,7 @@ fun ShieldAlertIcon(
 
 @Composable
 fun ExclamationCircleIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -347,7 +347,7 @@ fun ExclamationCircleIcon(
 
 @Composable
 fun InfoIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -383,7 +383,7 @@ fun InfoIcon(
 
 @Composable
 fun ChatOutlineIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {

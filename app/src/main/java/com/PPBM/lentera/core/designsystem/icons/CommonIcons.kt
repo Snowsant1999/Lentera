@@ -18,7 +18,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun BackArrowIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -61,7 +61,7 @@ fun BackArrowIcon(
 
 @Composable
 fun ChevronLeftIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -88,7 +88,7 @@ fun ChevronLeftIcon(
 
 @Composable
 fun ChevronRightIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -115,7 +115,7 @@ fun ChevronRightIcon(
 
 @Composable
 fun ChevronDownIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     isExpanded: Boolean = false,
     tint: Color = SlateGray
 ) {
@@ -146,7 +146,7 @@ fun ChevronDownIcon(
 
 @Composable
 fun CloseIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -173,7 +173,7 @@ fun CloseIcon(
 
 @Composable
 fun ArrowForwardIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -207,7 +207,7 @@ fun ArrowForwardIcon(
 
 @Composable
 fun PlusIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = Color.White
 ) {
     Canvas(modifier = modifier) {
@@ -236,7 +236,7 @@ fun PlusIcon(
 
 @Composable
 fun SearchIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -269,7 +269,7 @@ fun SearchIcon(
 
 @Composable
 fun SendIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = Color.White
 ) {
     Canvas(modifier = modifier) {
@@ -303,7 +303,7 @@ fun SendIcon(
 
 @Composable
 fun MoreDotsIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -319,7 +319,7 @@ fun MoreDotsIcon(
 
 @Composable
 fun CopyIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -349,7 +349,7 @@ fun CopyIcon(
 
 @Composable
 fun TrashIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -414,7 +414,7 @@ fun TrashIcon(
 
 @Composable
 fun RestoreIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -459,7 +459,7 @@ fun RestoreIcon(
 
 @Composable
 fun CloudUploadIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -515,7 +515,7 @@ fun CloudUploadIcon(
 
 @Composable
 fun FileDocIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -584,7 +584,7 @@ fun FileDocIcon(
 
 @Composable
 fun ReportFileIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -634,7 +634,7 @@ fun ReportFileIcon(
 
 @Composable
 fun ListIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -665,7 +665,7 @@ fun ListIcon(
 
 @Composable
 fun ImagePlaceholderIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -708,7 +708,7 @@ fun ImagePlaceholderIcon(
 
 @Composable
 fun MusicNoteIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -746,7 +746,7 @@ fun MusicNoteIcon(
 
 @Composable
 fun MailIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {

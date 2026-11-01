@@ -2,6 +2,7 @@ package com.PPBM.lentera.features.admin.akunmahasiswa
 import com.PPBM.lentera.core.designsystem.components.*
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,12 +19,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
+import com.PPBM.lentera.core.designsystem.theme.*
 
-val PlusJakartaSans = FontFamily(Font(com.PPBM.lentera.R.font.plus_jakarta_sans))
+// Menggunakan PlusJakartaSans dari core design system theme
 
 @Composable
-fun BuatAkunMahasiswaScreen() {
+fun BuatAkunMahasiswaScreen(
+    onBackClick: () -> Unit = {},
+    onSimpanSuccess: () -> Unit = onBackClick,
+    onNavClick: (LenteraNavItem) -> Unit = {}
+) {
     var namaLengkap by remember { mutableStateOf("Dewi Lestari") }
     var nim by remember { mutableStateOf("2026110009") }
     var perguruanTinggi by remember { mutableStateOf("Universitas Contoh") }
@@ -34,20 +39,25 @@ fun BuatAkunMahasiswaScreen() {
     var kirimEmail by remember { mutableStateOf(true) }
 
     Scaffold(
-        containerColor = Color(0xFFF5F7FA),
-        bottomBar = { BuatAkunMahasiswaBottomBar() }
+        containerColor = ScreenBackground,
+        bottomBar = {
+            AdminBottomBar(
+                selected = LenteraNavItem.MAHASISWA,
+                onItemClick = onNavClick
+            )
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF5F7FA))
+                .background(ScreenBackground)
                 .padding(innerPadding),
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header Top Bar & Subtitle
             item {
-                HeaderTopBar()
+                HeaderTopBar(onBackClick = onBackClick)
             }
 
             // Card 1: Identitas Mahasiswa
@@ -91,14 +101,14 @@ fun BuatAkunMahasiswaScreen() {
 
             // Action Buttons
             item {
-                ActionButtons()
+                ActionButtons(onSimpan = onSimpanSuccess, onKembali = onBackClick)
             }
         }
     }
 }
 
 @Composable
-fun HeaderTopBar() {
+fun HeaderTopBar(onBackClick: () -> Unit = {}) {
     Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -108,7 +118,9 @@ fun HeaderTopBar() {
                 painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back),
                 contentDescription = "Back",
                 tint = Color(0xFF1E3A5F),
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onBackClick() }
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -570,11 +582,14 @@ fun InfoNoticeBanner() {
 }
 
 @Composable
-fun ActionButtons() {
+fun ActionButtons(
+    onSimpan: () -> Unit = {},
+    onKembali: () -> Unit = {}
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Simpan Akun Mahasiswa
         Button(
-            onClick = { },
+            onClick = onSimpan,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -592,7 +607,7 @@ fun ActionButtons() {
 
         // Kembali ke Daftar Mahasiswa
         OutlinedButton(
-            onClick = { },
+            onClick = onKembali,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),

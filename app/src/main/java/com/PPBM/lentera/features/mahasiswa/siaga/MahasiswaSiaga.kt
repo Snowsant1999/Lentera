@@ -1,4 +1,12 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.Image
+
+import com.PPBM.lentera.core.designsystem.components.MahasiswaBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraTab
+
 import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
@@ -303,19 +311,22 @@ private fun SiagaHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar Profil (Dapat diganti dengan foto profil asli)
+            // 1. Bagian Avatar
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-                    .background(Color.White.copy(alpha = 0.15f))
-                    .clickable(onClick = onProfileClick),
-                contentAlignment = Alignment.Center
+                    .clickable { onProfileClick() }
+                    .background(Color.White, CircleShape)
             ) {
-                AvatarIcon(
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.White
+                Image(
+                    painter = painterResource(id = R.drawable.ic_avatar_2),
+                    contentDescription = "User Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
                 )
             }
 
@@ -346,21 +357,19 @@ private fun SiagaHeader(
                 )
             }
 
-            // Tombol Notifikasi Lonceng
+            // 3. Bagian Lonceng Notifikasi
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onNotificationClick
-                    ),
-                contentAlignment = Alignment.Center
+                    .clickable(onClick = onNotificationClick)
             ) {
-                BellIcon(
-                    modifier = Modifier.size(24.dp),
-                    tint = Color.White
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_bell_outline),
+                    contentDescription = "Notifikasi",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -590,80 +599,25 @@ private fun SiagaBottomNavigationBar(
     onTabSelected: (SiagaNavTab) -> Unit,
     fontFamily: FontFamily
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(SiagaNavBg)
-            .navigationBarsPadding()
-            .padding(vertical = 8.dp, horizontal = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SiagaNavTab.entries.forEach { tab ->
-                val isSelected = tab == selectedTab
-
-                if (isSelected) {
-                    // Tab Aktif (Pill Container Hijau-Teal)
-                    Box(
-                        modifier = Modifier
-                            .height(56.dp)
-                            .width(82.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(SiagaTealPrimary)
-                            .clickable { onTabSelected(tab) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            NavTabIcon(tab = tab, tint = Color.White)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = tab.label,
-                                style = androidx.compose.ui.text.TextStyle(
-                                    fontFamily = fontFamilyFallback(fontFamily),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White
-                                )
-                            )
-                        }
-                    }
-                } else {
-                    // Tab Tidak Aktif
-                    Box(
-                        modifier = Modifier
-                            .height(56.dp)
-                            .width(76.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onTabSelected(tab) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            NavTabIcon(tab = tab, tint = SiagaNavUnselected)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = tab.label,
-                                style = androidx.compose.ui.text.TextStyle(
-                                    fontFamily = fontFamilyFallback(fontFamily),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = SiagaNavUnselected
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
+    val currentTab = when (selectedTab) {
+        SiagaNavTab.BERANDA -> LenteraTab.BERANDA
+        SiagaNavTab.PENGADUAN -> LenteraTab.PENGADUAN
+        SiagaNavTab.MAGANG_HUB -> LenteraTab.MAGANG_HUB
+        SiagaNavTab.PROFIL -> LenteraTab.PROFIL
     }
+    MahasiswaBottomBar(
+        currentTab = currentTab,
+        onTabSelected = { tab ->
+            onTabSelected(
+                when (tab) {
+                    LenteraTab.BERANDA -> SiagaNavTab.BERANDA
+                    LenteraTab.PENGADUAN -> SiagaNavTab.PENGADUAN
+                    LenteraTab.MAGANG_HUB -> SiagaNavTab.MAGANG_HUB
+                    LenteraTab.PROFIL -> SiagaNavTab.PROFIL
+                }
+            )
+        }
+    )
 }
 
 

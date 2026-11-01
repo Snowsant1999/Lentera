@@ -1,4 +1,9 @@
 package com.PPBM.lentera.features.mahasiswa.magang
+import androidx.compose.ui.layout.ContentScale
+
+import com.PPBM.lentera.core.designsystem.components.MahasiswaBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraTab
+
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -335,18 +340,22 @@ private fun MagangHeader(
                     .clip(RoundedCornerShape(12.dp))
                     .clickable(onClick = onProfileClick)
             ) {
-                // Avatar dengan border putih
+                // 1. Bagian Avatar
                 Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .border(2.5.dp, Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
+                        .clickable { onProfileClick() }
+                        .background(Color.White, CircleShape)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_avatar),
-                        contentDescription = "Avatar Pengguna",
-                        modifier = Modifier.size(48.dp)
+                        painter = painterResource(id = R.drawable.ic_avatar_2),
+                        contentDescription = "User Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
                     )
                 }
 
@@ -377,21 +386,19 @@ private fun MagangHeader(
                 }
             }
 
-            // Sisi Kanan: Tombol Notifikasi (Putih Bulat)
+            // 3. Bagian Lonceng Notifikasi
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(42.dp)
-                    .shadow(elevation = 2.dp, shape = CircleShape)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable(onClick = onNotificationClick),
-                contentAlignment = Alignment.Center
+                    .clickable(onClick = onNotificationClick)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_bell_outline),
                     contentDescription = "Notifikasi",
                     tint = NavyDark,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -1019,80 +1026,25 @@ private fun MagangBottomNavigationBar(
     onTabSelected: (MagangNavTab) -> Unit,
     fontFamily: FontFamily
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MagangNavBg)
-            .navigationBarsPadding()
-            .padding(vertical = 8.dp, horizontal = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            MagangNavTab.entries.forEach { tab ->
-                val isSelected = tab == selectedTab
-
-                if (isSelected) {
-                    // Tab Aktif (Pill Container Golden/Amber)
-                    Box(
-                        modifier = Modifier
-                            .height(54.dp)
-                            .width(88.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(MagangAmberPrimary)
-                            .clickable { onTabSelected(tab) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            NavTabIconMagang(tab = tab, tint = NavyDark)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = tab.label,
-                                style = TextStyle(
-                                    fontFamily = fontFamily,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = NavyDark
-                                )
-                            )
-                        }
-                    }
-                } else {
-                    // Tab Tidak Aktif
-                    Box(
-                        modifier = Modifier
-                            .height(54.dp)
-                            .width(76.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onTabSelected(tab) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            NavTabIconMagang(tab = tab, tint = MagangNavUnselected)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = tab.label,
-                                style = TextStyle(
-                                    fontFamily = fontFamily,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MagangNavUnselected
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
+    val currentTab = when (selectedTab) {
+        MagangNavTab.BERANDA -> LenteraTab.BERANDA
+        MagangNavTab.PENGADUAN -> LenteraTab.PENGADUAN
+        MagangNavTab.MAGANG_HUB -> LenteraTab.MAGANG_HUB
+        MagangNavTab.PROFIL -> LenteraTab.PROFIL
     }
+    MahasiswaBottomBar(
+        currentTab = currentTab,
+        onTabSelected = { tab ->
+            onTabSelected(
+                when (tab) {
+                    LenteraTab.BERANDA -> MagangNavTab.BERANDA
+                    LenteraTab.PENGADUAN -> MagangNavTab.PENGADUAN
+                    LenteraTab.MAGANG_HUB -> MagangNavTab.MAGANG_HUB
+                    LenteraTab.PROFIL -> MagangNavTab.PROFIL
+                }
+            )
+        }
+    )
 }
 
 @Composable

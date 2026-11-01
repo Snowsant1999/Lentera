@@ -14,11 +14,14 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun HomeIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(22.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -48,7 +51,7 @@ fun HomeIcon(
 
 @Composable
 fun BriefcaseIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(22.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -109,7 +112,7 @@ fun BriefcaseIcon(
 
 @Composable
 fun ChatPlusIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(22.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -169,7 +172,7 @@ fun ChatPlusIcon(
 
 @Composable
 fun ProfileNavIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(22.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -208,7 +211,7 @@ fun ProfileNavIcon(
 
 @Composable
 fun AvatarIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = SlateGray
 ) {
     Canvas(modifier = modifier) {
@@ -239,7 +242,7 @@ fun AvatarIcon(
 
 @Composable
 fun BellIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = NavyDark
 ) {
     Canvas(modifier = modifier) {
@@ -287,7 +290,7 @@ fun BellIcon(
 
 @Composable
 fun PhoneIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     tint: Color = Color.White
 ) {
     Canvas(modifier = modifier) {
@@ -320,13 +323,19 @@ fun PhoneIcon(
 @Composable
 fun NavTabIcon(
     tab: com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(20.dp),
     tint: Color = Color.White
 ) {
-    when (tab) {
-        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.BERANDA -> HomeIcon(modifier = modifier, tint = tint)
-        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.PENGADUAN -> ChatPlusIcon(modifier = modifier, tint = tint)
-        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.MAGANG_HUB -> BriefcaseIcon(modifier = modifier, tint = tint)
-        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.PROFIL -> ProfileNavIcon(modifier = modifier, tint = tint)
+    val iconRes = when (tab) {
+        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.BERANDA -> R.drawable.ic_house
+        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.PENGADUAN -> R.drawable.ic_message_square_plus
+        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.MAGANG_HUB -> R.drawable.ic_briefcase_business
+        com.PPBM.lentera.features.mahasiswa.siaga.SiagaNavTab.PROFIL -> R.drawable.ic_profile_circle_thin
     }
+    Icon(
+        painter = painterResource(id = iconRes),
+        contentDescription = tab.label,
+        tint = tint,
+        modifier = modifier
+    )
 }
