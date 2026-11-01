@@ -1,6 +1,5 @@
 package com.PPBM.lentera.features.magang
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,12 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -813,18 +808,12 @@ private fun LamaranSection(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Canvas(modifier = Modifier.size(10.dp)) {
-                            val path = Path().apply {
-                                moveTo(size.width * 0.2f, size.height * 0.1f)
-                                lineTo(size.width * 0.8f, size.height * 0.5f)
-                                lineTo(size.width * 0.2f, size.height * 0.9f)
-                            }
-                            drawPath(
-                                path = path,
-                                color = NavyDark,
-                                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_status_chevron),
+                            contentDescription = null,
+                            tint = NavyDark,
+                            modifier = Modifier.size(10.dp)
+                        )
                     }
                 }
 
