@@ -75,7 +75,7 @@ fun DokumenSayaScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.open_answer),
+                    painter = painterResource(id = R.drawable.ic_open_answer),
                     contentDescription = "Kembali",
                     tint = LenteraNavy,
                     modifier = Modifier
@@ -122,7 +122,7 @@ fun DokumenSayaScreen(
                     .padding(18.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.folder_open),
+                    painter = painterResource(id = R.drawable.ic_folder_open),
                     contentDescription = null,
                     tint = LenteraNavy,
                     modifier = Modifier.size(32.dp)
@@ -152,7 +152,7 @@ fun DokumenSayaScreen(
 
             // Dokumen 1: Curriculum Vitae
             DokumenCard(
-                iconRes = R.drawable.document_symbol,
+                iconRes = R.drawable.ic_document_symbol,
                 title = "Curriculum Vitae",
                 fileName = "CV_Budi_Santoso.pdf",
                 fileInfo = "PDF · 245 KB · 12 Okt 2026"
@@ -162,7 +162,7 @@ fun DokumenSayaScreen(
 
             // Dokumen 2: Transkrip Nilai
             DokumenCard(
-                iconRes = R.drawable.document_symbol_2,
+                iconRes = R.drawable.ic_document_symbol_2,
                 title = "Transkrip Nilai",
                 fileName = "Transkrip_Budi_Santoso.pdf",
                 fileInfo = "PDF · 1,2 MB · 10 Okt 2026"
@@ -172,7 +172,7 @@ fun DokumenSayaScreen(
 
             // Dokumen 3: Portofolio
             DokumenCard(
-                iconRes = R.drawable.document_symbol_3,
+                iconRes = R.drawable.ic_document_symbol_3,
                 title = "Portofolio",
                 fileName = "Portofolio_Budi_Santoso.pdf",
                 fileInfo = "PDF · 3,4 MB · 10 Okt 2026"
@@ -197,7 +197,7 @@ fun DokumenSayaScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.open_answer),
+                        painter = painterResource(id = R.drawable.ic_open_answer),
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier
@@ -233,7 +233,7 @@ fun DokumenSayaScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.history_icon),
+                    painter = painterResource(id = R.drawable.ic_history_alt),
                     contentDescription = null,
                     tint = LenteraTextSecondary,
                     modifier = Modifier.size(18.dp)
@@ -260,7 +260,7 @@ fun DokumenSayaScreen(
                     .padding(16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.information_icon),
+                    painter = painterResource(id = R.drawable.ic_information_icon),
                     contentDescription = null,
                     tint = LenteraNavy,
                     modifier = Modifier.size(20.dp)
@@ -342,7 +342,7 @@ private fun DokumenCard(
             }
 
             Icon(
-                painter = painterResource(id = R.drawable.open_answer),
+                painter = painterResource(id = R.drawable.ic_open_answer),
                 contentDescription = null,
                 tint = LenteraTextSecondary,
                 modifier = Modifier.size(16.dp)

@@ -88,7 +88,7 @@ fun DetailLowonganScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.company_mark),
+                                    painter = painterResource(id = R.drawable.logo_company_mark),
                                     contentDescription = "Logo",
                                     tint = MagangNavyDark,
                                     modifier = Modifier.size(26.dp)
@@ -192,7 +192,7 @@ fun DetailLowonganScreen(
                         // Batas Pendaftaran (Date icon)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                painter = painterResource(id = R.drawable.date),
+                                painter = painterResource(id = R.drawable.ic_date_alt),
                                 contentDescription = "Date",
                                 tint = MagangNavyDark,
                                 modifier = Modifier.size(20.dp)

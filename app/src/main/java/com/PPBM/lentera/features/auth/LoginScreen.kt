@@ -94,7 +94,7 @@ fun LoginScreen(
         ) {
             // Logo
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(154.dp)
@@ -229,7 +229,7 @@ fun LoginScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.iconamoon_profile_circle_thin),
+                        painter = painterResource(id = R.drawable.ic_profile_circle_thin),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -333,7 +333,7 @@ fun LoginScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.lock_keyhole),
+                        painter = painterResource(id = R.drawable.ic_lock_keyhole),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -402,7 +402,7 @@ fun LoginScreen(
                             ) { passwordVisible = !passwordVisible }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.eye_off),
+                            painter = painterResource(id = R.drawable.ic_eye_off),
                             contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
                             tint = SlateGray,
                             modifier = Modifier.size(20.dp)

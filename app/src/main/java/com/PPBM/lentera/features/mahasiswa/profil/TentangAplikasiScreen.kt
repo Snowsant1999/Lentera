@@ -69,7 +69,7 @@ fun TentangAplikasiScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.open_answer),
+                    painter = painterResource(id = R.drawable.ic_open_answer),
                     contentDescription = "Kembali",
                     tint = LenteraNavy,
                     modifier = Modifier
@@ -125,7 +125,7 @@ fun TentangAplikasiScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.support_symbol),
+                        painter = painterResource(id = R.drawable.ic_support_symbol),
                         contentDescription = null,
                         modifier = Modifier.size(44.dp)
                     )

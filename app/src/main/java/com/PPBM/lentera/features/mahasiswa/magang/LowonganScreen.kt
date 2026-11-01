@@ -93,7 +93,7 @@ fun LowonganScreen(
                 lokasi = "Bontang",
                 durasi = "3 Bulan",
                 kategori = "Teknologi",
-                logoDrawable = R.drawable.studio_mark
+                logoDrawable = R.drawable.logo_company_studio_mark
             ),
             LowonganItem(
                 id = "3",
@@ -111,7 +111,7 @@ fun LowonganScreen(
                 lokasi = "Remote",
                 durasi = "3 Bulan",
                 kategori = "Desain",
-                logoDrawable = R.drawable.studio_mark
+                logoDrawable = R.drawable.logo_company_studio_mark
             )
         )
     }
@@ -275,7 +275,7 @@ private fun LowonganSearchBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.search),
+                painter = painterResource(id = R.drawable.ic_search_alt),
                 contentDescription = "Search",
                 tint = SlateGray,
                 modifier = Modifier.size(18.dp)

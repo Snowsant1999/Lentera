@@ -88,7 +88,7 @@ fun HeaderAdmin() {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = com.PPBM.lentera.R.drawable.iconamoon_profile_circle_fill),
+                    painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_profile_circle_fill),
                     contentDescription = "Profile",
                     tint = Color(0xFF1E3A5F),
                     modifier = Modifier.size(36.dp)
@@ -113,7 +113,7 @@ fun HeaderAdmin() {
             }
 
             Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.icomoon_free_notification),
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_notification_badge),
                 contentDescription = "Notification",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
@@ -158,7 +158,7 @@ fun GridStatistik() {
             StatCard(
                 modifier = Modifier.weight(1f),
                 bgColor = Color(0xFFE6F3F0),
-                iconId = com.PPBM.lentera.R.drawable.student_accounts,
+                iconId = com.PPBM.lentera.R.drawable.ic_student_accounts,
                 count = "128",
                 title = "MAHASISWA",
                 subtitle = "124 aktif · 4 belum aktivasi"
@@ -166,7 +166,7 @@ fun GridStatistik() {
             StatCard(
                 modifier = Modifier.weight(1f),
                 bgColor = Color(0xFFE3F0EC),
-                iconId = com.PPBM.lentera.R.drawable.shield,
+                iconId = com.PPBM.lentera.R.drawable.ic_shield,
                 count = "24",
                 title = "LENTERA SIAGA",
                 subtitle = "3 baru · 5 proses · 16 selesai"
@@ -181,7 +181,7 @@ fun GridStatistik() {
             StatCard(
                 modifier = Modifier.weight(1f),
                 bgColor = Color(0xFFFEF3E2),
-                iconId = com.PPBM.lentera.R.drawable.company_logo,
+                iconId = com.PPBM.lentera.R.drawable.logo_company,
                 count = "12",
                 title = "TEMPAT MAGANG",
                 subtitle = "9 aktif · 2 draf · 1 arsip"
@@ -189,7 +189,7 @@ fun GridStatistik() {
             StatCard(
                 modifier = Modifier.weight(1f),
                 bgColor = Color(0xFFFEF3E2),
-                iconId = com.PPBM.lentera.R.drawable.folder_open,
+                iconId = com.PPBM.lentera.R.drawable.ic_folder_open,
                 count = "8",
                 title = "LOWONGAN",
                 subtitle = "4 terbit · 3 draf · 1 ditutup"
@@ -267,7 +267,7 @@ fun TombolAksiCepat() {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(id = com.PPBM.lentera.R.drawable.penciloutline),
+                    painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_pencil_outline),
                     contentDescription = "Tambah Mahasiswa",
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)

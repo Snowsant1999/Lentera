@@ -545,7 +545,7 @@ fun FormDropdownField(
                 modifier = Modifier.weight(1f)
             )
             Icon(
-                painter = painterResource(id = R.drawable.chevron_down),
+                painter = painterResource(id = R.drawable.ic_chevron_down_alt),
                 contentDescription = "Dropdown",
                 tint = MagangNavyDark,
                 modifier = Modifier.size(16.dp)

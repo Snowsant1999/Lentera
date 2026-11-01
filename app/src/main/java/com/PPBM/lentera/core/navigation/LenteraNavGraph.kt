@@ -474,7 +474,7 @@ fun DashboardPlaceholderScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo Lentera",
                 modifier = Modifier.size(120.dp)
             )

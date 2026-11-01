@@ -85,7 +85,7 @@ fun DetailTempatMagangScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.building_2),
+                                    painter = painterResource(id = R.drawable.ic_building_2),
                                     contentDescription = "Building",
                                     tint = MagangNavyDark,
                                     modifier = Modifier.size(26.dp)
@@ -462,7 +462,7 @@ fun DocumentItemBox(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.file_text),
+            painter = painterResource(id = R.drawable.ic_file_text_alt),
             contentDescription = "File",
             tint = MagangNavyDark,
             modifier = Modifier.size(22.dp)
@@ -493,7 +493,7 @@ fun DocumentItemBox(
         }
 
         Icon(
-            painter = painterResource(id = R.drawable.vector_chevron),
+            painter = painterResource(id = R.drawable.ic_vector_chevron),
             contentDescription = "Buka",
             tint = MagangNavyDark,
             modifier = Modifier.size(12.dp)

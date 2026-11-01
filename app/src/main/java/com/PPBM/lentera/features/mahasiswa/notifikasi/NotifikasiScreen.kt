@@ -83,7 +83,7 @@ fun MahasiswaNotifikasiScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.open_answer),
+                    painter = painterResource(id = R.drawable.ic_open_answer),
                     contentDescription = "Kembali",
                     tint = LenteraNavy,
                     modifier = Modifier
@@ -181,7 +181,7 @@ fun MahasiswaNotifikasiScreen(
 
                 // Item 1: Laporan sedang diperiksa
                 NotifikasiCard(
-                    iconRes = R.drawable.category_icon,
+                    iconRes = R.drawable.ic_category,
                     title = "Laporan sedang diperiksa",
                     description = "Laporan Keracunan Makanan sedang ditinjau oleh tim LENTERA Siaga.",
                     timeInfo = "LENTERA Siaga · 10 menit lalu",
@@ -205,7 +205,7 @@ fun MahasiswaNotifikasiScreen(
 
                 // Item 2: Rekomendasi magang baru
                 NotifikasiCard(
-                    iconRes = R.drawable.category_icon_2,
+                    iconRes = R.drawable.ic_category_2,
                     title = "Rekomendasi magang baru",
                     description = "Posisi UI/UX Design di PT. Maju Mundur tersedia. Yuk, lihat detailnya!",
                     timeInfo = "Portal Magang · 1 jam lalu",
@@ -229,7 +229,7 @@ fun MahasiswaNotifikasiScreen(
 
                 // Item 3: Laporan telah diselesaikan
                 NotifikasiCard(
-                    iconRes = R.drawable.category_icon_3,
+                    iconRes = R.drawable.ic_category_3,
                     title = "Laporan telah diselesaikan",
                     description = "Laporan Pintu Mau Roboh telah ditangani. Terima kasih atas kepedulianmu.",
                     timeInfo = "LENTERA Siaga · 12 Okt 2026",
@@ -240,7 +240,7 @@ fun MahasiswaNotifikasiScreen(
 
                 // Item 4: Tindak lanjut laporan selesai
                 NotifikasiCard(
-                    iconRes = R.drawable.category_icon_3,
+                    iconRes = R.drawable.ic_category_3,
                     title = "Tindak lanjut laporan selesai",
                     description = "Penanganan laporan Pelecehan Verbal selesai. Lihat tanggapan tim kami.",
                     timeInfo = "LENTERA Siaga · 10 Okt 2026",

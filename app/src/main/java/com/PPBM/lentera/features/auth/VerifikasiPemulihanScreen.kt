@@ -140,7 +140,7 @@ fun VerifikasiPemulihanScreen(
                 .padding(top = 16.dp, bottom = 28.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(154.dp)

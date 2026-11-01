@@ -339,7 +339,7 @@ fun CardInformasiAkademik(
                         ),
                         trailingIcon = {
                             Icon(
-                                painter = painterResource(id = com.PPBM.lentera.R.drawable.chevron_down),
+                                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
                                 contentDescription = "Select Program Studi",
                                 tint = Color(0xFF1E3A5F),
                                 modifier = Modifier.size(20.dp)
@@ -377,7 +377,7 @@ fun CardInformasiAkademik(
                         ),
                         trailingIcon = {
                             Icon(
-                                painter = painterResource(id = com.PPBM.lentera.R.drawable.chevron_down),
+                                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
                                 contentDescription = "Select Angkatan",
                                 tint = Color(0xFF1E3A5F),
                                 modifier = Modifier.size(20.dp)
@@ -481,7 +481,7 @@ fun CardAksesAkunAwal(
                     ),
                     trailingIcon = {
                         Icon(
-                            painter = painterResource(id = com.PPBM.lentera.R.drawable.chevron_down),
+                            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
                             contentDescription = "Select Metode",
                             tint = Color(0xFF1E3A5F),
                             modifier = Modifier.size(20.dp)
@@ -552,7 +552,7 @@ fun InfoNoticeBanner() {
             verticalAlignment = Alignment.Top
         ) {
             Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.info),
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_info_alt),
                 contentDescription = "Info",
                 tint = Color(0xFF1E3A5F),
                 modifier = Modifier.size(20.dp)

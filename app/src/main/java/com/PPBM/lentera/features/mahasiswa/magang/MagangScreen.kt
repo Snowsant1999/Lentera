@@ -142,7 +142,7 @@ fun MagangScreen(
                 tipe = "Penuh Waktu",
                 persentaseCocok = 92,
                 batasHari = 5,
-                logoDrawable = R.drawable.studio_mark
+                logoDrawable = R.drawable.logo_company_studio_mark
             )
         )
     }
@@ -344,7 +344,7 @@ private fun MagangHeader(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.avatar),
+                        painter = painterResource(id = R.drawable.ic_avatar),
                         contentDescription = "Avatar Pengguna",
                         modifier = Modifier.size(48.dp)
                     )
@@ -388,7 +388,7 @@ private fun MagangHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.bell),
+                    painter = painterResource(id = R.drawable.ic_bell_outline),
                     contentDescription = "Notifikasi",
                     tint = NavyDark,
                     modifier = Modifier.size(20.dp)
@@ -492,7 +492,7 @@ private fun MagangSearchBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.search),
+                painter = painterResource(id = R.drawable.ic_search_alt),
                 contentDescription = "Search",
                 tint = SlateGray,
                 modifier = Modifier.size(18.dp)
@@ -1103,7 +1103,7 @@ private fun NavTabIconMagang(
     when (tab) {
         MagangNavTab.BERANDA -> {
             Icon(
-                painter = painterResource(id = R.drawable.house),
+                painter = painterResource(id = R.drawable.ic_house),
                 contentDescription = tab.label,
                 tint = tint,
                 modifier = Modifier.size(20.dp)
@@ -1111,7 +1111,7 @@ private fun NavTabIconMagang(
         }
         MagangNavTab.PENGADUAN -> {
             Icon(
-                painter = painterResource(id = R.drawable.message_square_plus),
+                painter = painterResource(id = R.drawable.ic_message_square_plus),
                 contentDescription = tab.label,
                 tint = tint,
                 modifier = Modifier.size(20.dp)
@@ -1119,7 +1119,7 @@ private fun NavTabIconMagang(
         }
         MagangNavTab.MAGANG_HUB -> {
             Icon(
-                painter = painterResource(id = R.drawable.briefcase_business),
+                painter = painterResource(id = R.drawable.ic_briefcase_business),
                 contentDescription = tab.label,
                 tint = tint,
                 modifier = Modifier.size(20.dp)
@@ -1127,7 +1127,7 @@ private fun NavTabIconMagang(
         }
         MagangNavTab.PROFIL -> {
             Icon(
-                painter = painterResource(id = R.drawable.iconamoon_profile_circle_thin),
+                painter = painterResource(id = R.drawable.ic_profile_circle_thin),
                 contentDescription = tab.label,
                 tint = tint,
                 modifier = Modifier.size(20.dp)

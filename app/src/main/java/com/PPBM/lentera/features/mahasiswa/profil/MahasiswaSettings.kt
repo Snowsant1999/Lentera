@@ -115,7 +115,7 @@ class MahasiswaSettings {
                             )
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.avatar_2),
+                            painter = painterResource(id = R.drawable.ic_avatar_2),
                             contentDescription = "Avatar Profil",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
@@ -189,35 +189,35 @@ class MahasiswaSettings {
                             .padding(vertical = 8.dp)
                     ) {
                         ProfilMenuItem(
-                            iconRes = R.drawable.menu_symbol,
+                            iconRes = R.drawable.ic_menu_symbol,
                             title = "Data Diri",
                             subtitle = "Informasi akun dan akademik",
                             onClick = onNavigateToDataDiri
                         )
 
                         ProfilMenuItem(
-                            iconRes = R.drawable.menu_symbol_2,
+                            iconRes = R.drawable.ic_menu_symbol_2,
                             title = "Dokumen Saya",
                             subtitle = "CV, transkrip, dan portofolio",
                             onClick = onNavigateToDokumen
                         )
 
                         ProfilMenuItem(
-                            iconRes = R.drawable.menu_symbol_3,
+                            iconRes = R.drawable.ic_menu_symbol_3,
                             title = "Notifikasi",
                             subtitle = "Atur pembaruan layanan",
                             onClick = onNavigateToNotifikasi
                         )
 
                         ProfilMenuItem(
-                            iconRes = R.drawable.support_symbol,
+                            iconRes = R.drawable.ic_support_symbol,
                             title = "Bantuan",
                             subtitle = "Panduan dan dukungan",
                             onClick = onNavigateToBantuan
                         )
 
                         ProfilMenuItem(
-                            iconRes = R.drawable.menu_symbol_4,
+                            iconRes = R.drawable.ic_menu_symbol_4,
                             title = "Tentang Aplikasi",
                             subtitle = "Credit aplikasi",
                             onClick = onNavigateToTentang
@@ -242,7 +242,7 @@ class MahasiswaSettings {
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.log),
+                                painter = painterResource(id = R.drawable.ic_log),
                                 contentDescription = "Keluar",
                                 tint = LenteraRedMuted,
                                 modifier = Modifier.size(22.dp)
@@ -257,7 +257,7 @@ class MahasiswaSettings {
                         }
 
                         Icon(
-                            painter = painterResource(id = R.drawable.open_answer),
+                            painter = painterResource(id = R.drawable.ic_open_answer),
                             contentDescription = null,
                             tint = LenteraRedMuted,
                             modifier = Modifier.size(16.dp)
@@ -344,7 +344,7 @@ class MahasiswaSettings {
             }
 
             Icon(
-                painter = painterResource(id = R.drawable.open_answer),
+                painter = painterResource(id = R.drawable.ic_open_answer),
                 contentDescription = null,
                 tint = LenteraTextSecondary,
                 modifier = Modifier.size(16.dp)
@@ -368,7 +368,7 @@ class MahasiswaSettings {
             ) {
                 // Simbol Keluar (Icon Simbol keluar.svg dari folder icon)
                 Image(
-                    painter = painterResource(id = R.drawable.simbol_keluar),
+                    painter = painterResource(id = R.drawable.ic_simbol_keluar),
                     contentDescription = "Keluar",
                     modifier = Modifier.size(56.dp)
                 )

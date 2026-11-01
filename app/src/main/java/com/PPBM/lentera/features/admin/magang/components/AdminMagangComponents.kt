@@ -138,7 +138,7 @@ fun MagangSearchBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.search_icon),
+            painter = painterResource(id = R.drawable.ic_search_icon),
             contentDescription = "Cari",
             tint = MagangTextSecondary,
             modifier = Modifier.size(18.dp)
@@ -223,7 +223,7 @@ fun MagangInfoBox(
         verticalAlignment = Alignment.Top
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.information),
+            painter = painterResource(id = R.drawable.ic_information),
             contentDescription = "Informasi",
             tint = MagangNavyDark,
             modifier = Modifier.size(18.dp)

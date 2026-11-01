@@ -139,7 +139,7 @@ fun FormLowonganScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.company_mark),
+                                    painter = painterResource(id = R.drawable.logo_company_mark),
                                     contentDescription = "Logo",
                                     tint = MagangNavyDark,
                                     modifier = Modifier.size(24.dp)
@@ -171,7 +171,7 @@ fun FormLowonganScreen(
                             }
 
                             Icon(
-                                painter = painterResource(id = R.drawable.vector_chevron),
+                                painter = painterResource(id = R.drawable.ic_vector_chevron),
                                 contentDescription = "Pilih",
                                 tint = MagangNavyDark,
                                 modifier = Modifier.size(12.dp)
@@ -286,7 +286,7 @@ fun FormLowonganScreen(
                         // Batas pendaftaran
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                painter = painterResource(id = R.drawable.date),
+                                painter = painterResource(id = R.drawable.ic_date_alt),
                                 contentDescription = "Date",
                                 tint = MagangNavyDark,
                                 modifier = Modifier.size(20.dp)

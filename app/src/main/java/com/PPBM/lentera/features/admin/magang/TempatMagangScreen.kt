@@ -203,7 +203,7 @@ fun TempatMagangScreen(
             // 6. List Card 1: PT. Cahaya Digital (Draf)
             item {
                 TempatMagangItemCard(
-                    iconRes = R.drawable.building_2,
+                    iconRes = R.drawable.ic_building_2,
                     name = "PT. Cahaya Digital",
                     category = "Bontang · Teknologi",
                     badgeText = "Draf",
@@ -217,7 +217,7 @@ fun TempatMagangScreen(
             // 7. List Card 2: PT. Maju Mundur (Aktif)
             item {
                 TempatMagangItemCard(
-                    iconRes = R.drawable.company_mark,
+                    iconRes = R.drawable.logo_company_mark,
                     name = "PT. Maju Mundur",
                     category = "Bontang · Desain & Bisnis",
                     badgeText = "Aktif",
@@ -231,7 +231,7 @@ fun TempatMagangScreen(
             // 8. List Card 3: PT. Bismillah Berkah (Aktif)
             item {
                 TempatMagangItemCard(
-                    iconRes = R.drawable.company_mark_1,
+                    iconRes = R.drawable.logo_company_mark_1,
                     name = "PT. Bismillah Berkah",
                     category = "Bontang · Teknologi",
                     badgeText = "Aktif",
@@ -376,7 +376,7 @@ fun TempatMagangItemCard(
                 }
 
                 Icon(
-                    painter = painterResource(id = R.drawable.vector_chevron),
+                    painter = painterResource(id = R.drawable.ic_vector_chevron),
                     contentDescription = "Detail",
                     tint = MagangNavyDark,
                     modifier = Modifier.size(14.dp)

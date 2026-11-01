@@ -83,7 +83,7 @@ fun BantuanScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.open_answer),
+                    painter = painterResource(id = R.drawable.ic_open_answer),
                     contentDescription = "Kembali",
                     tint = LenteraNavy,
                     modifier = Modifier
@@ -131,7 +131,7 @@ fun BantuanScreen(
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.search),
+                    painter = painterResource(id = R.drawable.ic_search_alt),
                     contentDescription = "Cari",
                     tint = LenteraTextSecondary,
                     modifier = Modifier.size(18.dp)
@@ -163,7 +163,7 @@ fun BantuanScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.message_square_plus),
+                        painter = painterResource(id = R.drawable.ic_message_square_plus),
                         contentDescription = null,
                         tint = LenteraNavy,
                         modifier = Modifier.size(24.dp)
@@ -195,7 +195,7 @@ fun BantuanScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.briefcase_business),
+                        painter = painterResource(id = R.drawable.ic_briefcase_business),
                         contentDescription = null,
                         tint = LenteraNavy,
                         modifier = Modifier.size(24.dp)
@@ -303,7 +303,7 @@ fun BantuanScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.support_symbol),
+                        painter = painterResource(id = R.drawable.ic_support_symbol),
                         contentDescription = null,
                         modifier = Modifier.size(44.dp)
                     )
@@ -345,7 +345,7 @@ fun BantuanScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.message_circle),
+                            painter = painterResource(id = R.drawable.ic_message_circle),
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
@@ -407,7 +407,7 @@ private fun FaqItem(
             )
 
             Icon(
-                painter = painterResource(id = R.drawable.open_answer),
+                painter = painterResource(id = R.drawable.ic_open_answer),
                 contentDescription = null,
                 tint = LenteraNavy,
                 modifier = Modifier

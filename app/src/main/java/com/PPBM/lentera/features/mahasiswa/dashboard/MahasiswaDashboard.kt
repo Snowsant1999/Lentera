@@ -104,7 +104,7 @@ class MahasiswaDashboard {
                                 .background(Color.White, CircleShape)
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.avatar_2),
+                                painter = painterResource(id = R.drawable.ic_avatar_2),
                                 contentDescription = "User Avatar",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -150,7 +150,7 @@ class MahasiswaDashboard {
                             .clickable(onClick = onNotificationClick)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.bell),
+                            painter = painterResource(id = R.drawable.ic_bell_outline),
                             contentDescription = "Notifikasi",
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
@@ -203,7 +203,7 @@ class MahasiswaDashboard {
                                 .padding(14.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.shield),
+                                painter = painterResource(id = R.drawable.ic_shield),
                                 contentDescription = "Lentera Siaga",
                                 tint = LenteraTeal,
                                 modifier = Modifier.size(32.dp)
@@ -253,7 +253,7 @@ class MahasiswaDashboard {
                                 .padding(14.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.briefcase_business),
+                                painter = painterResource(id = R.drawable.ic_briefcase_business),
                                 contentDescription = "Portal Magang",
                                 tint = LenteraYellow,
                                 modifier = Modifier.size(32.dp)
@@ -514,7 +514,7 @@ class MahasiswaDashboard {
                     .background(Color(0xFFEFF5FD), CircleShape)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.group),
+                    painter = painterResource(id = R.drawable.ic_group),
                     contentDescription = null,
                     tint = LenteraNavy,
                     modifier = Modifier.size(24.dp)

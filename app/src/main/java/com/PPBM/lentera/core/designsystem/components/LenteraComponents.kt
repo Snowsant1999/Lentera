@@ -134,7 +134,7 @@ fun LenteraSearchBar(
         },
         leadingIcon = {
             Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.search),
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_search_alt),
                 contentDescription = "Search",
                 tint = LenteraColors.SlateText,
                 modifier = Modifier.size(20.dp)
@@ -408,7 +408,7 @@ fun LenteraInfoBanner(text: String) {
             verticalAlignment = Alignment.Top
         ) {
             Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.info),
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_info_alt),
                 contentDescription = "Info",
                 tint = LenteraColors.NavyPrimary,
                 modifier = Modifier.size(20.dp)

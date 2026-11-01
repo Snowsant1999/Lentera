@@ -51,25 +51,25 @@ fun MahasiswaBottomBar(
     ) {
         BottomNavItem(
             label = "Beranda",
-            iconRes = R.drawable.house,
+            iconRes = R.drawable.ic_house,
             isSelected = currentTab == LenteraTab.BERANDA,
             onClick = { onTabSelected(LenteraTab.BERANDA) }
         )
         BottomNavItem(
             label = "Pengaduan",
-            iconRes = R.drawable.message_square_plus,
+            iconRes = R.drawable.ic_message_square_plus,
             isSelected = currentTab == LenteraTab.PENGADUAN,
             onClick = { onTabSelected(LenteraTab.PENGADUAN) }
         )
         BottomNavItem(
             label = "Magang Hub",
-            iconRes = R.drawable.briefcase_business,
+            iconRes = R.drawable.ic_briefcase_business,
             isSelected = currentTab == LenteraTab.MAGANG_HUB,
             onClick = { onTabSelected(LenteraTab.MAGANG_HUB) }
         )
         BottomNavItem(
             label = "Profil",
-            iconRes = R.drawable.iconamoon_profile_circle_thin,
+            iconRes = R.drawable.ic_profile_circle_thin,
             isSelected = currentTab == LenteraTab.PROFIL,
             onClick = { onTabSelected(LenteraTab.PROFIL) }
         )

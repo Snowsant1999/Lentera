@@ -93,7 +93,7 @@ fun KelolaStatusTempatScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.building_2),
+                                    painter = painterResource(id = R.drawable.ic_building_2),
                                     contentDescription = "Building",
                                     tint = MagangNavyDark,
                                     modifier = Modifier.size(26.dp)

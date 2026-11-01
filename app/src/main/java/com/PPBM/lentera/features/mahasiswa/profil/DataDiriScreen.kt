@@ -74,7 +74,7 @@ fun DataDiriScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.open_answer),
+                    painter = painterResource(id = R.drawable.ic_open_answer),
                     contentDescription = "Kembali",
                     tint = LenteraNavy,
                     modifier = Modifier
@@ -121,7 +121,7 @@ fun DataDiriScreen(
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.avatar_2),
+                    painter = painterResource(id = R.drawable.ic_avatar_2),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -191,7 +191,7 @@ fun DataDiriScreen(
                         modifier = Modifier.clickable { /* Aksi Ubah */ }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.open_answer),
+                            painter = painterResource(id = R.drawable.ic_open_answer),
                             contentDescription = "Ubah",
                             tint = LenteraNavy,
                             modifier = Modifier.size(14.dp)
@@ -239,7 +239,7 @@ fun DataDiriScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.academic_calendar),
+                        painter = painterResource(id = R.drawable.ic_academic_calendar),
                         contentDescription = null,
                         tint = LenteraNavy,
                         modifier = Modifier.size(20.dp)
@@ -279,7 +279,7 @@ fun DataDiriScreen(
                     .padding(16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.information_icon),
+                    painter = painterResource(id = R.drawable.ic_information_icon),
                     contentDescription = null,
                     tint = LenteraNavy,
                     modifier = Modifier.size(20.dp)

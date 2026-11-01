@@ -156,7 +156,7 @@ fun DaftarLowonganScreen(
             // 5. Card 1: UI/UX Design (Draf)
             item {
                 LowonganItemCard(
-                    logoRes = R.drawable.company_mark,
+                    logoRes = R.drawable.logo_company_mark,
                     title = "UI/UX Design",
                     company = "PT. Maju Mundur",
                     metaText = "Periode Jan–Mar 2027 · 0 lamaran",
@@ -174,7 +174,7 @@ fun DaftarLowonganScreen(
             // 6. Card 2: Web Developer (Terbit)
             item {
                 LowonganItemCard(
-                    logoRes = R.drawable.company_mark_1,
+                    logoRes = R.drawable.logo_company_mark_1,
                     title = "Web Developer",
                     company = "PT. Bismillah Berkah",
                     metaText = "Bontang · 8 lamaran",

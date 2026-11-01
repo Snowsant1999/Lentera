@@ -210,7 +210,7 @@ fun LamaranSayaScreen(
                     },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.search),
+                            painter = painterResource(id = R.drawable.ic_search_alt),
                             contentDescription = "Search",
                             tint = SlateGray,
                             modifier = Modifier.size(18.dp)

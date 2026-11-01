@@ -104,7 +104,7 @@ fun LupaPasswordScreen(
                 .padding(bottom = 20.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(120.dp)
@@ -180,7 +180,7 @@ fun LupaPasswordScreen(
                         .padding(14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.iconamoon_profile_circle_thin),
+                        painter = painterResource(id = R.drawable.ic_profile_circle_thin),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
