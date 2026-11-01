@@ -8,8 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import com.PPBM.lentera.features.siaga.AdminSiagaFlowScreen
+import com.PPBM.lentera.features.admin.siaga.AdminSiagaFlowScreen
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,22 +20,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
-import com.PPBM.lentera.features.dashboard.MahasiswaDashboard
-import com.PPBM.lentera.features.dashboard.NotifikasiScreen
-import com.PPBM.lentera.features.magang.*
-import com.PPBM.lentera.features.settings.BantuanScreen
-import com.PPBM.lentera.features.settings.DataDiriScreen
-import com.PPBM.lentera.features.settings.DokumenSayaScreen
-import com.PPBM.lentera.features.settings.MahasiswaSettings
-import com.PPBM.lentera.features.settings.TentangAplikasiScreen
-import com.PPBM.lentera.navigation.LenteraNavGraph
-import com.PPBM.lentera.ui.components.LenteraBottomBar
-import com.PPBM.lentera.ui.components.LenteraTab
-import com.PPBM.lentera.ui.theme.LenteraBg
-import com.PPBM.lentera.ui.theme.LenteraNavy
-import com.PPBM.lentera.ui.theme.LenteraTheme
-import com.PPBM.lentera.ui.theme.PlusJakartaSans
-import com.PPBM.lentera.ui.theme.ScreenBackground
+import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
+import com.PPBM.lentera.features.mahasiswa.notifikasi.MahasiswaNotifikasiScreen
+import com.PPBM.lentera.features.mahasiswa.magang.*
+import com.PPBM.lentera.features.mahasiswa.profil.BantuanScreen
+import com.PPBM.lentera.features.mahasiswa.profil.DataDiriScreen
+import com.PPBM.lentera.features.mahasiswa.profil.DokumenSayaScreen
+import com.PPBM.lentera.features.mahasiswa.profil.MahasiswaSettings
+import com.PPBM.lentera.features.mahasiswa.profil.TentangAplikasiScreen
+import com.PPBM.lentera.core.navigation.LenteraNavGraph
+import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.theme.LenteraBg
+import com.PPBM.lentera.core.designsystem.theme.LenteraNavy
+import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
+import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
+import com.PPBM.lentera.core.designsystem.theme.ScreenBackground
 
 enum class ScreenState {
     BERANDA,
@@ -126,7 +125,7 @@ fun LenteraApp() {
                 )
             }
             ScreenState.NOTIFIKASI -> {
-                NotifikasiScreen(
+                MahasiswaNotifikasiScreen(
                     onBackClick = {
                         if (currentTab == LenteraTab.PROFIL) {
                             currentScreen = ScreenState.PROFIL

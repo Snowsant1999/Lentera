@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.ui.theme.*
+import com.PPBM.lentera.core.designsystem.theme.*
 import kotlinx.coroutines.delay
 
 /**

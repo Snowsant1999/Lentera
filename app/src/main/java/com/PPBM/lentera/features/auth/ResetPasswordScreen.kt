@@ -15,7 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import com.PPBM.lentera.ui.components.BackArrowIcon
+import com.PPBM.lentera.core.designsystem.components.BackArrowIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.ui.theme.*
+import com.PPBM.lentera.core.designsystem.theme.*
 
 /**
  * Screen Reset Password (AUTH-005)
