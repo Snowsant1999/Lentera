@@ -36,7 +36,7 @@ enum class LenteraTab {
 }
 
 @Composable
-fun LenteraBottomBar(
+fun MahasiswaBottomBar(
     currentTab: LenteraTab,
     onTabSelected: (LenteraTab) -> Unit,
     modifier: Modifier = Modifier
@@ -152,4 +152,18 @@ private fun BottomNavItem(
             }
         }
     }
+}
+
+
+@Composable
+fun LenteraBottomBar(
+    currentTab: LenteraTab,
+    onTabSelected: (LenteraTab) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    MahasiswaBottomBar(
+        currentTab = currentTab,
+        onTabSelected = onTabSelected,
+        modifier = modifier
+    )
 }

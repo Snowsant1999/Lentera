@@ -257,50 +257,7 @@ fun StudentCard(name: String, nim: String, status: String, statusColor: Color, b
 
 @Composable
 fun AdminMahasiswaBottomBar() {
-    NavigationBar(
-        containerColor = Color.White,
-        tonalElevation = 8.dp
-    ) {
-        NavigationBarItem(
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Beranda", modifier = Modifier.size(24.dp)) },
-            label = { Text("Beranda", fontSize = 10.sp) },
-            selected = false,
-            onClick = { },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = Color.Gray,
-                unselectedTextColor = Color.Gray
-            )
-        )
-        NavigationBarItem(
-            icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Mahasiswa", modifier = Modifier.size(24.dp)) },
-            label = { Text("Mahasiswa", fontSize = 10.sp) },
-            selected = true,
-            onClick = { },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                selectedTextColor = Color(0xFF1E3A5F),
-                indicatorColor = Color(0xFF1E3A5F)
-            )
-        )
-        NavigationBarItem(
-            icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = "Laporan", modifier = Modifier.size(24.dp)) },
-            label = { Text("Laporan", fontSize = 10.sp) },
-            selected = false,
-            onClick = { }
-        )
-        NavigationBarItem(
-            icon = { Icon(imageVector = Icons.Default.DateRange, contentDescription = "Magang", modifier = Modifier.size(24.dp)) },
-            label = { Text("Magang", fontSize = 10.sp) },
-            selected = false,
-            onClick = { }
-        )
-        NavigationBarItem(
-            icon = { Icon(imageVector = Icons.Default.AccountBox, contentDescription = "Profil", modifier = Modifier.size(24.dp)) },
-            label = { Text("Profil", fontSize = 10.sp) },
-            selected = false,
-            onClick = { }
-        )
-    }
+    AdminBottomBar(selected = LenteraNavItem.MAHASISWA)
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
