@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,15 +62,15 @@ fun TentangAplikasiScreen(
             .fillMaxSize()
             .background(LenteraBg)
             .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tombol Kembali: "← Profil"
+            // Tombol Kembali: "â† Profil"
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,11 +218,7 @@ fun TentangAplikasiScreen(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Bottom Navigation Bar
-        LenteraBottomBar(
-            currentTab = LenteraTab.PROFIL,
-            onTabSelected = onTabSelected
-        )
+
     }
 
     if (showUpdateDialog) {

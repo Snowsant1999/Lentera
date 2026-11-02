@@ -1,5 +1,6 @@
-package com.PPBM.lentera
+﻿package com.PPBM.lentera
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -166,6 +167,9 @@ fun LenteraApp() {
     var siagaDetailOrigin by remember { mutableStateOf(ScreenState.PENGADUAN) }
     var magangLowonganOrigin by remember { mutableStateOf(ScreenState.BERANDA) }
     var magangDetailOrigin by remember { mutableStateOf(ScreenState.MAGANG_HUB) }
+    var notifikasiOrigin by remember { mutableStateOf(ScreenState.BERANDA) }
+    var userProfilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var userNamaLengkap by remember { mutableStateOf("Budi Santoso") }
 
     val mahasiswaDashboard = remember { MahasiswaDashboard() }
     val mahasiswaSettings = remember { MahasiswaSettings() }
@@ -245,7 +249,12 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.BERANDA -> {
                 mahasiswaDashboard.mhsDashboard(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    photoUri = userProfilePhotoUri,
+                    userName = userNamaLengkap,
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.BERANDA
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL
@@ -283,9 +292,14 @@ fun LenteraApp() {
             }
             ScreenState.PROFIL -> {
                 mahasiswaSettings.mhsProfilScreen(
+                    photoUri = userProfilePhotoUri,
+                    namaLengkap = userNamaLengkap,
                     onNavigateToDataDiri = { currentScreen = ScreenState.DATA_DIRI },
                     onNavigateToDokumen = { currentScreen = ScreenState.DOKUMEN_SAYA },
-                    onNavigateToNotifikasi = { currentScreen = ScreenState.NOTIFIKASI },
+                    onNavigateToNotifikasi = {
+                        notifikasiOrigin = ScreenState.PROFIL
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onNavigateToBantuan = { currentScreen = ScreenState.BANTUAN },
                     onNavigateToTentang = { currentScreen = ScreenState.TENTANG_APLIKASI },
                     onLogoutConfirmed = {
@@ -296,6 +310,10 @@ fun LenteraApp() {
             }
             ScreenState.DATA_DIRI -> {
                 DataDiriScreen(
+                    initialPhotoUri = userProfilePhotoUri,
+                    onPhotoUpdated = { userProfilePhotoUri = it },
+                    initialNama = userNamaLengkap,
+                    onNamaUpdated = { userNamaLengkap = it },
                     onBackClick = { currentScreen = ScreenState.PROFIL },
                     onTabSelected = handleTabSelected
                 )
@@ -309,10 +327,12 @@ fun LenteraApp() {
             ScreenState.NOTIFIKASI -> {
                 MahasiswaNotifikasiScreen(
                     onBackClick = {
-                        if (currentTab == LenteraTab.PROFIL) {
-                            currentScreen = ScreenState.PROFIL
-                        } else {
-                            currentScreen = ScreenState.BERANDA
+                        currentScreen = notifikasiOrigin
+                        currentTab = when (notifikasiOrigin) {
+                            ScreenState.MAGANG_HUB -> LenteraTab.MAGANG_HUB
+                            ScreenState.PENGADUAN -> LenteraTab.PENGADUAN
+                            ScreenState.PROFIL -> LenteraTab.PROFIL
+                            else -> LenteraTab.BERANDA
                         }
                     },
                     onTabSelected = handleTabSelected
@@ -336,7 +356,10 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.PENGADUAN -> {
                 MahasiswaSiagaScreen(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.PENGADUAN
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL
@@ -517,7 +540,10 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.MAGANG_HUB -> {
                 MagangScreen(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.MAGANG_HUB
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL

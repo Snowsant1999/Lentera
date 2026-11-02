@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -57,6 +58,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -103,21 +105,21 @@ fun DokumenSayaScreen(
                 iconRes = R.drawable.ic_document_symbol,
                 title = "Curriculum Vitae (CV)",
                 fileName = "CV_Budi_Santoso.pdf",
-                fileInfo = "PDF Â· 245 KB Â· 12 Okt 2026"
+                fileInfo = "PDF Ã‚· 245 KB Ã‚· 12 Okt 2026"
             ),
             DokumenModel(
                 id = "2",
                 iconRes = R.drawable.ic_document_symbol_2,
                 title = "Transkrip Nilai",
                 fileName = "Transkrip_Budi_Santoso.pdf",
-                fileInfo = "PDF Â· 1,2 MB Â· 10 Okt 2026"
+                fileInfo = "PDF Ã‚· 1,2 MB Ã‚· 10 Okt 2026"
             ),
             DokumenModel(
                 id = "3",
                 iconRes = R.drawable.ic_document_symbol_3,
                 title = "Portofolio",
                 fileName = "Portofolio_Budi_Santoso.pdf",
-                fileInfo = "PDF Â· 3,4 MB Â· 10 Okt 2026"
+                fileInfo = "PDF Ã‚· 3,4 MB Ã‚· 10 Okt 2026"
             )
         )
     }
@@ -127,20 +129,25 @@ fun DokumenSayaScreen(
     var selectedDocForPreview by remember { mutableStateOf<DokumenModel?>(null) }
     var terakhirDiperbarui by remember { mutableStateOf("12 Oktober 2026") }
 
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LenteraBg)
             .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tombol Kembali: "â† Profil"
+            // Tombol Kembali: "Ã¢â€ Â Profil"
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -274,7 +281,7 @@ fun DokumenSayaScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Format PDF Â· Maksimal 5 MB per dokumen",
+                text = "Format PDF Ã‚· Maksimal 5 MB per dokumen",
                 fontFamily = PlusJakartaSans,
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
@@ -336,11 +343,7 @@ fun DokumenSayaScreen(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Bottom Navigation Bar
-        LenteraBottomBar(
-            currentTab = LenteraTab.PROFIL,
-            onTabSelected = onTabSelected
-        )
+
     }
 
     // Modal In-App Preview Dokumen Langsung di Dalam Aplikasi
@@ -356,6 +359,10 @@ fun DokumenSayaScreen(
             onDelete = {
                 dokumenList.remove(doc)
                 selectedDocForPreview = null
+                feedbackIsSuccess = true
+                feedbackTitle = "Dokumen Dihapus"
+                feedbackMessage = "Berkas ${doc.title} (${doc.fileName}) telah berhasil dihapus dari daftar dokumen."
+                showFeedbackDialog = true
             }
         )
     }
@@ -380,15 +387,28 @@ fun DokumenSayaScreen(
                         iconRes = icon,
                         title = kategori,
                         fileName = namaFile,
-                        fileInfo = "PDF Â· $ukuran Â· Baru saja",
+                        fileInfo = "PDF Ã‚· $ukuran Ã‚· Baru saja",
                         localUri = uri
                     )
                 )
                 terakhirDiperbarui = "Hari ini"
                 showUploadDialog = false
+
+                feedbackIsSuccess = true
+                feedbackTitle = "Dokumen Berhasil Disimpan"
+                feedbackMessage = "Berkas $namaFile untuk $kategori berhasil diunggah dan disimpan ke profil."
+                showFeedbackDialog = true
             }
         )
     }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = feedbackIsSuccess,
+        title = feedbackTitle,
+        message = feedbackMessage,
+        onDismiss = { showFeedbackDialog = false }
+    )
 }
 
 // ============================================================================
@@ -653,20 +673,20 @@ private fun InAppDocumentPreviewDialog(
 
                     val detailContent = when (doc.title) {
                         "Curriculum Vitae (CV)" ->
-                            "â€¢ Ringkasan Profesional: Mahasiswa aktif Teknik Informatika berfokus pada UI/UX Design & Front-End Android Development.\n" +
-                            "â€¢ Keahlian Utama: Jetpack Compose, Figma, Kotlin, REST API, Git Version Control.\n" +
-                            "â€¢ Pengalaman Organisasi: Koordinator Divisi Desain Himpunan Mahasiswa Informatika (2024â€“2025).\n" +
-                            "â€¢ Riwayat Pelatihan: Google Developer Student Clubs UI/UX Intensive Bootcamp."
+                            "• Ringkasan Profesional: Mahasiswa aktif Teknik Informatika berfokus pada UI/UX Design & Front-End Android Development.\n" +
+                            "• Keahlian Utama: Jetpack Compose, Figma, Kotlin, REST API, Git Version Control.\n" +
+                            "• Pengalaman Organisasi: Koordinator Divisi Desain Himpunan Mahasiswa Informatika (2024–2025).\n" +
+                            "• Riwayat Pelatihan: Google Developer Student Clubs UI/UX Intensive Bootcamp."
                         "Transkrip Nilai" ->
-                            "â€¢ Indeks Prestasi Kumulatif (IPK): 3.85 / 4.00 (Cum Laude)\n" +
-                            "â€¢ Total SKS Lulus: 84 SKS (Semester 1â€“4)\n" +
-                            "â€¢ Mata Kuliah Relevan: Pemrograman Berbasis Bergerak (A), Rekayasa Perangkat Lunak (A), Interaksi Manusia & Komputer (A)."
+                            "• Indeks Prestasi Kumulatif (IPK): 3.85 / 4.00 (Cum Laude)\n" +
+                            "• Total SKS Lulus: 84 SKS (Semester 1–4)\n" +
+                            "• Mata Kuliah Relevan: Pemrograman Berbasis Bergerak (A), Rekayasa Perangkat Lunak (A), Interaksi Manusia & Komputer (A)."
                         "Portofolio" ->
-                            "â€¢ Proyek 1: Redesign UI Aplikasi Mobile LENTERA Kampus (Figma & Compose UI Prototype)\n" +
-                            "â€¢ Proyek 2: Website Portal Career & Magang Terpadu\n" +
-                            "â€¢ Link Portofolio Daring: https://behance.net/budisantoso"
+                            "• Proyek 1: Redesign UI Aplikasi Mobile LENTERA Kampus (Figma & Compose UI Prototype)\n" +
+                            "• Proyek 2: Website Portal Career & Magang Terpadu\n" +
+                            "• Link Portofolio Daring: https://behance.net/budisantoso"
                         "Kartu Tanda Mahasiswa (KTM)" ->
-                            "â€¢ Nomor Induk: 2023110045\nâ€¢ Status: Terdaftar & Terverifikasi Aktif Semester Berjalan\nâ€¢ Masa Berlaku: Hingga September 2027"
+                            "• Nomor Induk: 2023110045\n• Status: Terdaftar & Terverifikasi Aktif Semester Berjalan\n• Masa Berlaku: Hingga September 2027"
                         else ->
                             "Dokumen resmi ini telah diverifikasi dan siap diteruskan sebagai kelengkapan berkas magang mahasiswa."
                     }
@@ -826,6 +846,10 @@ private fun UploadDokumenDialog(
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var fileNameDisplay by remember { mutableStateOf("") }
     var fileSizeDisplay by remember { mutableStateOf("520 KB") }
+
+    var showUploadError by remember { mutableStateOf(false) }
+    var uploadErrorTitle by remember { mutableStateOf("") }
+    var uploadErrorMessage by remember { mutableStateOf("") }
 
     // Launcher File Picker Bawaan HP Android (System Storage)
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -988,6 +1012,21 @@ private fun UploadDokumenDialog(
                             val sanitizedCat = selectedKategori.replace(" ", "_").replace("(", "").replace(")", "")
                             "${sanitizedCat}_Budi_Santoso.pdf"
                         }
+
+                        if (selectedUri == null && fileNameDisplay.isBlank()) {
+                            uploadErrorTitle = "Berkas Belum Dipilih"
+                            uploadErrorMessage = "Silakan ketuk tombol 'Pilih Berkas PDF' untuk memilih dokumen dari memori HP."
+                            showUploadError = true
+                            return@Button
+                        }
+
+                        if (!finalFileName.lowercase().endsWith(".pdf")) {
+                            uploadErrorTitle = "Format Berkas Tidak Sesuai"
+                            uploadErrorMessage = "Berkas yang dipilih harus berekstensi .pdf."
+                            showUploadError = true
+                            return@Button
+                        }
+
                         onUploadSuccess(selectedKategori, finalFileName, fileSizeDisplay, selectedUri)
                     },
                     modifier = Modifier
@@ -1009,6 +1048,15 @@ private fun UploadDokumenDialog(
             }
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showUploadError,
+        isSuccess = false,
+        title = uploadErrorTitle,
+        message = uploadErrorMessage,
+        onDismiss = { showUploadError = false },
+        buttonText = "Pilih Ulang"
+    )
 }
 
 // Helper untuk membaca nama & ukuran file asli dari Content Resolver Android

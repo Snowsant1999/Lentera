@@ -41,6 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import android.net.Uri
+import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
@@ -59,6 +61,8 @@ class MahasiswaSettings {
     @Composable
     fun mhsProfilScreen(
         modifier: Modifier = Modifier,
+        photoUri: Uri? = null,
+        namaLengkap: String = "Budi Santoso",
         onNavigateToDataDiri: () -> Unit = {},
         onNavigateToDokumen: () -> Unit = {},
         onNavigateToNotifikasi: () -> Unit = {},
@@ -117,20 +121,16 @@ class MahasiswaSettings {
                                 spotColor = Color(0x15173B57)
                             )
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_avatar_2),
-                            contentDescription = "Avatar Profil",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(88.dp)
-                                .clip(CircleShape)
+                        ProfileAvatarImage(
+                            photoUri = photoUri,
+                            modifier = Modifier.size(88.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Budi Santoso",
+                        text = namaLengkap,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 22.sp,

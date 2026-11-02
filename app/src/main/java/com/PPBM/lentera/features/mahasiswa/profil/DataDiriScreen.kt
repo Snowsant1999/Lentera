@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -46,6 +47,13 @@ import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -59,29 +67,38 @@ import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
 @Composable
 fun DataDiriScreen(
     onBackClick: () -> Unit = {},
-    onTabSelected: (LenteraTab) -> Unit = {}
+    onTabSelected: (LenteraTab) -> Unit = {},
+    initialPhotoUri: Uri? = null,
+    onPhotoUpdated: (Uri?) -> Unit = {},
+    initialNama: String = "Budi Santoso",
+    onNamaUpdated: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
-    var namaLengkap by remember { mutableStateOf("Budi Santoso") }
+    var photoUri by remember { mutableStateOf(initialPhotoUri) }
+    var namaLengkap by remember { mutableStateOf(initialNama) }
     var email by remember { mutableStateOf("budi.santoso@lentera.ac.id") }
     var nomorTelepon by remember { mutableStateOf("081234567890") }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LenteraBg)
             .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tombol Kembali: "← Profil"
+            // Tombol Kembali: "â† Profil"
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -133,13 +150,9 @@ fun DataDiriScreen(
                     .background(Color(0xFFE2EBF4))
                     .padding(16.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
+                ProfileAvatarImage(
+                    photoUri = photoUri,
+                    modifier = Modifier.size(60.dp)
                 )
 
                 Column(
@@ -313,11 +326,7 @@ fun DataDiriScreen(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Bottom Navigation Bar
-        LenteraBottomBar(
-            currentTab = LenteraTab.PROFIL,
-            onTabSelected = onTabSelected
-        )
+
     }
 
     if (showEditDialog) {
@@ -325,15 +334,32 @@ fun DataDiriScreen(
             currentNama = namaLengkap,
             currentEmail = email,
             currentTelepon = nomorTelepon,
+            currentPhotoUri = photoUri,
             onDismiss = { showEditDialog = false },
-            onSave = { newNama, newEmail, newTelepon ->
-                if (newNama.isNotBlank()) namaLengkap = newNama
+            onSave = { newNama, newEmail, newTelepon, newPhotoUri ->
+                namaLengkap = newNama
+                onNamaUpdated(newNama)
                 email = newEmail
                 nomorTelepon = newTelepon
+                photoUri = newPhotoUri
+                onPhotoUpdated(newPhotoUri)
                 showEditDialog = false
+
+                feedbackIsSuccess = true
+                feedbackTitle = "Data Berhasil Disimpan"
+                feedbackMessage = "Informasi data diri dan foto profil kamu berhasil diperbarui."
+                showFeedbackDialog = true
             }
         )
     }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = feedbackIsSuccess,
+        title = feedbackTitle,
+        message = feedbackMessage,
+        onDismiss = { showFeedbackDialog = false }
+    )
 }
 
 @Composable
@@ -341,12 +367,26 @@ private fun UbahDataDiriDialog(
     currentNama: String,
     currentEmail: String,
     currentTelepon: String,
+    currentPhotoUri: Uri?,
     onDismiss: () -> Unit,
-    onSave: (nama: String, email: String, telepon: String) -> Unit
+    onSave: (nama: String, email: String, telepon: String, photoUri: Uri?) -> Unit
 ) {
     var tempNama by remember { mutableStateOf(currentNama) }
     var tempEmail by remember { mutableStateOf(if (currentEmail == "Belum ditambahkan") "" else currentEmail) }
     var tempTelepon by remember { mutableStateOf(if (currentTelepon == "Belum ditambahkan") "" else currentTelepon) }
+    var tempPhotoUri by remember { mutableStateOf(currentPhotoUri) }
+
+    var showValidationError by remember { mutableStateOf(false) }
+    var validationErrorTitle by remember { mutableStateOf("") }
+    var validationErrorMessage by remember { mutableStateOf("") }
+
+    val photoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            tempPhotoUri = uri
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -354,6 +394,7 @@ private fun UbahDataDiriDialog(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color.White)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -364,6 +405,83 @@ private fun UbahDataDiriDialog(
                 fontSize = 18.sp,
                 color = LenteraNavy
             )
+
+            // Bagian Foto Profil (Preview & Ikon Pensil)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier.size(92.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Preview avatar/foto bulat
+                    ProfileAvatarImage(
+                        photoUri = tempPhotoUri,
+                        modifier = Modifier
+                            .size(84.dp)
+                            .clip(CircleShape)
+                            .clickable { photoLauncher.launch("image/*") }
+                    )
+
+                    // Overlay badge pensil di sudut kanan bawah lingkaran foto
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(LenteraNavy)
+                            .border(2.dp, Color.White, CircleShape)
+                            .clickable { photoLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Ganti Foto Profil",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Ketuk untuk ganti foto",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = LenteraNavy,
+                    modifier = Modifier.clickable { photoLauncher.launch("image/*") }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Kotak Catatan Keterangan Almamater
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFEBF3FA))
+                        .border(1.dp, Color(0xFFD0E2F2), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "ℹ️",
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = "Wajib menggunakan foto formal mengenakan jas almamater kampus.",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        color = LenteraNavy
+                    )
+                }
+            }
 
             // Input Nama Lengkap
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -474,7 +592,37 @@ private fun UbahDataDiriDialog(
 
                 Button(
                     onClick = {
-                        onSave(tempNama, tempEmail, tempTelepon)
+                        val cleanedNama = tempNama.trim()
+                        val cleanedEmail = tempEmail.trim()
+                        val cleanedPhone = tempTelepon.replace(" ", "").replace("-", "")
+
+                        if (cleanedNama.isEmpty()) {
+                            validationErrorTitle = "Nama Tidak Boleh Kosong"
+                            validationErrorMessage = "Silakan masukkan nama lengkap Anda sebelum menyimpan perubahan."
+                            showValidationError = true
+                            return@Button
+                        }
+
+                        if (cleanedEmail.isNotEmpty() && (!cleanedEmail.contains("@") || !cleanedEmail.contains("."))) {
+                            validationErrorTitle = "Format Email Tidak Valid"
+                            validationErrorMessage = "Alamat email harus memiliki format yang benar (contoh: budi@lentera.ac.id)."
+                            showValidationError = true
+                            return@Button
+                        }
+
+                        if (cleanedPhone.isNotEmpty() && (!cleanedPhone.all { it.isDigit() || it == '+' } || cleanedPhone.length < 9)) {
+                            validationErrorTitle = "Nomor Telepon Tidak Valid"
+                            validationErrorMessage = "Nomor telepon harus berupa angka valid dengan panjang minimal 9 digit."
+                            showValidationError = true
+                            return@Button
+                        }
+
+                        onSave(
+                            cleanedNama,
+                            if (cleanedEmail.isEmpty()) "Belum ditambahkan" else cleanedEmail,
+                            if (cleanedPhone.isEmpty()) "Belum ditambahkan" else tempTelepon.trim(),
+                            tempPhotoUri
+                        )
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -495,6 +643,15 @@ private fun UbahDataDiriDialog(
             }
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showValidationError,
+        isSuccess = false,
+        title = validationErrorTitle,
+        message = validationErrorMessage,
+        onDismiss = { showValidationError = false },
+        buttonText = "Periksa Kembali"
+    )
 }
 
 @Composable
