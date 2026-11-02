@@ -5,7 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -144,9 +147,12 @@ fun InformasiPenerimaanScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_company_bismillah),
+                            painter = painterResource(id = R.drawable.ic_avatar_2),
                             contentDescription = perusahaan,
-                            modifier = Modifier.size(54.dp)
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clip(CircleShape)
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {

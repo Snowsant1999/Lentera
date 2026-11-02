@@ -170,6 +170,7 @@ fun LenteraApp() {
     var notifikasiOrigin by remember { mutableStateOf(ScreenState.BERANDA) }
     var userProfilePhotoUri by remember { mutableStateOf<Uri?>(null) }
     var userNamaLengkap by remember { mutableStateOf("Budi Santoso") }
+    var bookmarkedLowonganIds by remember { mutableStateOf(setOf<String>()) }
 
     val mahasiswaDashboard = remember { MahasiswaDashboard() }
     val mahasiswaSettings = remember { MahasiswaSettings() }
@@ -536,6 +537,14 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.MAGANG_HUB -> {
                 MagangScreen(
+                    bookmarkedIds = bookmarkedLowonganIds,
+                    onBookmarkClick = { card ->
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(card.id)) {
+                            bookmarkedLowonganIds - card.id
+                        } else {
+                            bookmarkedLowonganIds + card.id
+                        }
+                    },
                     onNotificationClick = {
                         notifikasiOrigin = ScreenState.MAGANG_HUB
                         currentScreen = ScreenState.NOTIFIKASI
@@ -581,6 +590,14 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_LOWONGAN -> {
                 LowonganScreen(
+                    bookmarkedIds = bookmarkedLowonganIds,
+                    onBookmarkToggle = { item ->
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(item.id)) {
+                            bookmarkedLowonganIds - item.id
+                        } else {
+                            bookmarkedLowonganIds + item.id
+                        }
+                    },
                     onBackClick = {
                         currentScreen = magangLowonganOrigin
                         if (magangLowonganOrigin == ScreenState.BERANDA) {
@@ -597,6 +614,15 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_DETAIL -> {
                 DetailMagangScreen(
+                    isBookmarked = bookmarkedLowonganIds.contains("1"),
+                    onBookmarkToggle = {
+                        val id = "1"
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(id)) {
+                            bookmarkedLowonganIds - id
+                        } else {
+                            bookmarkedLowonganIds + id
+                        }
+                    },
                     onBackClick = {
                         currentScreen = magangDetailOrigin
                         if (magangDetailOrigin == ScreenState.BERANDA) {
@@ -617,7 +643,10 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_LAMARAN_SAYA -> {
                 LamaranSayaScreen(
-                    onBackClick = { currentScreen = ScreenState.MAGANG_HUB },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onStatusClick = { item ->
                         if (item.status == "Diterima") {
                             currentScreen = ScreenState.MAGANG_STATUS_FINAL
@@ -631,7 +660,10 @@ fun LenteraApp() {
                 StatusLamaranScreen(
                     needsCorrection = true,
                     isFinalAccepted = false,
-                    onBackClick = { currentScreen = ScreenState.MAGANG_LAMARAN_SAYA },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onPerbaikiDokumenClick = { currentScreen = ScreenState.MAGANG_PERBAIKAN_DOKUMEN },
                     onInformasiPenerimaanClick = { currentScreen = ScreenState.MAGANG_INFORMASI }
                 )
@@ -640,7 +672,10 @@ fun LenteraApp() {
                 StatusLamaranScreen(
                     needsCorrection = false,
                     isFinalAccepted = true,
-                    onBackClick = { currentScreen = ScreenState.MAGANG_LAMARAN_SAYA },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onInformasiPenerimaanClick = { currentScreen = ScreenState.MAGANG_INFORMASI_FINAL }
                 )
             }

@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +49,7 @@ data class LowonganItem(
     val status: String = "Available",
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
+    val logoDrawable: Int = R.drawable.ic_avatar_2,
     val isBookmarked: Boolean = false
 )
 
@@ -64,6 +66,7 @@ fun LowonganScreen(
     onBackClick: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onLowonganClick: (LowonganItem) -> Unit = {},
+    bookmarkedIds: Set<String> = emptySet(),
     onBookmarkToggle: (LowonganItem) -> Unit = {}
 ) {
     val plusJakarta = remember { FontFamily(Font(R.font.plus_jakarta_sans)) }
@@ -72,7 +75,7 @@ fun LowonganScreen(
     var selectedCategory by remember { mutableStateOf("Semua") }
 
     val categories = remember {
-        listOf("Semua", "Teknologi", "Desain", "Bisnis", "Remote")
+        listOf("Semua", "Tersimpan", "Teknologi", "Desain", "Bisnis", "Remote")
     }
 
     val lowonganList = remember {
@@ -84,7 +87,7 @@ fun LowonganScreen(
                 lokasi = "Bontang",
                 durasi = "3 Bulan",
                 kategori = "Desain",
-                logoDrawable = R.drawable.ic_company_maju_mundur
+                logoDrawable = R.drawable.ic_avatar_2
             ),
             LowonganItem(
                 id = "2",
@@ -93,7 +96,7 @@ fun LowonganScreen(
                 lokasi = "Bontang",
                 durasi = "3 Bulan",
                 kategori = "Teknologi",
-                logoDrawable = R.drawable.logo_company_studio_mark
+                logoDrawable = R.drawable.ic_avatar_2
             ),
             LowonganItem(
                 id = "3",
@@ -102,7 +105,7 @@ fun LowonganScreen(
                 lokasi = "Samarinda",
                 durasi = "3 Bulan",
                 kategori = "Bisnis",
-                logoDrawable = R.drawable.ic_company_maju_mundur
+                logoDrawable = R.drawable.ic_avatar_2
             ),
             LowonganItem(
                 id = "4",
@@ -111,15 +114,19 @@ fun LowonganScreen(
                 lokasi = "Remote",
                 durasi = "3 Bulan",
                 kategori = "Desain",
-                logoDrawable = R.drawable.logo_company_studio_mark
+                logoDrawable = R.drawable.ic_avatar_2
             )
         )
     }
 
-    val filteredList = remember(selectedCategory, searchQuery) {
-        lowonganList.filter { item ->
-            val matchCategory = selectedCategory == "Semua" || item.kategori.equals(selectedCategory, ignoreCase = true) ||
-                    (selectedCategory == "Remote" && item.lokasi.equals("Remote", ignoreCase = true))
+    val filteredList = remember(selectedCategory, searchQuery, bookmarkedIds) {
+        lowonganList.map { it.copy(isBookmarked = bookmarkedIds.contains(it.id)) }.filter { item ->
+            val matchCategory = when (selectedCategory) {
+                "Semua" -> true
+                "Tersimpan" -> item.isBookmarked
+                "Remote" -> item.lokasi.equals("Remote", ignoreCase = true)
+                else -> item.kategori.equals(selectedCategory, ignoreCase = true)
+            }
             val matchQuery = searchQuery.isEmpty() ||
                     item.posisi.contains(searchQuery, ignoreCase = true) ||
                     item.perusahaan.contains(searchQuery, ignoreCase = true) ||
@@ -198,20 +205,62 @@ fun LowonganScreen(
             }
 
             // 5. Daftar Kartu Lowongan Vertikal
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(filteredList) { item ->
-                    LowonganItemCard(
-                        item = item,
-                        onClick = { onLowonganClick(item) },
-                        onBookmarkClick = { onBookmarkToggle(item) },
-                        fontFamily = plusJakarta
-                    )
+            if (filteredList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = if (selectedCategory == "Tersimpan") R.drawable.ic_bookmark else R.drawable.ic_search_alt),
+                            contentDescription = null,
+                            tint = SlateGray,
+                            modifier = Modifier.size(44.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = if (selectedCategory == "Tersimpan") "Belum ada lowongan tersimpan" else "Lowongan tidak ditemukan",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (selectedCategory == "Tersimpan") "Klik ikon bookmark pada lowongan untuk menyimpannya di sini" else "Coba cari dengan kata kunci lain",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 12.5.sp,
+                                color = SlateGray,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(filteredList) { item ->
+                        LowonganItemCard(
+                            item = item,
+                            onClick = { onLowonganClick(item) },
+                            onBookmarkClick = { onBookmarkToggle(item) },
+                            fontFamily = plusJakarta
+                        )
+                    }
                 }
             }
         }
@@ -369,21 +418,15 @@ private fun LowonganItemCard(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.Top
                 ) {
-                    // Logo Perusahaan Bulat
-                    Box(
+                    // Logo/Avatar Perusahaan Bulat
+                    Image(
+                        painter = painterResource(id = item.logoDrawable),
+                        contentDescription = "Logo Perusahaan",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(46.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF3F7FA))
-                            .border(1.dp, Color(0xFFE4EDF5), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = item.logoDrawable),
-                            contentDescription = "Logo Perusahaan",
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                    )
 
                     Spacer(modifier = Modifier.width(12.dp))
 
@@ -416,14 +459,15 @@ private fun LowonganItemCard(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .border(1.dp, CardBorder, CircleShape)
+                        .background(if (item.isBookmarked) MagangAmberPillBg else Color.White)
+                        .border(1.dp, if (item.isBookmarked) MagangAmberPrimary else CardBorder, CircleShape)
                         .clickable(onClick = onBookmarkClick),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        painter = painterResource(id = if (item.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
                         contentDescription = "Bookmark",
-                        tint = NavyDark,
+                        tint = if (item.isBookmarked) MagangAmberPrimary else NavyDark,
                         modifier = Modifier.size(15.dp)
                     )
                 }

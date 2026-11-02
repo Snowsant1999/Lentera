@@ -45,7 +45,7 @@ data class DetailMagangData(
     val status: String = "Available",
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
+    val logoDrawable: Int = R.drawable.ic_avatar_2,
     val isBookmarked: Boolean = false,
     val deskripsiPekerjaan: String = "Bertanggung jawab dalam merancang antarmuka pengguna (UI) dan alur pengalaman pengguna (UX) untuk produk digital, berkolaborasi dengan tim pengembang dan product manager.",
     val persyaratan: List<String> = listOf(
@@ -69,6 +69,7 @@ data class DetailMagangData(
 @Composable
 fun DetailMagangScreen(
     data: DetailMagangData = DetailMagangData(),
+    isBookmarked: Boolean = false,
     onBackClick: () -> Unit = {},
     onBookmarkToggle: () -> Unit = {},
     onLamarSekarangClick: () -> Unit = {}
@@ -132,7 +133,7 @@ fun DetailMagangScreen(
             ) {
                 // 2. Kartu Header Utama Lowongan
                 HeaderLowonganCard(
-                    data = data,
+                    data = data.copy(isBookmarked = isBookmarked),
                     onBookmarkToggle = onBookmarkToggle,
                     fontFamily = plusJakarta
                 )
@@ -300,13 +301,14 @@ private fun HeaderLowonganCard(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
+                        .background(if (data.isBookmarked) MagangAmberPillBg else Color.Transparent)
                         .clickable(onClick = onBookmarkToggle),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        painter = painterResource(id = if (data.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
                         contentDescription = "Bookmark",
-                        tint = NavyDark,
+                        tint = if (data.isBookmarked) MagangAmberPrimary else NavyDark,
                         modifier = Modifier.size(18.dp)
                     )
                 }

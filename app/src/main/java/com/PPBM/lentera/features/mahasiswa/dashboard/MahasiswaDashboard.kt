@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -198,7 +200,9 @@ class MahasiswaDashboard {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.Top,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
                     ) {
                         // Kartu 1: Lentera Siaga
                         Column(
@@ -206,6 +210,7 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
                                 .clickable { onSiagaClick() }
                                 .background(
@@ -242,6 +247,7 @@ class MahasiswaDashboard {
                             )
                             Text(
                                 text = "1 Diperiksa\n2 Selesai",
+                                minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     lineHeight = 15.sp,
@@ -258,6 +264,7 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
                                 .clickable { onMagangClick() }
                                 .background(
@@ -294,6 +301,7 @@ class MahasiswaDashboard {
                             )
                             Text(
                                 text = "Tidak ada Update!",
+                                minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     lineHeight = 15.sp,
