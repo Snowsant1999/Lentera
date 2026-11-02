@@ -494,12 +494,8 @@ fun LenteraApp() {
                         }
                     },
                     onKembaliKeDashboard = {
-                        currentScreen = siagaRiwayatOrigin
-                        if (siagaRiwayatOrigin == ScreenState.BERANDA) {
-                            currentTab = LenteraTab.BERANDA
-                        } else {
-                            currentTab = LenteraTab.PENGADUAN
-                        }
+                        currentTab = LenteraTab.PENGADUAN
+                        currentScreen = ScreenState.PENGADUAN
                     }
                 )
             }
