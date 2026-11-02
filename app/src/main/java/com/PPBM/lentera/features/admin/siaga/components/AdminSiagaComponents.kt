@@ -1,4 +1,5 @@
 package com.PPBM.lentera.features.admin.siaga.components
+import androidx.compose.foundation.Image
 
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -89,21 +91,18 @@ fun AdminSiagaHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(SiagaBgColor)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_back),
-                contentDescription = "Kembali",
-                tint = SiagaNavyDark,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        Image(
+            painter = painterResource(id = R.drawable.ic_back_button),
+            contentDescription = "Kembali",
+            modifier = Modifier
+                .size(44.dp)
+                .clickable(onClick = onBackClick)
+        )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         Column {
             Text(
@@ -239,7 +238,8 @@ fun LaporanSummaryHeaderCard(
 @Composable
 fun AdminSiagaBottomBar(
     currentRoute: String = "Laporan",
-    onTabSelected: (String) -> Unit = {}
+    onTabSelected: (String) -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     val selectedItem = when (currentRoute) {
         "Beranda" -> LenteraNavItem.BERANDA
@@ -251,6 +251,7 @@ fun AdminSiagaBottomBar(
     AdminBottomBar(
         selected = selectedItem,
         onItemClick = { item ->
+            onNavClick(item)
             onTabSelected(
                 when (item) {
                     LenteraNavItem.BERANDA -> "Beranda"

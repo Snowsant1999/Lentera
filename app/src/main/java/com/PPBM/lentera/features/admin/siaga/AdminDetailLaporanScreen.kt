@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,7 +50,8 @@ fun AdminDetailLaporanScreen(
     onNavigateToPenugasan: () -> Unit = {},
     onNavigateToCatatanTindakan: () -> Unit = {},
     onNavigateToHasilPenyelesaian: () -> Unit = {},
-    onBackToList: () -> Unit = {}
+    onBackToList: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -518,7 +520,7 @@ fun AdminDetailLaporanScreen(
         }
 
         // 3. Bottom Bar
-        AdminSiagaBottomBar(currentRoute = "Laporan")
+        AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
     }
 }
 

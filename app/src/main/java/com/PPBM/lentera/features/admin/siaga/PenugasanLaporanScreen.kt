@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,7 +50,8 @@ import com.PPBM.lentera.R
 @Composable
 fun PenugasanLaporanScreen(
     onSimpanPenugasan: () -> Unit = {},
-    onBackToDetail: () -> Unit = {}
+    onBackToDetail: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var jalurTindakLanjut by remember { mutableStateOf("Alihkan ke pihak berwenang") }
     var unitPetugas by remember { mutableStateOf("Tim Advokasi Kampus") }
@@ -265,7 +267,7 @@ fun PenugasanLaporanScreen(
         }
 
         // 3. Bottom Bar
-        AdminSiagaBottomBar(currentRoute = "Laporan")
+        AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
     }
 }
 

@@ -1,4 +1,5 @@
 package com.PPBM.lentera.features.admin.akunmahasiswa
+import androidx.compose.foundation.Image
 import com.PPBM.lentera.core.designsystem.components.*
 
 import androidx.compose.foundation.background
@@ -37,6 +38,11 @@ fun BuatAkunMahasiswaScreen(
     var emailKampus by remember { mutableStateOf("dewi.lestari@kampus.ac.id") }
     var metodeAkses by remember { mutableStateOf("Kirim tautan aktivasi ke email") }
     var kirimEmail by remember { mutableStateOf(true) }
+
+    var showFeedback by remember { mutableStateOf(false) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -101,28 +107,55 @@ fun BuatAkunMahasiswaScreen(
 
             // Action Buttons
             item {
-                ActionButtons(onSimpan = onSimpanSuccess, onKembali = onBackClick)
+                ActionButtons(
+                    onSimpan = {
+                        if (namaLengkap.isBlank() || nim.isBlank() || emailKampus.isBlank()) {
+                            feedbackTitle = "Data Belum Lengkap"
+                            feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, dan Email Kampus."
+                            feedbackIsSuccess = false
+                            showFeedback = true
+                        } else {
+                            feedbackTitle = "Akun Berhasil Dibuat"
+                            feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan dan siap digunakan."
+                            feedbackIsSuccess = true
+                            showFeedback = true
+                        }
+                    },
+                    onKembali = onBackClick
+                )
             }
         }
+
+        LenteraFeedbackDialog(
+            show = showFeedback,
+            isSuccess = feedbackIsSuccess,
+            title = feedbackTitle,
+            message = feedbackMessage,
+            onDismiss = {
+                showFeedback = false
+                if (feedbackIsSuccess) {
+                    onSimpanSuccess()
+                }
+            }
+        )
     }
 }
 
 @Composable
 fun HeaderTopBar(onBackClick: () -> Unit = {}) {
-    Column {
+    Column(modifier = Modifier.statusBarsPadding()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back),
+            Image(
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back_button),
                 contentDescription = "Back",
-                tint = Color(0xFF1E3A5F),
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(44.dp)
                     .clickable { onBackClick() }
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = "BUAT AKUN MAHASISWA",

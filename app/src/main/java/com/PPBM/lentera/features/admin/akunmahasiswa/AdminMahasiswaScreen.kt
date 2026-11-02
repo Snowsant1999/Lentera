@@ -17,6 +17,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import com.PPBM.lentera.R
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -50,7 +54,7 @@ fun AdminMahasiswaScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ScreenBackground)
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             TopBarMahasiswa(onBackClick = onBack, onAddClick = onNavigateToBuatAkun)
             SearchBarMahasiswa()
@@ -69,42 +73,48 @@ fun TopBarMahasiswa(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 18.dp),
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            tint = NavyDark,
-            contentDescription = "Back",
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { onBackClick() }
-        )
-
-        Text(
-            text = "Akun Mahasiswa",
-            style = TextStyle(
-                fontSize = 18.sp,
-                fontFamily = PlusJakartaSans,
-                fontWeight = FontWeight.Bold,
-                color = NavyDark
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_back_button),
+                contentDescription = "Kembali",
+                modifier = Modifier
+                    .size(44.dp)
+                    .clickable { onBackClick() }
             )
-        )
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Text(
+                text = "Akun Mahasiswa",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = NavyDark
+                )
+            )
+        }
 
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .clickable { onAddClick() }
-                .background(NavyDark, RoundedCornerShape(10.dp)),
+                .background(NavyDark, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "+",
                 style = TextStyle(
                     color = Color.White,
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
                     fontFamily = PlusJakartaSans,
                     fontWeight = FontWeight.Bold
                 )
@@ -260,10 +270,10 @@ fun StudentCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
+            Image(
+                painter = painterResource(id = R.drawable.ic_avatar_2),
                 contentDescription = "Avatar",
-                tint = NavyDark,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)

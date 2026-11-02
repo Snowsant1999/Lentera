@@ -711,6 +711,7 @@ fun LenteraApp() {
                     onNavigateToMahasiswa = { currentScreen = ScreenState.ADMIN_MAHASISWA },
                     onNavigateToSiaga = { currentScreen = ScreenState.ADMIN_SIAGA },
                     onNavigateToMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
                     onNavigateToProfil = { currentScreen = ScreenState.ADMIN_PROFIL },
                     onNavigateToNotifikasi = { currentScreen = ScreenState.ADMIN_NOTIFIKASI },
                     onTambahMahasiswa = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
@@ -742,7 +743,8 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_SIAGA -> {
                 AdminSiagaFlowScreen(
-                    onBackToDashboard = { currentScreen = ScreenState.ADMIN_DASHBOARD }
+                    onBackToDashboard = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TEMPAT -> {
@@ -750,25 +752,29 @@ fun LenteraApp() {
                     onNavigateToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
                     onNavigateToTambahTempat = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
-                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD }
+                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT -> {
                 TambahTempatMagangScreen(
                     onSimpanSuccess = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT -> {
                 DetailTempatMagangScreen(
                     onNavigateToKelolaStatus = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_STATUS },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_KELOLA_STATUS -> {
                 KelolaStatusTempatScreen(
                     onSimpanStatus = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
-                    onBackToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT }
+                    onBackToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_LOWONGAN -> {
@@ -776,18 +782,21 @@ fun LenteraApp() {
                     onNavigateToTambahLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToFormLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToDetailLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN -> {
                 FormLowonganScreen(
                     onSimpanLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
-                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN }
+                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN -> {
                 DetailLowonganScreen(
-                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN }
+                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_PROFIL -> {

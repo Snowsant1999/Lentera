@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +48,8 @@ import com.PPBM.lentera.R
 @Composable
 fun LaporanMasukScreen(
     onNavigateToDetail: (String) -> Unit = {},
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Semua 24") }
@@ -295,7 +297,7 @@ fun LaporanMasukScreen(
         }
 
         // 3. Bottom Bar
-        AdminSiagaBottomBar(currentRoute = "Laporan")
+        AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
     }
 }
 
