@@ -1,10 +1,8 @@
 package com.PPBM.lentera.features.mahasiswa.profil
 
-import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
-
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,29 +14,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBorder
@@ -55,10 +63,16 @@ fun DataDiriScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    var namaLengkap by remember { mutableStateOf("Budi Santoso") }
+    var email by remember { mutableStateOf("budi.santoso@lentera.ac.id") }
+    var nomorTelepon by remember { mutableStateOf("081234567890") }
+    var showEditDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LenteraBg)
+            .statusBarsPadding()
     ) {
         Column(
             modifier = Modifier
@@ -132,7 +146,7 @@ fun DataDiriScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Budi Santoso",
+                        text = namaLengkap,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp,
@@ -187,7 +201,10 @@ fun DataDiriScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.clickable { /* Aksi Ubah */ }
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showEditDialog = true }
+                            .padding(horizontal = 6.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_open_answer),
@@ -211,11 +228,11 @@ fun DataDiriScreen(
                     modifier = Modifier.padding(vertical = 14.dp)
                 )
 
-                FieldItem(label = "Nama lengkap", value = "Budi Santoso", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Nama lengkap", value = namaLengkap, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Email", value = "Belum ditambahkan", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Email", value = if (email.isBlank()) "Belum ditambahkan" else email, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Nomor telepon", value = "Belum ditambahkan", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Nomor telepon", value = if (nomorTelepon.isBlank()) "Belum ditambahkan" else nomorTelepon, modifier = Modifier.fillMaxWidth())
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -301,6 +318,182 @@ fun DataDiriScreen(
             currentTab = LenteraTab.PROFIL,
             onTabSelected = onTabSelected
         )
+    }
+
+    if (showEditDialog) {
+        UbahDataDiriDialog(
+            currentNama = namaLengkap,
+            currentEmail = email,
+            currentTelepon = nomorTelepon,
+            onDismiss = { showEditDialog = false },
+            onSave = { newNama, newEmail, newTelepon ->
+                if (newNama.isNotBlank()) namaLengkap = newNama
+                email = newEmail
+                nomorTelepon = newTelepon
+                showEditDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun UbahDataDiriDialog(
+    currentNama: String,
+    currentEmail: String,
+    currentTelepon: String,
+    onDismiss: () -> Unit,
+    onSave: (nama: String, email: String, telepon: String) -> Unit
+) {
+    var tempNama by remember { mutableStateOf(currentNama) }
+    var tempEmail by remember { mutableStateOf(if (currentEmail == "Belum ditambahkan") "" else currentEmail) }
+    var tempTelepon by remember { mutableStateOf(if (currentTelepon == "Belum ditambahkan") "" else currentTelepon) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Ubah Informasi Pribadi",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = LenteraNavy
+            )
+
+            // Input Nama Lengkap
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "Nama Lengkap",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = LenteraTextSecondary
+                )
+                BasicTextField(
+                    value = tempNama,
+                    onValueChange = { tempNama = it },
+                    textStyle = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LenteraNavy
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(LenteraBg)
+                        .border(1.dp, LenteraBorder, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                )
+            }
+
+            // Input Email
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "Email",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = LenteraTextSecondary
+                )
+                BasicTextField(
+                    value = tempEmail,
+                    onValueChange = { tempEmail = it },
+                    textStyle = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LenteraNavy
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(LenteraBg)
+                        .border(1.dp, LenteraBorder, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                )
+            }
+
+            // Input Nomor Telepon
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "Nomor Telepon",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = LenteraTextSecondary
+                )
+                BasicTextField(
+                    value = tempTelepon,
+                    onValueChange = { tempTelepon = it },
+                    textStyle = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LenteraNavy
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(LenteraBg)
+                        .border(1.dp, LenteraBorder, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Action Buttons: Batal & Simpan
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(46.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraBg,
+                        contentColor = LenteraNavy
+                    )
+                ) {
+                    Text(
+                        text = "Batal",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        onSave(tempNama, tempEmail, tempTelepon)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(46.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraNavy,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Simpan",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
     }
 }
 

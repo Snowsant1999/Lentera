@@ -1,8 +1,5 @@
 package com.PPBM.lentera.features.mahasiswa.profil
 
-import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
-
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,17 +12,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -33,9 +36,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBorder
 import com.PPBM.lentera.core.designsystem.theme.LenteraNavy
@@ -49,11 +54,13 @@ fun TentangAplikasiScreen(
     onTabSelected: (LenteraTab) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LenteraBg)
+            .statusBarsPadding()
     ) {
         Column(
             modifier = Modifier
@@ -104,7 +111,7 @@ fun TentangAplikasiScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
             )
 
-            // Card Utama Tentang Aplikasi Sesuai Bantuan-1.png
+            // Card Utama Tentang Aplikasi
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -133,14 +140,14 @@ fun TentangAplikasiScreen(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Text(
-                            text = "Masih butuh bantuan?",
+                            text = "LENTERA",
                             fontFamily = PlusJakartaSans,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
+                            fontSize = 18.sp,
                             color = LenteraNavy
                         )
                         Text(
-                            text = "Tim LENTERA siap membantu.",
+                            text = "Aman, Nyaman, Berdaya",
                             fontFamily = PlusJakartaSans,
                             fontWeight = FontWeight.Normal,
                             fontSize = 13.sp,
@@ -186,6 +193,25 @@ fun TentangAplikasiScreen(
                         color = LenteraTextSecondary
                     )
                 }
+
+                Button(
+                    onClick = { showUpdateDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE2EBF4),
+                        contentColor = LenteraNavy
+                    )
+                ) {
+                    Text(
+                        text = "Periksa Pembaruan",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -196,6 +222,53 @@ fun TentangAplikasiScreen(
             currentTab = LenteraTab.PROFIL,
             onTabSelected = onTabSelected
         )
+    }
+
+    if (showUpdateDialog) {
+        Dialog(onDismissRequest = { showUpdateDialog = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Status Pembaruan",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = LenteraNavy
+                )
+                Text(
+                    text = "Aplikasi LENTERA Anda sudah dalam versi terbaru (v1.0.0). Tidak ada pembaruan saat ini.",
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 13.sp,
+                    color = LenteraTextSecondary,
+                    lineHeight = 18.sp
+                )
+                Button(
+                    onClick = { showUpdateDialog = false },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraNavy,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Oke",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
     }
 }
 
