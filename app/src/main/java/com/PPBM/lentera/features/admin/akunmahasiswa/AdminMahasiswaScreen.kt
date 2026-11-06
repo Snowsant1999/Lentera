@@ -9,8 +9,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,7 +20,6 @@ import androidx.compose.foundation.Image
 import com.PPBM.lentera.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +35,6 @@ import com.PPBM.lentera.core.designsystem.theme.*
 fun AdminMahasiswaScreen(
     onNavigateToBuatAkun: () -> Unit = {},
     onNavigateToDetail: () -> Unit = {},
-    onBack: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     Scaffold(
@@ -56,7 +52,7 @@ fun AdminMahasiswaScreen(
                 .background(ScreenBackground)
                 .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            TopBarMahasiswa(onBackClick = onBack, onAddClick = onNavigateToBuatAkun)
+            TopBarMahasiswa(onAddClick = onNavigateToBuatAkun)
             SearchBarMahasiswa()
             TabsMahasiswa()
             Spacer(modifier = Modifier.height(14.dp))
@@ -67,7 +63,6 @@ fun AdminMahasiswaScreen(
 
 @Composable
 fun TopBarMahasiswa(
-    onBackClick: () -> Unit = {},
     onAddClick: () -> Unit = {}
 ) {
     Row(
@@ -81,16 +76,6 @@ fun TopBarMahasiswa(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_back_button),
-                contentDescription = "Kembali",
-                modifier = Modifier
-                    .size(44.dp)
-                    .clickable { onBackClick() }
-            )
-
-            Spacer(modifier = Modifier.width(14.dp))
-
             Text(
                 text = "Akun Mahasiswa",
                 style = TextStyle(
