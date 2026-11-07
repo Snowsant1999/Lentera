@@ -15,7 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import com.PPBM.lentera.ui.components.BackArrowIcon
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.ui.theme.*
+import com.PPBM.lentera.core.designsystem.theme.*
 
 /**
  * Screen Reset Password (AUTH-005)
@@ -124,7 +124,7 @@ fun ResetPasswordScreen(
                 .padding(top = 16.dp, bottom = 28.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(154.dp)
@@ -220,7 +220,7 @@ fun ResetPasswordScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.lock_keyhole),
+                        painter = painterResource(id = R.drawable.ic_lock_keyhole),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -282,7 +282,7 @@ fun ResetPasswordScreen(
                             ) { newPasswordVisible = !newPasswordVisible }
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.eye_off),
+                            painter = painterResource(id = R.drawable.ic_eye_off),
                             contentDescription = if (newPasswordVisible) "Sembunyikan" else "Tampilkan",
                             colorFilter = ColorFilter.tint(if (newPasswordVisible) NavyMedium else SlateGray),
                             modifier = Modifier.size(20.dp)
@@ -334,7 +334,7 @@ fun ResetPasswordScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.lock_keyhole),
+                        painter = painterResource(id = R.drawable.ic_lock_keyhole),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -399,7 +399,7 @@ fun ResetPasswordScreen(
                             ) { confirmPasswordVisible = !confirmPasswordVisible }
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.eye_off),
+                            painter = painterResource(id = R.drawable.ic_eye_off),
                             contentDescription = if (confirmPasswordVisible) "Sembunyikan" else "Tampilkan",
                             colorFilter = ColorFilter.tint(if (confirmPasswordVisible) NavyMedium else SlateGray),
                             modifier = Modifier.size(20.dp)

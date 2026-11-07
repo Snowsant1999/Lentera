@@ -13,9 +13,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import com.PPBM.lentera.ui.components.BackArrowIcon
-import com.PPBM.lentera.ui.components.InfoIcon
-import com.PPBM.lentera.ui.components.MailIcon
+import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
+import com.PPBM.lentera.core.designsystem.icons.InfoIcon
+import com.PPBM.lentera.core.designsystem.icons.MailIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.ui.theme.*
+import com.PPBM.lentera.core.designsystem.theme.*
 
 /**
  * Lupa Password Screen
@@ -104,7 +104,7 @@ fun LupaPasswordScreen(
                 .padding(bottom = 20.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(120.dp)
@@ -180,7 +180,7 @@ fun LupaPasswordScreen(
                         .padding(14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.iconamoon_profile_circle_thin),
+                        painter = painterResource(id = R.drawable.ic_profile_circle_thin),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )

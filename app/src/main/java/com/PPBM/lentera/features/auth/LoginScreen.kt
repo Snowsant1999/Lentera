@@ -16,7 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import com.PPBM.lentera.ui.components.InfoIcon
+import com.PPBM.lentera.core.designsystem.icons.InfoIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.ui.theme.*
+import com.PPBM.lentera.core.designsystem.theme.*
 
 /**
  * Login Screen — Halaman utama login
@@ -52,6 +52,8 @@ import com.PPBM.lentera.ui.theme.*
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
+    onLoginMahasiswa: () -> Unit = onLoginSuccess,
+    onLoginAdmin: () -> Unit = onLoginSuccess,
     onForgotPassword: () -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
@@ -63,7 +65,7 @@ fun LoginScreen(
     var showError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Simulasi login
+    // Simulasi login dummy tanpa backend
     fun doLogin() {
         if (nimOrEmail.isBlank() || password.isBlank()) {
             showError = true
@@ -71,8 +73,11 @@ fun LoginScreen(
         }
         isLoading = true
         showError = false
-        // Untuk saat ini, login selalu berhasil jika field terisi
-        onLoginSuccess()
+        if (nimOrEmail.contains("admin", ignoreCase = true)) {
+            onLoginAdmin()
+        } else {
+            onLoginMahasiswa()
+        }
     }
 
     Column(
@@ -94,7 +99,7 @@ fun LoginScreen(
         ) {
             // Logo
             Image(
-                painter = painterResource(id = R.drawable.lenteralogo),
+                painter = painterResource(id = R.drawable.img_lentera_logo),
                 contentDescription = "Logo LENTERA",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(154.dp)
@@ -229,7 +234,7 @@ fun LoginScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.iconamoon_profile_circle_thin),
+                        painter = painterResource(id = R.drawable.ic_profile_circle_thin),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -333,7 +338,7 @@ fun LoginScreen(
                         .padding(horizontal = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.lock_keyhole),
+                        painter = painterResource(id = R.drawable.ic_lock_keyhole),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(20.dp)
@@ -402,7 +407,7 @@ fun LoginScreen(
                             ) { passwordVisible = !passwordVisible }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.eye_off),
+                            painter = painterResource(id = R.drawable.ic_eye_off),
                             contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
                             tint = SlateGray,
                             modifier = Modifier.size(20.dp)
@@ -455,6 +460,67 @@ fun LoginScreen(
                             color = CardWhite
                         )
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Demo Accounts Fast Login
+                Text(
+                    text = "— Masuk Cepat untuk Demo —",
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        fontFamily = plusJakarta,
+                        fontWeight = FontWeight.Medium,
+                        color = SlateGray,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .border(1.dp, NavyMedium, RoundedCornerShape(12.dp))
+                            .background(Color.White, RoundedCornerShape(12.dp))
+                            .clickable { onLoginMahasiswa() }
+                    ) {
+                        Text(
+                            text = "Demo Mahasiswa",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = plusJakarta,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyMedium
+                            )
+                        )
+                    }
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .background(Color(0xFFEEB042), RoundedCornerShape(12.dp))
+                            .clickable { onLoginAdmin() }
+                    ) {
+                        Text(
+                            text = "Demo Admin",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = plusJakarta,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                    }
                 }
             }
 
