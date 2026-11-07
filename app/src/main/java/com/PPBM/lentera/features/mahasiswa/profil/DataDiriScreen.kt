@@ -64,21 +64,28 @@ import com.PPBM.lentera.core.designsystem.theme.LenteraTextSecondary
 import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
 import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
 
+import com.PPBM.lentera.backend.auth.model.UserProfile
+
 @Composable
 fun DataDiriScreen(
     onBackClick: () -> Unit = {},
     onTabSelected: (LenteraTab) -> Unit = {},
+    userProfile: UserProfile? = null,
     initialPhotoUri: Uri? = null,
     onPhotoUpdated: (Uri?) -> Unit = {},
     initialNama: String = "Budi Santoso",
-    onNamaUpdated: (String) -> Unit = {}
+    onNamaUpdated: (String) -> Unit = {},
+    onSimpanDataDiri: (nama: String, noTelepon: String) -> Unit = { _, _ -> }
 ) {
     val scrollState = rememberScrollState()
 
     var photoUri by remember { mutableStateOf(initialPhotoUri) }
-    var namaLengkap by remember { mutableStateOf(initialNama) }
-    var email by remember { mutableStateOf("budi.santoso@lentera.ac.id") }
-    var nomorTelepon by remember { mutableStateOf("081234567890") }
+    var namaLengkap by remember(userProfile) { mutableStateOf(userProfile?.namaLengkap ?: initialNama) }
+    var email by remember(userProfile) { mutableStateOf(userProfile?.email ?: "mahasiswa@student.ac.id") }
+    var nomorTelepon by remember(userProfile) { mutableStateOf(userProfile?.noTelepon ?: "081234567890") }
+    val nim = userProfile?.nim ?: "2024010001"
+    val perguruanTinggi = userProfile?.perguruanTinggi ?: "Universitas Lentera"
+    val programStudi = userProfile?.programStudi ?: "Teknik Informatika"
     var showEditDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var feedbackIsSuccess by remember { mutableStateOf(true) }
@@ -288,11 +295,11 @@ fun DataDiriScreen(
                     modifier = Modifier.padding(vertical = 14.dp)
                 )
 
-                FieldItem(label = "Nomor Induk Mahasiswa (NIM)", value = "2023110045", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Nomor Induk Mahasiswa (NIM)", value = nim, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Perguruan tinggi", value = "Universitas Contoh", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Perguruan tinggi", value = perguruanTinggi, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Program studi", value = "Teknik Informatika", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Program studi", value = programStudi, modifier = Modifier.fillMaxWidth())
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -343,6 +350,7 @@ fun DataDiriScreen(
                 nomorTelepon = newTelepon
                 photoUri = newPhotoUri
                 onPhotoUpdated(newPhotoUri)
+                onSimpanDataDiri(newNama, newTelepon)
                 showEditDialog = false
 
                 feedbackIsSuccess = true

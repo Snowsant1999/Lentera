@@ -91,3 +91,43 @@ data class CreateLaporanPayload(
     val status: String = "baru"
 )
 
+/**
+ * DTO permintaan informasi tambahan dari admin ke pelapor
+ */
+@Serializable
+data class PermintaanInformasiItem(
+    val id: String,
+    @SerialName("laporan_id")
+    val laporanId: String,
+    @SerialName("pesan_ke_pelapor")
+    val pesanKePelapor: String,
+    @SerialName("balasan_pelapor")
+    val balasanPelapor: String? = null,
+    @SerialName("lampiran_balasan")
+    val lampiranBalasan: String? = null,
+    @SerialName("created_at")
+    val createdAt: String
+)
+
+/**
+ * DTO berkas berita acara / dokumen hasil penyelesaian kasus
+ */
+@Serializable
+data class DokumenHasilItem(
+    val id: String,
+    @SerialName("laporan_id")
+    val laporanId: String,
+    @SerialName("nama_file")
+    val namaFile: String,
+    @SerialName("tipe_file")
+    val tipeFile: String,
+    @SerialName("ukuran_bytes")
+    val ukuranBytes: Long,
+    @SerialName("file_path")
+    val filePath: String,
+    @SerialName("boleh_dibagikan")
+    val bolehDibagikan: Boolean = false,
+    @SerialName("created_at")
+    val createdAt: String
+)
+

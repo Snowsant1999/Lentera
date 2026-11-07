@@ -6,6 +6,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class SiagaRepository {
     private val client = SupabaseConfig.client
@@ -168,6 +170,68 @@ class SiagaRepository {
             }.decodeSingle<BuktiLaporanItem>()
 
             Result.success(inserted)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mengambil permintaan informasi tambahan dari admin untuk laporan tertentu.
+     */
+    suspend fun getPermintaanInformasi(laporanId: String): Result<List<PermintaanInformasiItem>> {
+        return try {
+            val list = client.from("permintaan_informasi")
+                .select {
+                    filter {
+                        eq("laporan_id", laporanId)
+                    }
+                    order("created_at", order = Order.DESCENDING)
+                }
+                .decodeList<PermintaanInformasiItem>()
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mengirim balasan klarifikasi/informasi tambahan dari pelapor.
+     */
+    suspend fun balasPermintaanInformasi(
+        permintaanId: String,
+        balasan: String,
+        lampiranPath: String? = null
+    ): Result<Unit> {
+        return try {
+            val payload = buildJsonObject {
+                put("balasan_pelapor", balasan.trim())
+                if (lampiranPath != null) put("lampiran_balasan", lampiranPath)
+            }
+            client.from("permintaan_informasi").update(payload) {
+                filter {
+                    eq("id", permintaanId)
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mengambil dokumen berita acara / hasil penyelesaian kasus yang boleh dibagikan.
+     */
+    suspend fun getDokumenHasil(laporanId: String): Result<List<DokumenHasilItem>> {
+        return try {
+            val list = client.from("dokumen_hasil")
+                .select {
+                    filter {
+                        eq("laporan_id", laporanId)
+                        eq("boleh_dibagikan", true)
+                    }
+                }
+                .decodeList<DokumenHasilItem>()
+            Result.success(list)
         } catch (e: Exception) {
             Result.failure(e)
         }

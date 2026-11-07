@@ -1,0 +1,80 @@
+package com.PPBM.lentera.features.mahasiswa.dashboard
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
+import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
+import com.PPBM.lentera.backend.mahasiswa.repository.MagangRepository
+import com.PPBM.lentera.backend.mahasiswa.repository.SiagaRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class MahasiswaDashboardUiState(
+    val isLoading: Boolean = false,
+    val totalLaporan: Int = 0,
+    val laporanDiperiksa: Int = 0,
+    val laporanSelesai: Int = 0,
+    val totalLamaran: Int = 0,
+    val lamaranStatusSummary: String = "Tidak ada update",
+    val aktivitasTerbaru: List<LaporanSaya> = emptyList(),
+    val rekomendasiLowongan: List<LowonganTerbit> = emptyList(),
+    val errorMessage: String? = null
+)
+
+class MahasiswaDashboardViewModel(
+    private val siagaRepo: SiagaRepository = SiagaRepository(),
+    private val magangRepo: MagangRepository = MagangRepository()
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(MahasiswaDashboardUiState())
+    val uiState: StateFlow<MahasiswaDashboardUiState> = _uiState.asStateFlow()
+
+    init {
+        loadDashboardData()
+    }
+
+    fun loadDashboardData() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            // 1. Ambil Laporan Saya
+            val laporanResult = siagaRepo.getLaporanSaya()
+            val laporanList = laporanResult.getOrDefault(emptyList())
+
+            val totalLap = laporanList.size
+            val lapDiperiksa = laporanList.count { it.status == "baru" || it.status == "verifikasi" || it.status == "investigasi" || it.status == "penanganan" }
+            val lapSelesai = laporanList.count { it.status == "selesai" }
+
+            // 2. Ambil Lamaran Saya
+            val lamaranResult = magangRepo.getLamaranSaya()
+            val lamaranList = lamaranResult.getOrDefault(emptyList())
+            val totalLam = lamaranList.size
+            val lamaranSummary = when {
+                totalLam == 0 -> "Belum ada lamaran"
+                lamaranList.any { it.status == "diterima" } -> "Lamaran Diterima!"
+                lamaranList.any { it.status == "perlu_perbaikan" } -> "Perlu perbaikan berkas"
+                lamaranList.any { it.status == "wawancara" } -> "Tahap wawancara"
+                else -> "$totalLam lamaran aktif"
+            }
+
+            // 3. Ambil Lowongan Terbit
+            val lowonganResult = magangRepo.getLowonganTerbit()
+            val lowonganList = lowonganResult.getOrDefault(emptyList()).take(5)
+
+            _uiState.value = MahasiswaDashboardUiState(
+                isLoading = false,
+                totalLaporan = totalLap,
+                laporanDiperiksa = lapDiperiksa,
+                laporanSelesai = lapSelesai,
+                totalLamaran = totalLam,
+                lamaranStatusSummary = lamaranSummary,
+                aktivitasTerbaru = laporanList.take(3),
+                rekomendasiLowongan = lowonganList,
+                errorMessage = null
+            )
+        }
+    }
+}
+

@@ -9,19 +9,24 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -29,8 +34,10 @@ import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.features.admin.dashboard.AdminDashboardScreen
 import com.PPBM.lentera.features.auth.*
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
+import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboardViewModel
 import com.PPBM.lentera.features.mahasiswa.siaga.*
 import com.PPBM.lentera.features.mahasiswa.notifikasi.MahasiswaNotifikasiScreen
+import com.PPBM.lentera.features.mahasiswa.profil.*
 import com.PPBM.lentera.features.mahasiswa.magang.*
 import com.PPBM.lentera.core.designsystem.theme.*
 
@@ -41,6 +48,11 @@ import com.PPBM.lentera.core.designsystem.theme.*
  */
 @Composable
 fun LenteraNavGraph(navController: NavHostController) {
+    val siagaViewModel: SiagaViewModel = viewModel()
+    val siagaState by siagaViewModel.uiState.collectAsState()
+    val profilViewModel: ProfilViewModel = viewModel()
+    val profilState by profilViewModel.uiState.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = Routes.SPLASH,
@@ -182,23 +194,38 @@ fun LenteraNavGraph(navController: NavHostController) {
             val context = LocalContext.current
             val session = SessionManager.getInstance(context)
             val profile = session.getProfile()
+            val dashboardViewModel: MahasiswaDashboardViewModel = viewModel()
+            val dashboardState by dashboardViewModel.uiState.collectAsState()
+
             MahasiswaDashboard().mhsDashboard(
                 userName = profile?.namaLengkap ?: "Budi Mahasiswa",
+                totalLaporan = dashboardState.totalLaporan,
+                laporanDiperiksa = dashboardState.laporanDiperiksa,
+                laporanSelesai = dashboardState.laporanSelesai,
+                totalLamaran = dashboardState.totalLamaran,
+                lamaranStatusText = dashboardState.lamaranStatusSummary,
+                aktivitasList = dashboardState.aktivitasTerbaru,
+                lowonganList = dashboardState.rekomendasiLowongan,
                 onTabSelected = { tab ->
                     when (tab) {
                         LenteraTab.BERANDA -> { /* tetap di beranda */ }
                         LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
                         LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
-                        LenteraTab.PROFIL -> {
-                            session.clearSession()
-                            navController.navigate(Routes.LOGIN) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
                     }
                 },
+                onProfileClick = { navController.navigate(Routes.MAHASISWA_PROFIL) },
+                onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onSiagaClick = { navController.navigate(Routes.SIAGA) },
-                onMagangClick = { navController.navigate(Routes.MAGANG) }
+                onMagangClick = { navController.navigate(Routes.MAGANG) },
+                onAktivitasLihatSemuaClick = { navController.navigate(Routes.SIAGA) },
+                onAktivitasItemClick = { laporanId ->
+                    navController.navigate(Routes.detailLaporanTracking(laporanId))
+                },
+                onLowonganLihatSemuaClick = { navController.navigate(Routes.MAGANG) },
+                onLowonganItemClick = { lowonganId ->
+                    navController.navigate(Routes.detailMagang(lowonganId))
+                }
             )
         }
 
@@ -225,7 +252,32 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Lentera Siaga Mahasiswa
         composable(Routes.SIAGA) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+
+            LaunchedEffect(Unit) {
+                siagaViewModel.loadLaporanSaya()
+            }
+
+            val laporanItemList = siagaState.laporanList.map { item ->
+                val statusEnum = when (item.status.lowercase()) {
+                    "selesai" -> LaporanStatus.SELESAI
+                    "ditolak" -> LaporanStatus.DITOLAK
+                    "penanganan", "investigasi" -> LaporanStatus.DIPROSES
+                    else -> LaporanStatus.DIPERIKSA
+                }
+                LaporanItem(
+                    id = item.id,
+                    title = item.judul,
+                    date = item.tanggalKejadian,
+                    status = statusEnum
+                )
+            }
+
             MahasiswaSiagaScreen(
+                userName = profile?.namaLengkap ?: "Mahasiswa Lentera",
+                laporanList = if (siagaState.laporanList.isEmpty()) sampleLaporanList else laporanItemList,
                 onCreateReportClick = {
                     navController.navigate(Routes.BUAT_LAPORAN)
                 },
@@ -233,16 +285,15 @@ fun LenteraNavGraph(navController: NavHostController) {
                     navController.navigate(Routes.RIWAYAT_LAPORAN)
                 },
                 onReportClick = { item ->
-                    if (item.status == LaporanStatus.SELESAI) {
-                        navController.navigate(Routes.DETAIL_LAPORAN)
-                    } else {
-                        navController.navigate(Routes.DETAIL_LAPORAN_TRACKING)
-                    }
+                    navController.navigate(Routes.detailLaporanTracking(item.id))
                 },
+                onProfileClick = { navController.navigate(Routes.MAHASISWA_PROFIL) },
+                onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onNavTabClick = { tab ->
                     when (tab) {
                         SiagaNavTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
-                        SiagaNavTab.BERANDA -> navController.navigate(Routes.DASHBOARD_PLACEHOLDER)
+                        SiagaNavTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        SiagaNavTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
                         else -> {}
                     }
                 }
@@ -252,9 +303,24 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Halaman Buat Laporan (Langkah 2 dari 4)
         composable(Routes.BUAT_LAPORAN) {
             BuatLaporanScreen(
+                initialData = BuatLaporanFormData(
+                    kategori = siagaState.selectedKategoriNama,
+                    judul = siagaState.formJudul.ifBlank { siagaState.selectedKategoriNama },
+                    tanggalWaktu = siagaState.formTanggalWaktu.ifBlank { "12 Oktober 2026, 14.30" },
+                    lokasi = siagaState.formLokasi.ifBlank { "Koridor Kampus" },
+                    deskripsi = siagaState.formKronologi,
+                    isAnonim = siagaState.formIsAnonim
+                ),
                 onBackClick = { navController.popBackStack() },
                 onKembaliKeKategoriClick = { navController.popBackStack() },
                 onLanjutKeBuktiClick = { data ->
+                    siagaViewModel.updateFormData(
+                        judul = data.judul,
+                        tanggalWaktu = data.tanggalWaktu,
+                        lokasi = data.lokasi,
+                        kronologi = data.deskripsi,
+                        isAnonim = data.isAnonim
+                    )
                     navController.navigate(Routes.UPLOAD_BUKTI)
                 }
             )
@@ -262,9 +328,30 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Upload Bukti (Langkah 3 dari 4)
         composable(Routes.UPLOAD_BUKTI) {
+            val buktiItems = if (siagaState.uploadedBuktiList.isEmpty()) {
+                sampleBuktiList
+            } else {
+                siagaState.uploadedBuktiList.mapIndexed { index, item ->
+                    BuktiFileItem(
+                        id = index.toString(),
+                        fileName = item.fileName,
+                        fileType = item.fileType,
+                        fileSize = item.fileSizeFormatted,
+                        isExcluded = item.isExcluded
+                    )
+                }
+            }
+
             UploadBuktiScreen(
+                initialFiles = buktiItems,
                 onBackClick = { navController.popBackStack() },
                 onKembaliClick = { navController.popBackStack() },
+                onDeleteFile = { item ->
+                    item.id.toIntOrNull()?.let { siagaViewModel.toggleExcludeBukti(it) }
+                },
+                onRestoreFile = { item ->
+                    item.id.toIntOrNull()?.let { siagaViewModel.toggleExcludeBukti(it) }
+                },
                 onLanjutClick = { files ->
                     navController.navigate(Routes.TINJAU_LAPORAN)
                 }
@@ -273,7 +360,18 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Tinjau Laporan (Langkah 4 dari 4)
         composable(Routes.TINJAU_LAPORAN) {
+            val reportData = TinjauLaporanData(
+                kategori = siagaState.selectedKategoriNama,
+                judul = siagaState.formJudul.ifBlank { siagaState.selectedKategoriNama },
+                tanggalWaktu = siagaState.formTanggalWaktu.ifBlank { "12 Oktober 2026, 14.30" },
+                lokasi = siagaState.formLokasi.ifBlank { "Koridor Kampus" },
+                deskripsi = siagaState.formKronologi.ifBlank { "Kronologi pengaduan kejadian" },
+                buktiSummary = "${siagaState.uploadedBuktiList.count { !it.isExcluded }} file bukti disertakan",
+                isAnonim = siagaState.formIsAnonim
+            )
+
             TinjauLaporanScreen(
+                reportData = reportData,
                 onBackClick = { navController.popBackStack() },
                 onUbahKategori = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
                 onUbahJudul = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
@@ -282,18 +380,49 @@ fun LenteraNavGraph(navController: NavHostController) {
                 onUbahDeskripsi = { navController.popBackStack(Routes.BUAT_LAPORAN, false) },
                 onUbahBukti = { navController.popBackStack(Routes.UPLOAD_BUKTI, false) },
                 onKirimLaporan = { finalData ->
-                    navController.navigate(Routes.LAPORAN_TERKIRIM) {
-                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    siagaViewModel.submitLaporan { nomorRef ->
+                        navController.navigate(Routes.laporanTerkirim(nomorRef)) {
+                            popUpTo(Routes.SIAGA) { inclusive = false }
+                        }
                     }
                 }
             )
         }
 
         // Halaman Konfirmasi Laporan Terkirim
+        composable(
+            route = Routes.LAPORAN_TERKIRIM_ROUTE,
+            arguments = listOf(navArgument("ref") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val refArg = backStackEntry.arguments?.getString("ref").orEmpty()
+            val finalRef = if (refArg.isNotBlank()) refArg else (siagaState.submitSuccessNomorLaporan ?: "LTR-2026-00001")
+
+            LaporanTerkirimScreen(
+                nomorReferensi = finalRef,
+                onLihatStatusClick = {
+                    val targetId = siagaState.laporanList.firstOrNull()?.id ?: ""
+                    navController.navigate(Routes.detailLaporanTracking(targetId)) {
+                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    }
+                },
+                onKembaliKeBerandaClick = {
+                    navController.navigate(Routes.SIAGA) {
+                        popUpTo(Routes.SIAGA) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Fallback route lama tanpa query
         composable(Routes.LAPORAN_TERKIRIM) {
             LaporanTerkirimScreen(
+                nomorReferensi = siagaState.submitSuccessNomorLaporan ?: "LTR-2026-00001",
                 onLihatStatusClick = {
-                    navController.navigate(Routes.DETAIL_LAPORAN_TRACKING) {
+                    val targetId = siagaState.laporanList.firstOrNull()?.id ?: ""
+                    navController.navigate(Routes.detailLaporanTracking(targetId)) {
                         popUpTo(Routes.SIAGA) { inclusive = false }
                     }
                 },
@@ -306,8 +435,87 @@ fun LenteraNavGraph(navController: NavHostController) {
         }
 
         // Halaman Detail Laporan Tracking (Sedang Ditindaklanjuti)
-        composable(Routes.DETAIL_LAPORAN_TRACKING) {
+        composable(
+            route = Routes.DETAIL_LAPORAN_TRACKING_ROUTE,
+            arguments = listOf(navArgument("id") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val idArg = backStackEntry.arguments?.getString("id").orEmpty()
+            val targetId = if (idArg.isNotBlank()) idArg else (siagaState.laporanList.firstOrNull()?.id ?: "")
+
+            LaunchedEffect(targetId) {
+                if (targetId.isNotBlank()) {
+                    siagaViewModel.loadDetailLaporan(targetId)
+                }
+            }
+
+            val detail = siagaState.detailLaporan
+            val hasPendingAdmin = siagaState.permintaanInfoList.any { it.balasanPelapor.isNullOrBlank() }
+            val adminMsg = siagaState.permintaanInfoList.firstOrNull { it.balasanPelapor.isNullOrBlank() }?.pesanKePelapor
+                ?: "Mohon jelaskan ciri pelaku dan apakah ada saksi saat kejadian."
+
+            val trackingData = if (detail != null) {
+                val stepState = when (detail.status.lowercase()) {
+                    "selesai" -> Pair(TimelineStepState.COMPLETED, TimelineStepState.COMPLETED)
+                    "penanganan", "investigasi" -> Pair(TimelineStepState.COMPLETED, TimelineStepState.ACTIVE)
+                    "verifikasi" -> Pair(TimelineStepState.ACTIVE, TimelineStepState.PENDING)
+                    else -> Pair(TimelineStepState.ACTIVE, TimelineStepState.PENDING)
+                }
+                DetailLaporanTrackingData(
+                    nomorReferensi = detail.nomorLaporan,
+                    judul = detail.judul,
+                    status = detail.status.replaceFirstChar { it.uppercase() },
+                    tanggalPengiriman = "Dikirim ${detail.createdAt.take(10)} · ${if (detail.isAnonim) "Laporan anonim" else "Kerahasiaan terjamin"}",
+                    hasAdminRequest = hasPendingAdmin,
+                    adminMessage = adminMsg,
+                    timeline = listOf(
+                        TimelineStepItem(
+                            title = "Dikirim",
+                            description = "${detail.createdAt.take(10)} · Laporan diterima sistem",
+                            state = TimelineStepState.COMPLETED
+                        ),
+                        TimelineStepItem(
+                            title = "Diperiksa",
+                            description = "Tim Satgas meninjau laporan",
+                            state = stepState.first
+                        ),
+                        TimelineStepItem(
+                            title = "Ditindaklanjuti",
+                            description = "Proses penanganan kasus",
+                            state = stepState.second
+                        ),
+                        TimelineStepItem(
+                            title = "Selesai",
+                            description = detail.hasilPenanganan ?: "Ringkasan penyelesaian laporan",
+                            state = if (detail.status == "selesai") TimelineStepState.COMPLETED else TimelineStepState.PENDING
+                        )
+                    )
+                )
+            } else {
+                DetailLaporanTrackingData()
+            }
+
             DetailLaporanTrackingScreen(
+                reportData = trackingData,
+                onBackClick = { navController.popBackStack() },
+                onLengkapiInformasiClick = {
+                    navController.navigate(Routes.LENGKAPI_INFORMASI)
+                }
+            )
+        }
+
+        // Fallback route lama tanpa query
+        composable(Routes.DETAIL_LAPORAN_TRACKING) {
+            val targetId = siagaState.laporanList.firstOrNull()?.id ?: ""
+            LaunchedEffect(targetId) {
+                if (targetId.isNotBlank()) {
+                    siagaViewModel.loadDetailLaporan(targetId)
+                }
+            }
+            DetailLaporanTrackingScreen(
+                reportData = DetailLaporanTrackingData(),
                 onBackClick = { navController.popBackStack() },
                 onLengkapiInformasiClick = {
                     navController.navigate(Routes.LENGKAPI_INFORMASI)
@@ -317,12 +525,21 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Lengkapi Informasi Tambahan
         composable(Routes.LENGKAPI_INFORMASI) {
+            val pendingPermintaan = siagaState.permintaanInfoList.firstOrNull { it.balasanPelapor.isNullOrBlank() }
+            val pesan = pendingPermintaan?.pesanKePelapor
+                ?: "Mohon jelaskan kronologi lebih rinci dan apakah ada saksi saat kejadian."
+
             LengkapiInformasiScreen(
+                kodeLaporan = siagaState.detailLaporan?.nomorLaporan ?: "LTR-2026-00123",
+                pesanAdmin = pesan,
                 onBackClick = { navController.popBackStack() },
                 onKembaliClick = { navController.popBackStack() },
-                onKirimInformasiClick = { tambahan ->
-                    navController.navigate(Routes.INFORMASI_TERKIRIM) {
-                        popUpTo(Routes.DETAIL_LAPORAN_TRACKING) { inclusive = false }
+                onKirimInformasiClick = { balasan ->
+                    val reqId = pendingPermintaan?.id ?: ""
+                    siagaViewModel.kirimBalasanInformasi(reqId, balasan) {
+                        navController.navigate(Routes.INFORMASI_TERKIRIM) {
+                            popUpTo(Routes.DETAIL_LAPORAN_TRACKING) { inclusive = false }
+                        }
                     }
                 }
             )
@@ -331,9 +548,11 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Halaman Konfirmasi Informasi Tambahan Berhasil Dikirim
         composable(Routes.INFORMASI_TERKIRIM) {
             InformasiTerkirimScreen(
+                nomorLaporan = siagaState.detailLaporan?.nomorLaporan ?: "LTR-2026-00123",
                 onBackClick = { navController.popBackStack() },
                 onLihatStatusClick = {
-                    navController.navigate(Routes.DETAIL_LAPORAN_TRACKING) {
+                    val targetId = siagaState.detailLaporan?.id ?: ""
+                    navController.navigate(Routes.detailLaporanTracking(targetId)) {
                         popUpTo(Routes.SIAGA) { inclusive = false }
                     }
                 },
@@ -354,7 +573,24 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Hasil Penanganan
         composable(Routes.HASIL_PENANGANAN) {
+            val detail = siagaState.detailLaporan
+            val hasilData = if (detail != null) {
+                HasilPenangananData(
+                    nomorLaporan = detail.nomorLaporan,
+                    judul = detail.judul,
+                    status = detail.status.replaceFirstChar { it.uppercase() },
+                    tanggalLaporan = detail.tanggalKejadian,
+                    kategori = detail.kategori,
+                    ringkasanPenanganan = detail.hasilPenanganan
+                        ?: "Laporan telah selesai ditangani secara tuntas dan sesuai prosedur penanganan kampus.",
+                    tanggalPenyelesaian = detail.tanggalPenyelesaian ?: "${detail.updatedAt.take(10)}, 10:30 WITA"
+                )
+            } else {
+                HasilPenangananData()
+            }
+
             HasilPenangananScreen(
+                data = hasilData,
                 onBackClick = { navController.popBackStack() },
                 onTinjauDokumentasiClick = {
                     navController.navigate(Routes.DOKUMENTASI)
@@ -365,14 +601,46 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Riwayat Laporan (Laporan Saya)
         composable(Routes.RIWAYAT_LAPORAN) {
+            val riwayatItems = if (siagaState.laporanList.isEmpty()) {
+                sampleRiwayatLaporan
+            } else {
+                siagaState.laporanList.map { item ->
+                    val isSelesai = item.status.lowercase() == "selesai"
+                    val badgeBg: Color
+                    val badgeText: Color
+                    when (item.status.lowercase()) {
+                        "selesai" -> {
+                            badgeBg = Color(0xFFE3F5EB)
+                            badgeText = Color(0xFF287D4A)
+                        }
+                        "ditolak" -> {
+                            badgeBg = Color(0xFFFFEBEE)
+                            badgeText = Color(0xFFC62828)
+                        }
+                        else -> {
+                            badgeBg = Color(0xFFE6B363)
+                            badgeText = Color.White
+                        }
+                    }
+                    RiwayatLaporanItem(
+                        id = item.id,
+                        nomorLaporan = item.nomorLaporan,
+                        judul = item.judul,
+                        kategori = item.kategori,
+                        waktu = item.tanggalKejadian,
+                        statusBadge = item.status.replaceFirstChar { it.uppercase() },
+                        badgeBgColor = badgeBg,
+                        badgeTextColor = badgeText,
+                        isSelesai = isSelesai
+                    )
+                }
+            }
+
             RiwayatLaporanScreen(
+                reportList = riwayatItems,
                 onBackClick = { navController.popBackStack() },
                 onReportClick = { item ->
-                    if (item.isSelesai) {
-                        navController.navigate(Routes.DETAIL_LAPORAN)
-                    } else {
-                        navController.navigate(Routes.DETAIL_LAPORAN_TRACKING)
-                    }
+                    navController.navigate(Routes.detailLaporanTracking(item.id))
                 },
                 onKembaliKeDashboard = {
                     navController.navigate(Routes.SIAGA) {
@@ -384,7 +652,41 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Detail Laporan Lengkap (Scrollable)
         composable(Routes.DETAIL_LAPORAN) {
+            val detail = siagaState.detailLaporan
+            val fullData = if (detail != null) {
+                DetailLaporanFullData(
+                    nomorLaporan = detail.nomorLaporan,
+                    judul = detail.judul,
+                    status = detail.status.replaceFirstChar { it.uppercase() },
+                    waktuKirim = "Dikirim ${detail.createdAt.take(10)}",
+                    pelaporNama = if (detail.isAnonim) "Anonim" else "Pelapor Terverifikasi",
+                    pelaporDeskripsi = if (detail.isAnonim) "Identitas pelapor dirahasiakan" else "Data identitas terjaga aman",
+                    kategori = detail.kategori,
+                    tanggalKejadian = detail.tanggalKejadian,
+                    lokasiKejadian = detail.lokasiKejadian,
+                    ringkasanLaporan = detail.kronologi,
+                    listLampiran = if (siagaState.buktiList.isEmpty()) {
+                        emptyList()
+                    } else {
+                        siagaState.buktiList.map { b ->
+                            LampiranBuktiDetail(
+                                nama = b.namaFile,
+                                ukuran = "${b.ukuranBytes / 1024} KB",
+                                tipe = when (b.tipeFile.uppercase()) {
+                                    "JPG", "PNG", "JPEG" -> "PHOTO"
+                                    "MP4", "MKV" -> "DOC"
+                                    else -> "DOC"
+                                }
+                            )
+                        }
+                    }
+                )
+            } else {
+                DetailLaporanFullData()
+            }
+
             MahasiswaDetailLaporanScreen(
+                data = fullData,
                 onBackClick = { navController.popBackStack() },
                 onLihatHasilPenangananClick = {
                     navController.navigate(Routes.HASIL_PENANGANAN)
@@ -405,10 +707,13 @@ fun LenteraNavGraph(navController: NavHostController) {
                 onLihatLamaranClick = { navController.navigate(Routes.LAMARAN_SAYA) },
                 onStatusClick = { navController.navigate(Routes.LAMARAN_SAYA) },
                 onLamaranItemClick = { navController.navigate(Routes.STATUS_LAMARAN) },
+                onProfileClick = { navController.navigate(Routes.MAHASISWA_PROFIL) },
+                onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onNavTabClick = { tab ->
                     when (tab) {
                         MagangNavTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
-                        MagangNavTab.BERANDA -> navController.navigate(Routes.DASHBOARD_PLACEHOLDER)
+                        MagangNavTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        MagangNavTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
                         else -> {}
                     }
                 }
@@ -509,6 +814,126 @@ fun LenteraNavGraph(navController: NavHostController) {
                 onKembaliKeStatus = {
                     navController.navigate(Routes.STATUS_LAMARAN) {
                         popUpTo(Routes.STATUS_LAMARAN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ====================================================================
+        // Fitur Pengaturan & Profil Mahasiswa
+        // ====================================================================
+
+        // Halaman Utama Profil & Pengaturan (MahasiswaSettings.kt)
+        composable(Routes.MAHASISWA_PROFIL) {
+            val user = profilState.profile
+            val nama = user?.namaLengkap ?: "Budi Santoso"
+            val nim = user?.nim ?: "2024010001"
+            val pt = user?.perguruanTinggi ?: "Universitas Lentera"
+            val prodi = user?.programStudi ?: "Teknik Informatika"
+            val status = "Mahasiswa ${user?.statusAkun ?: "aktif"}"
+
+            MahasiswaSettings().mhsProfilScreen(
+                namaLengkap = nama,
+                nim = nim,
+                kampusProdi = "$pt - $prodi",
+                statusAkun = status,
+                onNavigateToDataDiri = { navController.navigate(Routes.MAHASISWA_DATA_DIRI) },
+                onNavigateToDokumen = { navController.navigate(Routes.MAHASISWA_DOKUMEN_SAYA) },
+                onNavigateToNotifikasi = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
+                onNavigateToBantuan = { navController.navigate(Routes.MAHASISWA_BANTUAN) },
+                onNavigateToTentang = { navController.navigate(Routes.MAHASISWA_TENTANG) },
+                onLogoutConfirmed = {
+                    profilViewModel.logout {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> { /* Tetap di halaman profil */ }
+                    }
+                }
+            )
+        }
+
+        // Halaman Data Diri (DataDiriScreen.kt)
+        composable(Routes.MAHASISWA_DATA_DIRI) {
+            DataDiriScreen(
+                userProfile = profilState.profile,
+                onBackClick = { navController.popBackStack() },
+                onSimpanDataDiri = { nama, telp ->
+                    profilViewModel.updateProfil(nama, telp)
+                },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Halaman Dokumen Saya (DokumenSayaScreen.kt)
+        composable(Routes.MAHASISWA_DOKUMEN_SAYA) {
+            DokumenSayaScreen(
+                onBackClick = { navController.popBackStack() },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Halaman Notifikasi Mahasiswa (NotifikasiScreen.kt)
+        composable(Routes.MAHASISWA_NOTIFIKASI) {
+            MahasiswaNotifikasiScreen(
+                onBackClick = { navController.popBackStack() },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Halaman Bantuan (BantuanScreen.kt)
+        composable(Routes.MAHASISWA_BANTUAN) {
+            BantuanScreen(
+                onBackClick = { navController.popBackStack() },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Halaman Tentang Aplikasi (TentangAplikasiScreen.kt)
+        composable(Routes.MAHASISWA_TENTANG) {
+            TentangAplikasiScreen(
+                onBackClick = { navController.popBackStack() },
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
                     }
                 }
             )

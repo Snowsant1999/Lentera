@@ -63,6 +63,9 @@ class MahasiswaSettings {
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
         namaLengkap: String = "Budi Santoso",
+        nim: String = "2024010001",
+        kampusProdi: String = "Universitas Lentera - Teknik Informatika",
+        statusAkun: String = "Mahasiswa aktif",
         onNavigateToDataDiri: () -> Unit = {},
         onNavigateToDokumen: () -> Unit = {},
         onNavigateToNotifikasi: () -> Unit = {},
@@ -140,7 +143,7 @@ class MahasiswaSettings {
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "NIM 2023110045",
+                        text = "NIM $nim",
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
@@ -150,7 +153,7 @@ class MahasiswaSettings {
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Universitas Contoh - Teknik Informatika",
+                        text = kampusProdi,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
@@ -168,7 +171,7 @@ class MahasiswaSettings {
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "Mahasiswa aktif",
+                            text = statusAkun,
                             fontFamily = PlusJakartaSans,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,

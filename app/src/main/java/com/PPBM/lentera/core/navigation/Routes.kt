@@ -17,8 +17,10 @@ object Routes {
     const val UPLOAD_BUKTI = "upload_bukti"
     const val TINJAU_LAPORAN = "tinjau_laporan"
     const val LAPORAN_TERKIRIM = "laporan_terkirim"
+    const val LAPORAN_TERKIRIM_ROUTE = "laporan_terkirim?ref={ref}"
     const val DETAIL_LAPORAN = "detail_laporan"
     const val DETAIL_LAPORAN_TRACKING = "detail_laporan_tracking"
+    const val DETAIL_LAPORAN_TRACKING_ROUTE = "detail_laporan_tracking?id={id}"
     const val DETAIL_LAPORAN_LENGKAP = "detail_laporan" // Alias untuk DETAIL_LAPORAN
     const val LENGKAPI_INFORMASI = "lengkapi_informasi"
     const val DOKUMENTASI = "dokumentasi"
@@ -26,6 +28,14 @@ object Routes {
     const val HASIL_PENANGANAN = "hasil_penanganan"
     const val RIWAYAT_LAPORAN = "riwayat_laporan"
     
+    // Mahasiswa Profil & Settings Routes
+    const val MAHASISWA_PROFIL = "mahasiswa_profil"
+    const val MAHASISWA_DATA_DIRI = "mahasiswa_data_diri"
+    const val MAHASISWA_DOKUMEN_SAYA = "mahasiswa_dokumen_saya"
+    const val MAHASISWA_NOTIFIKASI = "mahasiswa_notifikasi"
+    const val MAHASISWA_BANTUAN = "mahasiswa_bantuan"
+    const val MAHASISWA_TENTANG = "mahasiswa_tentang"
+
     // Magang Hub Routes
     const val MAGANG = "magang"
     const val LOWONGAN_MAGANG = "lowongan_magang"
@@ -42,4 +52,8 @@ object Routes {
     // Helper untuk route dengan argumen
     fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"
     fun resetPassword(email: String) = "reset_password/$email"
+    fun laporanTerkirim(nomorReferensi: String) = "laporan_terkirim?ref=$nomorReferensi"
+    fun detailLaporanTracking(id: String) = "detail_laporan_tracking?id=$id"
+    fun detailMagang(id: String) = "detail_magang?id=$id"
+    fun statusLamaran(id: String) = "status_lamaran?id=$id"
 }

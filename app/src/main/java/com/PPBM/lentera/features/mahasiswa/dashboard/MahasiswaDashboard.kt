@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import android.net.Uri
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
+import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -67,6 +69,13 @@ class MahasiswaDashboard {
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
         userName: String = "Budi Santoso",
+        totalLaporan: Int = 0,
+        laporanDiperiksa: Int = 0,
+        laporanSelesai: Int = 0,
+        totalLamaran: Int = 0,
+        lamaranStatusText: String = "Tidak ada update",
+        aktivitasList: List<LaporanSaya> = emptyList(),
+        lowonganList: List<LowonganTerbit> = emptyList(),
         onNotificationClick: () -> Unit = {},
         onTabSelected: (LenteraTab) -> Unit = {},
         onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
@@ -236,7 +245,7 @@ class MahasiswaDashboard {
                                 )
                             )
                             Text(
-                                text = "3 LAPORAN",
+                                text = "$totalLaporan LAPORAN",
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
@@ -246,7 +255,7 @@ class MahasiswaDashboard {
                                 )
                             )
                             Text(
-                                text = "1 Diperiksa\n2 Selesai",
+                                text = "$laporanDiperiksa Diperiksa\n$laporanSelesai Selesai",
                                 minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
@@ -290,7 +299,7 @@ class MahasiswaDashboard {
                                 )
                             )
                             Text(
-                                text = "0 LAPORAN",
+                                text = "$totalLamaran LAMARAN",
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
@@ -300,7 +309,7 @@ class MahasiswaDashboard {
                                 )
                             )
                             Text(
-                                text = "Tidak ada Update!",
+                                text = lamaranStatusText,
                                 minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
@@ -358,35 +367,33 @@ class MahasiswaDashboard {
                             )
                         }
 
-                        // Item 1: Keracunan Makanan (Diperiksa)
-                        AktivitasItem(
-                            title = "Keracunan Makanan",
-                            date = "12 Okt 2026",
-                            status = "Diperiksa",
-                            statusBg = LenteraYellowBg,
-                            statusColor = LenteraNavy,
-                            onClick = { onAktivitasItemClick("Keracunan Makanan") }
-                        )
-
-                        // Item 2: Pintu Mau Roboh (Selesai)
-                        AktivitasItem(
-                            title = "Pintu Mau Roboh",
-                            date = "10 Okt 2026",
-                            status = "Selesai",
-                            statusBg = LenteraGreenBg,
-                            statusColor = LenteraGreen,
-                            onClick = { onAktivitasItemClick("Pintu Mau Roboh") }
-                        )
-
-                        // Item 3: Pelecehan Verbal (Selesai)
-                        AktivitasItem(
-                            title = "Pelecehan Verbal",
-                            date = "08 Okt 2026",
-                            status = "Selesai",
-                            statusBg = LenteraGreenBg,
-                            statusColor = LenteraGreen,
-                            onClick = { onAktivitasItemClick("Pelecehan Verbal") }
-                        )
+                        if (aktivitasList.isEmpty()) {
+                            Text(
+                                text = "Belum ada aktivitas laporan.",
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    fontFamily = PlusJakartaSans,
+                                    color = LenteraTextSecondary
+                                ),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        } else {
+                            aktivitasList.forEach { item ->
+                                val (statusBg, statusColor) = when (item.status) {
+                                    "selesai" -> Pair(LenteraGreenBg, LenteraGreen)
+                                    "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
+                                    else -> Pair(LenteraYellowBg, LenteraNavy)
+                                }
+                                AktivitasItem(
+                                    title = item.judul,
+                                    date = item.tanggalKejadian,
+                                    status = item.status.replaceFirstChar { it.uppercase() },
+                                    statusBg = statusBg,
+                                    statusColor = statusColor,
+                                    onClick = { onAktivitasItemClick(item.id) }
+                                )
+                            }
+                        }
                     }
 
                     // --- KARTU 4: REKOMENDASI MAGANG ---
@@ -427,21 +434,21 @@ class MahasiswaDashboard {
                                 .fillMaxWidth()
                                 .horizontalScroll(rememberScrollState())
                         ) {
-                            MagangCard(
-                                title = "UI/UX DESIGN",
-                                company = "PT. Maju Mundur",
-                                location = "Bontang"
-                            )
-                            MagangCard(
-                                title = "WEB DEV",
-                                company = "PT. Bismillah Berkah",
-                                location = "Bontang"
-                            )
-                            MagangCard(
-                                title = "UI/UX DESIGN",
-                                company = "PT. Maju Mundur",
-                                location = "Bontang"
-                            )
+                            if (lowonganList.isEmpty()) {
+                                MagangCard(
+                                    title = "EXPLORE MAGANG",
+                                    company = "Mitra Kampus",
+                                    location = "Indonesia"
+                                )
+                            } else {
+                                lowonganList.forEach { lowongan ->
+                                    MagangCard(
+                                        title = lowongan.posisi.uppercase(),
+                                        company = lowongan.namaPerusahaan,
+                                        location = lowongan.kota
+                                    )
+                                }
+                            }
                         }
                     }
 
