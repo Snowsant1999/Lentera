@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ fun ProfilAdminScreen(
     versi: String = "1.0.0",
     menu: List<MenuProfilItem> = SampleMenuProfil,
     onMenuClick: (MenuProfilItem) -> Unit = {},
+    onAvatarClick: () -> Unit = {},
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -73,7 +75,12 @@ fun ProfilAdminScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(30.dp))
-            RingkasanProfil(nama = nama, peran = peran, badge = badge)
+            RingkasanProfil(
+                nama = nama,
+                peran = peran,
+                badge = badge,
+                onAvatarClick = onAvatarClick
+            )
             Spacer(modifier = Modifier.height(24.dp))
             MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
             Spacer(modifier = Modifier.height(14.dp))
@@ -93,10 +100,16 @@ fun ProfilAdminScreen(
 private fun RingkasanProfil(
     nama: String,
     peran: String,
-    badge: String
+    badge: String,
+    onAvatarClick: () -> Unit = {}
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        ProfileAvatar(size = 100.dp)
+        ProfileAvatar(
+            size = 100.dp,
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(onClick = onAvatarClick)
+        )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = nama,

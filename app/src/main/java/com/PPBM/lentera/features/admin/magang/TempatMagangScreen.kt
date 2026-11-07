@@ -63,8 +63,7 @@ fun TempatMagangScreen(
         topBar = {
             AdminMagangHeader(
                 title = "TEMPAT MAGANG",
-                subtitle = "LENTERA · Admin Kampus",
-                onBackClick = onBack
+                subtitle = "LENTERA · Admin Kampus"
             )
         },
         bottomBar = {
@@ -205,46 +204,61 @@ fun TempatMagangScreen(
                 }
             }
 
-            // 6. List Card 1: PT. Cahaya Digital (Draf)
-            item {
-                TempatMagangItemCard(
-                    iconRes = R.drawable.ic_building_2,
-                    name = "PT. Cahaya Digital",
-                    category = "Bontang · Teknologi",
-                    badgeText = "Draf",
-                    badgeBg = MagangCreamBox,
-                    badgeColor = MagangNavyDark,
-                    infoText = "2 dokumen · 16 Okt",
-                    onClick = onNavigateToDetailTempat
-                )
+            val places = listOf(
+                Triple("PT. Cahaya Digital", "Bontang · Teknologi", "Draf") to ("2 dokumen · 16 Okt" to R.drawable.ic_building_2),
+                Triple("PT. Maju Mundur", "Bontang · Desain & Bisnis", "Aktif") to ("2 lowongan terbit" to R.drawable.ic_avatar_2),
+                Triple("PT. Bismillah Berkah", "Bontang · Teknologi", "Aktif") to ("1 lowongan terbit" to R.drawable.ic_avatar_2)
+            )
+
+            val filteredPlaces = places.filter { (data, _) ->
+                val (name, cat, status) = data
+                val matchesSearch = searchQuery.isBlank() ||
+                        name.contains(searchQuery, ignoreCase = true) ||
+                        cat.contains(searchQuery, ignoreCase = true)
+                val matchesChip = when (selectedFilterIndex) {
+                    0 -> true // Semua 12
+                    1 -> status.equals("Aktif", ignoreCase = true) // Aktif 9
+                    2 -> status.equals("Draf", ignoreCase = true) // Draf 2
+                    3 -> status.equals("Arsip", ignoreCase = true) // Arsip 1
+                    else -> true
+                }
+                matchesSearch && matchesChip
             }
 
-            // 7. List Card 2: PT. Maju Mundur (Aktif)
-            item {
-                TempatMagangItemCard(
-                    iconRes = R.drawable.ic_avatar_2,
-                    name = "PT. Maju Mundur",
-                    category = "Bontang · Desain & Bisnis",
-                    badgeText = "Aktif",
-                    badgeBg = MagangActiveGreenBg,
-                    badgeColor = MagangActiveGreenText,
-                    infoText = "2 lowongan terbit",
-                    onClick = onNavigateToDetailTempat
-                )
-            }
-
-            // 8. List Card 3: PT. Bismillah Berkah (Aktif)
-            item {
-                TempatMagangItemCard(
-                    iconRes = R.drawable.ic_avatar_2,
-                    name = "PT. Bismillah Berkah",
-                    category = "Bontang · Teknologi",
-                    badgeText = "Aktif",
-                    badgeBg = MagangActiveGreenBg,
-                    badgeColor = MagangActiveGreenText,
-                    infoText = "1 lowongan terbit",
-                    onClick = onNavigateToDetailTempat
-                )
+            if (filteredPlaces.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Text(
+                            text = "Tidak ada tempat magang yang cocok dengan pencarian atau filter.",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = MagangTextSecondary
+                            ),
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            } else {
+                items(filteredPlaces.size) { index ->
+                    val (data, extra) = filteredPlaces[index]
+                    val (name, category, badgeText) = data
+                    val (infoText, iconRes) = extra
+                    TempatMagangItemCard(
+                        iconRes = iconRes,
+                        name = name,
+                        category = category,
+                        badgeText = badgeText,
+                        badgeBg = if (badgeText == "Aktif") MagangActiveGreenBg else MagangCreamBox,
+                        badgeColor = if (badgeText == "Aktif") MagangActiveGreenText else MagangNavyDark,
+                        infoText = infoText,
+                        onClick = onNavigateToDetailTempat
+                    )
+                }
             }
 
             // 9. Aktivitas Portal Card

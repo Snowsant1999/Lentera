@@ -82,7 +82,7 @@ enum class AdminMagangRoute {
 fun AdminMagangHeader(
     title: String,
     subtitle: String = "LENTERA · Admin Kampus",
-    onBackClick: () -> Unit = {}
+    onBackClick: (() -> Unit)? = null
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -92,15 +92,17 @@ fun AdminMagangHeader(
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_back_button),
-            contentDescription = "Kembali",
-            modifier = Modifier
-                .size(44.dp)
-                .clickable(onClick = onBackClick)
-        )
+        if (onBackClick != null) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_back_button),
+                contentDescription = "Kembali",
+                modifier = Modifier
+                    .size(44.dp)
+                    .clickable(onClick = onBackClick)
+            )
 
-        Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+        }
 
         Column {
             Text(

@@ -1,4 +1,4 @@
-﻿package com.PPBM.lentera
+package com.PPBM.lentera
 
 import android.net.Uri
 import android.os.Bundle
@@ -76,8 +76,12 @@ import com.PPBM.lentera.features.admin.magang.TempatMagangScreen
 import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
 import com.PPBM.lentera.features.admin.profil.BantuanAdminScreen
 import com.PPBM.lentera.features.admin.profil.DataAkunAdminScreen
+import com.PPBM.lentera.features.admin.profil.EmailPemulihanScreen
+import com.PPBM.lentera.features.admin.profil.KeamananAkunScreen
 import com.PPBM.lentera.features.admin.profil.KonfirmasiLogoutAdminScreen
+import com.PPBM.lentera.features.admin.profil.PerangkatTerhubungScreen
 import com.PPBM.lentera.features.admin.profil.ProfilAdminScreen
+import com.PPBM.lentera.features.admin.profil.RiwayatLoginScreen
 
 enum class ScreenState {
     // Auth Flow
@@ -140,6 +144,10 @@ enum class ScreenState {
     ADMIN_MAGANG_DETAIL_LOWONGAN,
     ADMIN_PROFIL,
     ADMIN_DATA_AKUN,
+    ADMIN_KEAMANAN_AKUN,
+    ADMIN_PERANGKAT_TERHUBUNG,
+    ADMIN_RIWAYAT_LOGIN,
+    ADMIN_EMAIL_PEMULIHAN,
     ADMIN_BANTUAN,
     ADMIN_LOGOUT,
     ADMIN_NOTIFIKASI
@@ -171,6 +179,10 @@ fun LenteraApp() {
     var userProfilePhotoUri by remember { mutableStateOf<Uri?>(null) }
     var userNamaLengkap by remember { mutableStateOf("Budi Santoso") }
     var bookmarkedLowonganIds by remember { mutableStateOf(setOf<String>()) }
+    var adminNama by remember { mutableStateOf("Rina Wulandari") }
+    var adminEmail by remember { mutableStateOf("rina.wulandari@lentera.ac.id") }
+    var adminTelepon by remember { mutableStateOf("081234567890") }
+    var adminNotifikasiOrigin by remember { mutableStateOf(ScreenState.ADMIN_DASHBOARD) }
 
     val mahasiswaDashboard = remember { MahasiswaDashboard() }
     val mahasiswaSettings = remember { MahasiswaSettings() }
@@ -708,12 +720,16 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.ADMIN_DASHBOARD -> {
                 AdminDashboardScreen(
+                    userName = adminNama,
                     onNavigateToMahasiswa = { currentScreen = ScreenState.ADMIN_MAHASISWA },
                     onNavigateToSiaga = { currentScreen = ScreenState.ADMIN_SIAGA },
                     onNavigateToMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
                     onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
                     onNavigateToProfil = { currentScreen = ScreenState.ADMIN_PROFIL },
-                    onNavigateToNotifikasi = { currentScreen = ScreenState.ADMIN_NOTIFIKASI },
+                    onNavigateToNotifikasi = {
+                        adminNotifikasiOrigin = ScreenState.ADMIN_DASHBOARD
+                        currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                    },
                     onTambahMahasiswa = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
                     onTambahTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavClick = handleAdminNavClick
@@ -723,7 +739,6 @@ fun LenteraApp() {
                 AdminMahasiswaScreen(
                     onNavigateToBuatAkun = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
                     onNavigateToDetail = { currentScreen = ScreenState.ADMIN_DETAIL_AKUN_MAHASISWA },
-                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -801,20 +816,67 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_PROFIL -> {
                 ProfilAdminScreen(
+                    nama = adminNama,
                     onMenuClick = { menuItem ->
                         when (menuItem.judul) {
                             "Data Akun" -> currentScreen = ScreenState.ADMIN_DATA_AKUN
+                            "Keamanan Akun" -> currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN
                             "Bantuan Admin" -> currentScreen = ScreenState.ADMIN_BANTUAN
-                            "Notifikasi" -> currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                            "Notifikasi" -> {
+                                adminNotifikasiOrigin = ScreenState.ADMIN_PROFIL
+                                currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                            }
                         }
                     },
+                    onAvatarClick = { currentScreen = ScreenState.ADMIN_DATA_AKUN },
                     onKeluarClick = { currentScreen = ScreenState.ADMIN_LOGOUT },
                     onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_DATA_AKUN -> {
                 DataAkunAdminScreen(
+                    nama = adminNama,
+                    email = adminEmail,
+                    nomorTelepon = adminTelepon,
                     onBackClick = { currentScreen = ScreenState.ADMIN_PROFIL },
+                    onDataUpdated = { newNama, newEmail, newTelepon ->
+                        adminNama = newNama
+                        adminEmail = newEmail
+                        adminTelepon = newTelepon
+                    },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_KEAMANAN_AKUN -> {
+                KeamananAkunScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_PROFIL },
+                    onPerangkatTerhubungClick = { currentScreen = ScreenState.ADMIN_PERANGKAT_TERHUBUNG },
+                    onRiwayatLoginClick = { currentScreen = ScreenState.ADMIN_RIWAYAT_LOGIN },
+                    onEmailPemulihanClick = { currentScreen = ScreenState.ADMIN_EMAIL_PEMULIHAN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_PERANGKAT_TERHUBUNG -> {
+                PerangkatTerhubungScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_RIWAYAT_LOGIN -> {
+                RiwayatLoginScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_EMAIL_PEMULIHAN -> {
+                EmailPemulihanScreen(
+                    currentEmail = adminEmail,
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onKirimVerifikasiClick = { newEmail ->
+                        if (newEmail.isNotBlank()) {
+                            adminEmail = newEmail
+                        }
+                    },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -832,7 +894,8 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_NOTIFIKASI -> {
                 AdminNotifikasiScreen(
-                    onBackClick = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onBackClick = { currentScreen = adminNotifikasiOrigin },
+                    onAvatarClick = { currentScreen = ScreenState.ADMIN_PROFIL },
                     onNavClick = handleAdminNavClick
                 )
             }

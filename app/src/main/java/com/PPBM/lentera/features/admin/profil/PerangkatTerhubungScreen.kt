@@ -7,7 +7,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,6 +61,10 @@ fun PerangkatTerhubungScreen(
     onCabutAksesClick: (PerangkatItem) -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var deviceList by remember(otherDevices) { mutableStateOf(otherDevices) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackMessage by remember { mutableStateOf("") }
+
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
@@ -225,82 +230,114 @@ fun PerangkatTerhubungScreen(
                 )
             )
 
-            otherDevices.forEach { device ->
+            if (deviceList.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = LenteraColors.CardBackground),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "Tidak ada perangkat lain yang sedang aktif.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = LenteraColors.SlateText,
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp
+                        ),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                deviceList.forEach { device ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = LenteraColors.CardBackground),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .size(48.dp)
-                                .background(Color(0xFFE9EEF3), CircleShape),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (device.isPhone) R.drawable.bi_phone_fill else R.drawable.bi_laptop
-                                ),
-                                contentDescription = null,
-                                tint = LenteraColors.NavyPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = device.nama,
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = LenteraColors.NavyPrimary,
-                                    fontFamily = PlusJakartaSans,
-                                    fontSize = 15.sp
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(Color(0xFFE9EEF3), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (device.isPhone) R.drawable.bi_phone_fill else R.drawable.bi_laptop
+                                    ),
+                                    contentDescription = null,
+                                    tint = LenteraColors.NavyPrimary,
+                                    modifier = Modifier.size(24.dp)
                                 )
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = device.lokasi,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = LenteraColors.SlateText,
-                                    fontFamily = PlusJakartaSans,
-                                    fontSize = 13.sp
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = device.nama,
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = LenteraColors.NavyPrimary,
+                                        fontFamily = PlusJakartaSans,
+                                        fontSize = 15.sp
+                                    )
                                 )
-                            )
-                            if (device.statusText != null) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = device.statusText,
+                                    text = device.lokasi,
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = LenteraColors.SlateText,
                                         fontFamily = PlusJakartaSans,
-                                        fontSize = 12.sp
+                                        fontSize = 13.sp
                                     )
                                 )
+                                if (device.statusText != null) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = device.statusText,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = LenteraColors.SlateText,
+                                            fontFamily = PlusJakartaSans,
+                                            fontSize = 12.sp
+                                        )
+                                    )
+                                }
                             }
-                        }
-                        IconButton(
-                            onClick = { onCabutAksesClick(device) },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.akar_icons_sign_out),
-                                contentDescription = "Cabut Akses",
-                                tint = Color(0xFFEF4444),
-                                modifier = Modifier.size(24.dp)
-                            )
+                            IconButton(
+                                onClick = {
+                                    deviceList = deviceList.filter { it.id != device.id }
+                                    feedbackMessage = "Akses login untuk ${device.nama} (${device.lokasi}) berhasil dicabut."
+                                    showFeedbackDialog = true
+                                    onCabutAksesClick(device)
+                                },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.akar_icons_sign_out),
+                                    contentDescription = "Cabut Akses",
+                                    tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = true,
+        title = "Akses Dicabut",
+        message = feedbackMessage,
+        onDismiss = { showFeedbackDialog = false }
+    )
 }
 
 @Preview(showBackground = true)

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.*
 import com.PPBM.lentera.core.designsystem.theme.*
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 
 @Composable
 fun EmailPemulihanScreen(
@@ -29,6 +30,11 @@ fun EmailPemulihanScreen(
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var emailBaru by remember { mutableStateOf("") }
+    var activeEmail by remember(currentEmail) { mutableStateOf(currentEmail) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var isSuccessFeedback by remember { mutableStateOf(true) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = LenteraColors.Background,
@@ -144,7 +150,7 @@ fun EmailPemulihanScreen(
                         Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = currentEmail,
+                                text = activeEmail,
                                 style = MaterialTheme.typography.titleSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = LenteraColors.NavyPrimary,
@@ -274,7 +280,23 @@ fun EmailPemulihanScreen(
 
             // Tombol Kirim Kode Verifikasi
             Button(
-                onClick = { onKirimVerifikasiClick(emailBaru) },
+                onClick = {
+                    val cleaned = emailBaru.trim()
+                    if (cleaned.isEmpty() || !cleaned.contains("@") || !cleaned.contains(".")) {
+                        isSuccessFeedback = false
+                        feedbackTitle = "Email Tidak Valid"
+                        feedbackMessage = "Silakan masukkan format alamat email yang valid untuk pemulihan."
+                        showFeedbackDialog = true
+                    } else {
+                        activeEmail = cleaned
+                        isSuccessFeedback = true
+                        feedbackTitle = "Kode Verifikasi Terkirim"
+                        feedbackMessage = "Tautan verifikasi dan instruksi konfirmasi telah dikirimkan ke $cleaned."
+                        showFeedbackDialog = true
+                        emailBaru = ""
+                        onKirimVerifikasiClick(cleaned)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -296,6 +318,14 @@ fun EmailPemulihanScreen(
             }
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = isSuccessFeedback,
+        title = feedbackTitle,
+        message = feedbackMessage,
+        onDismiss = { showFeedbackDialog = false }
+    )
 }
 
 @Preview(showBackground = true)

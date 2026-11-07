@@ -6,7 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +35,8 @@ fun DetailAkunMahasiswaScreen(
     onKembaliClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
@@ -72,7 +75,10 @@ fun DetailAkunMahasiswaScreen(
             )
             AksesAkunCard(
                 metodeAkses = metodeAkses,
-                onKirimUlangTautanClick = onKirimUlangTautanClick
+                onKirimUlangTautanClick = {
+                    showFeedbackDialog = true
+                    onKirimUlangTautanClick()
+                }
             )
             LenteraSecondaryButton(
                 text = "Kembali ke Daftar Mahasiswa",
@@ -80,6 +86,14 @@ fun DetailAkunMahasiswaScreen(
             )
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = true,
+        title = "Tautan Aktivasi Terkirim",
+        message = "Tautan aktivasi baru telah dikirimkan ke $emailKampus dan berlaku selama 24 jam.",
+        onDismiss = { showFeedbackDialog = false }
+    )
 }
 
 @Composable

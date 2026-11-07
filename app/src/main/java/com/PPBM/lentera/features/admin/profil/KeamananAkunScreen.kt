@@ -18,6 +18,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.*
 import com.PPBM.lentera.core.designsystem.theme.*
@@ -34,6 +37,13 @@ fun KeamananAkunScreen(
 ) {
     var isAutentikasi2Langkah by remember { mutableStateOf(true) }
     var isPeringatanKeamanan by remember { mutableStateOf(true) }
+    var isBiometrikAktif by remember { mutableStateOf(false) }
+
+    var showUbahKataSandiDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
+    var feedbackSuccess by remember { mutableStateOf(true) }
 
     Scaffold(
         containerColor = LenteraColors.Background,
@@ -112,7 +122,10 @@ fun KeamananAkunScreen(
                 title = "Ubah Kata Sandi",
                 subtitle = "Terakhir diubah 2 bulan lalu",
                 iconRes = R.drawable.ic_lock_keyhole,
-                onClick = onUbahKataSandiClick
+                onClick = {
+                    showUbahKataSandiDialog = true
+                    onUbahKataSandiClick()
+                }
             )
 
             KeamananMenuSwitchItem(
@@ -120,7 +133,13 @@ fun KeamananAkunScreen(
                 subtitle = "Tingkatkan Keamanan Login",
                 iconRes = R.drawable.ic_shield,
                 checked = isAutentikasi2Langkah,
-                onCheckedChange = { isAutentikasi2Langkah = it }
+                onCheckedChange = {
+                    isAutentikasi2Langkah = it
+                    feedbackSuccess = true
+                    feedbackTitle = if (it) "2FA Diaktifkan" else "2FA Dinonaktifkan"
+                    feedbackMessage = if (it) "Autentikasi 2 Langkah aktif untuk pengamanan login admin." else "Autentikasi 2 Langkah dinonaktifkan."
+                    showFeedbackDialog = true
+                }
             )
 
             KeamananMenuItem(
@@ -160,9 +179,16 @@ fun KeamananAkunScreen(
 
             KeamananMenuItem(
                 title = "Kunci Biometrik",
-                subtitle = "Gunakan Sidik Jari",
+                subtitle = if (isBiometrikAktif) "Aktif (Sidik Jari / Face ID)" else "Gunakan Sidik Jari",
                 iconRes = R.drawable.fa7_solid_fingerprint,
-                onClick = onKunciBiometrikClick
+                onClick = {
+                    isBiometrikAktif = !isBiometrikAktif
+                    feedbackSuccess = true
+                    feedbackTitle = if (isBiometrikAktif) "Kunci Biometrik Aktif" else "Kunci Biometrik Nonaktif"
+                    feedbackMessage = if (isBiometrikAktif) "Autentikasi biometrik berhasil diaktifkan untuk akun ini." else "Kunci biometrik dinonaktifkan."
+                    showFeedbackDialog = true
+                    onKunciBiometrikClick()
+                }
             )
 
             KeamananMenuSwitchItem(
@@ -170,8 +196,185 @@ fun KeamananAkunScreen(
                 subtitle = "Notifikasi Login Mencurigakan",
                 iconRes = R.drawable.ic_shield_alert,
                 checked = isPeringatanKeamanan,
-                onCheckedChange = { isPeringatanKeamanan = it }
+                onCheckedChange = {
+                    isPeringatanKeamanan = it
+                    feedbackSuccess = true
+                    feedbackTitle = if (it) "Peringatan Aktif" else "Peringatan Dinonaktifkan"
+                    feedbackMessage = if (it) "Notifikasi akan dikirimkan saat ada login dari perangkat baru." else "Peringatan keamanan dinonaktifkan."
+                    showFeedbackDialog = true
+                }
             )
+        }
+    }
+
+    if (showUbahKataSandiDialog) {
+        UbahKataSandiDialog(
+            onDismiss = { showUbahKataSandiDialog = false },
+            onSaveSuccess = {
+                showUbahKataSandiDialog = false
+                feedbackSuccess = true
+                feedbackTitle = "Kata Sandi Diperbarui"
+                feedbackMessage = "Kata sandi akun admin berhasil diperbarui dengan aman."
+                showFeedbackDialog = true
+            }
+        )
+    }
+
+    LenteraFeedbackDialog(
+        show = showFeedbackDialog,
+        isSuccess = feedbackSuccess,
+        title = feedbackTitle,
+        message = feedbackMessage,
+        onDismiss = { showFeedbackDialog = false }
+    )
+}
+
+@Composable
+private fun UbahKataSandiDialog(
+    onDismiss: () -> Unit,
+    onSaveSuccess: () -> Unit
+) {
+    var kataSandiLama by remember { mutableStateOf("") }
+    var kataSandiBaru by remember { mutableStateOf("") }
+    var konfirmasiSandi by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Ubah Kata Sandi",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = PlusJakartaSans,
+                color = LenteraColors.NavyPrimary
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Kata Sandi Saat Ini",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = PlusJakartaSans,
+                    color = LenteraColors.SlateText
+                )
+                OutlinedTextField(
+                    value = kataSandiLama,
+                    onValueChange = { kataSandiLama = it; errorMessage = null },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Kata Sandi Baru",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = PlusJakartaSans,
+                    color = LenteraColors.SlateText
+                )
+                OutlinedTextField(
+                    value = kataSandiBaru,
+                    onValueChange = { kataSandiBaru = it; errorMessage = null },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Konfirmasi Kata Sandi Baru",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = PlusJakartaSans,
+                    color = LenteraColors.SlateText
+                )
+                OutlinedTextField(
+                    value = konfirmasiSandi,
+                    onValueChange = { konfirmasiSandi = it; errorMessage = null },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = LenteraColors.Rose,
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(46.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraColors.Background,
+                        contentColor = LenteraColors.NavyDark
+                    )
+                ) {
+                    Text(
+                        text = "Batal",
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = PlusJakartaSans
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        if (kataSandiLama.trim().isEmpty()) {
+                            errorMessage = "Kata sandi saat ini harus diisi."
+                            return@Button
+                        }
+                        if (kataSandiBaru.trim().length < 8) {
+                            errorMessage = "Kata sandi baru minimal 8 karakter."
+                            return@Button
+                        }
+                        if (kataSandiBaru != konfirmasiSandi) {
+                            errorMessage = "Konfirmasi kata sandi tidak cocok."
+                            return@Button
+                        }
+                        onSaveSuccess()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(46.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraColors.NavyPrimary,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Simpan",
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = PlusJakartaSans
+                    )
+                }
+            }
         }
     }
 }

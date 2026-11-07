@@ -1,7 +1,6 @@
 package com.PPBM.lentera.core.designsystem.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -9,12 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -30,8 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.LenteraNavy
+import com.PPBM.lentera.core.designsystem.theme.MagangAmberPrimary
+import com.PPBM.lentera.core.designsystem.theme.NavyDark
 import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
-import com.PPBM.lentera.core.designsystem.theme.SlateGray
+import com.PPBM.lentera.core.designsystem.theme.SiagaNavBg
+import com.PPBM.lentera.core.designsystem.theme.SiagaNavUnselected
+import com.PPBM.lentera.core.designsystem.theme.SiagaTealPrimary
 
 @Composable
 fun AdminBottomBar(
@@ -42,14 +45,12 @@ fun AdminBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
-            .border(width = 1.dp, color = Color(0xFFE2E8F0))
+            .background(SiagaNavBg)
             .navigationBarsPadding()
-            .padding(horizontal = 6.dp, vertical = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             LenteraNavItem.entries.forEach { item ->
@@ -62,82 +63,103 @@ fun AdminBottomBar(
                     LenteraNavItem.PROFIL -> "Profil"
                 }
                 val iconRes = when (item) {
-                    LenteraNavItem.BERANDA -> R.drawable.ic_nav_beranda
+                    LenteraNavItem.BERANDA -> R.drawable.ic_house
                     LenteraNavItem.MAHASISWA -> R.drawable.ic_nav_mahasiswa
-                    LenteraNavItem.LAPORAN -> R.drawable.ic_nav_laporan
-                    LenteraNavItem.MAGANG -> R.drawable.ic_nav_magang
-                    LenteraNavItem.PROFIL -> R.drawable.ic_nav_profil
+                    LenteraNavItem.LAPORAN -> R.drawable.ic_message_square_plus
+                    LenteraNavItem.MAGANG -> R.drawable.ic_briefcase_business
+                    LenteraNavItem.PROFIL -> R.drawable.ic_profile_circle_thin
+                }
+                val activeBgColor = when (item) {
+                    LenteraNavItem.BERANDA -> LenteraNavy
+                    LenteraNavItem.MAHASISWA -> LenteraNavy
+                    LenteraNavItem.LAPORAN -> SiagaTealPrimary
+                    LenteraNavItem.MAGANG -> MagangAmberPrimary
+                    LenteraNavItem.PROFIL -> LenteraNavy
+                }
+                val activeContentColor = when (item) {
+                    LenteraNavItem.MAGANG -> NavyDark
+                    else -> Color.White
                 }
 
                 val interactionSource = remember { MutableInteractionSource() }
 
-                if (isSelected) {
-                    // Pill Aktif Admin
-                    Box(
-                        modifier = Modifier
-                            .height(52.dp)
-                            .width(76.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(LenteraNavy)
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                                onClick = { onItemClick(item) }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp)
+                        .padding(horizontal = 2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        // Pill Aktif Admin (desain & ukuran harmonis dengan Mahasiswa)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(activeBgColor)
+                                .clickable(
+                                    interactionSource = interactionSource,
+                                    indication = null,
+                                    onClick = { onItemClick(item) }
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = label,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = label,
-                                fontFamily = PlusJakartaSans,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                                color = Color.White
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = label,
+                                    tint = activeContentColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = label,
+                                    fontFamily = PlusJakartaSans,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    color = activeContentColor,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
-                    }
-                } else {
-                    // Tab Tidak Aktif Admin
-                    Box(
-                        modifier = Modifier
-                            .height(52.dp)
-                            .width(58.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                                onClick = { onItemClick(item) }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                    } else {
+                        // Tab Tidak Aktif Admin (fleksibel dan proporsional)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(
+                                    interactionSource = interactionSource,
+                                    indication = null,
+                                    onClick = { onItemClick(item) }
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = label,
-                                tint = SlateGray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = label,
-                                fontFamily = PlusJakartaSans,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 10.sp,
-                                color = SlateGray
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = label,
+                                    tint = SiagaNavUnselected,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = label,
+                                    fontFamily = PlusJakartaSans,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 10.sp,
+                                    color = SiagaNavUnselected,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
                 }

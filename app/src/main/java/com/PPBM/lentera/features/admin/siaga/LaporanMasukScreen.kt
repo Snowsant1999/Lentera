@@ -69,8 +69,7 @@ fun LaporanMasukScreen(
         // 1. Header
         AdminSiagaHeader(
             title = "LAPORAN MASUK",
-            subtitle = "LENTERA · Admin Kampus",
-            onBackClick = onBack
+            subtitle = "LENTERA · Admin Kampus"
         )
 
         // 2. Konten Scrollable
@@ -193,8 +192,42 @@ fun LaporanMasukScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            val filteredLaporan = daftarLaporan.filter { laporan ->
+                val matchesSearch = searchQuery.isBlank() ||
+                        laporan.id.contains(searchQuery, ignoreCase = true) ||
+                        laporan.judul.contains(searchQuery, ignoreCase = true)
+                val matchesFilter = when {
+                    selectedFilter.startsWith("Semua") -> true
+                    selectedFilter.startsWith("Baru") -> laporan.status.equals("Baru", ignoreCase = true)
+                    selectedFilter.startsWith("Proses") -> laporan.status in listOf("Diperiksa", "Penanganan", "Proses")
+                    selectedFilter.startsWith("Selesai") -> laporan.status.equals("Selesai", ignoreCase = true)
+                    else -> true
+                }
+                matchesSearch && matchesFilter
+            }
+
             // Kartu-kartu Laporan
-            daftarLaporan.forEach { laporan ->
+            if (filteredLaporan.isEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = "Tidak ada laporan yang sesuai dengan pencarian.",
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            fontFamily = PlusJakartaFont,
+                            color = SiagaTextSecondary
+                        ),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+            filteredLaporan.forEach { laporan ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()

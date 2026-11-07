@@ -33,6 +33,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun AdminDashboardScreen(
+    userName: String = "Rina Wulandari",
     onNavigateToMahasiswa: () -> Unit = {},
     onNavigateToSiaga: () -> Unit = {},
     onNavigateToMagang: () -> Unit = {},
@@ -61,6 +62,7 @@ fun AdminDashboardScreen(
             // 1. Header Profil Biru Lengkung Konsisten dengan Mahasiswa Dashboard
             item {
                 HeaderAdmin(
+                    userName = userName,
                     onProfileClick = onNavigateToProfil,
                     onNotificationClick = onNavigateToNotifikasi
                 )
