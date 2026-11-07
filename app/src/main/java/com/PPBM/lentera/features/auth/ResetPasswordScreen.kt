@@ -48,7 +48,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 @Composable
 fun ResetPasswordScreen(
     onBackToVerifikasi: () -> Unit = {},
-    onPasswordSaved: () -> Unit = {},
+    onPasswordSaved: (String) -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
@@ -70,7 +70,7 @@ fun ResetPasswordScreen(
             return
         }
         errorMessage = null
-        onPasswordSaved()
+        onPasswordSaved(newPassword)
     }
 
     Column(

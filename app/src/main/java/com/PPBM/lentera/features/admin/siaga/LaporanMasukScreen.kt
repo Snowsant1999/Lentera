@@ -47,19 +47,24 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun LaporanMasukScreen(
+    laporanList: List<AdminLaporanItem> = emptyList(),
     onNavigateToDetail: (String) -> Unit = {},
     onBack: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("Semua 24") }
+    var selectedFilter by remember { mutableStateOf("Semua") }
 
-    val daftarLaporan = listOf(
-        AdminLaporanItem("LTR-2026-00126", "Lampu Koridor Padam", "17 Okt 2026 · 08:15 WITA · Identitas terbatas", "Baru", Color(0xFFFEF3C7), Color(0xFFB45309)),
-        AdminLaporanItem("LTR-2026-00123", "Pelecehan Verbal", "15 Okt 2026 · 15:00 WITA · Anonim", "Diperiksa", Color(0xFFFFEDD5), Color(0xFFC2410C)),
-        AdminLaporanItem("LTR-2026-00122", "Keracunan Makanan", "12 Okt 2026 · 13:20 WITA · Identitas terbatas", "Penanganan", Color(0xFFFFE4E6), Color(0xFFE11D48)),
-        AdminLaporanItem("LTR-2026-00120", "Pintu Mau Roboh", "10 Okt 2026 · 09:10 WITA · Identitas terbatas", "Selesai", Color(0xFFE8F4F1), Color(0xFF2F7078))
-    )
+    val daftarLaporan = if (laporanList.isNotEmpty()) {
+        laporanList
+    } else {
+        listOf(
+            AdminLaporanItem("LTR-2026-00126", "Lampu Koridor Padam", "17 Okt 2026 · 08:15 WITA · Identitas terbatas", "Baru", Color(0xFFFEF3C7), Color(0xFFB45309)),
+            AdminLaporanItem("LTR-2026-00123", "Pelecehan Verbal", "15 Okt 2026 · 15:00 WITA · Anonim", "Diperiksa", Color(0xFFFFEDD5), Color(0xFFC2410C)),
+            AdminLaporanItem("LTR-2026-00122", "Keracunan Makanan", "12 Okt 2026 · 13:20 WITA · Identitas terbatas", "Penanganan", Color(0xFFFFE4E6), Color(0xFFE11D48)),
+            AdminLaporanItem("LTR-2026-00120", "Pintu Mau Roboh", "10 Okt 2026 · 09:10 WITA · Identitas terbatas", "Selesai", Color(0xFFE8F4F1), Color(0xFF2F7078))
+        )
+    }
 
     Column(
         modifier = Modifier

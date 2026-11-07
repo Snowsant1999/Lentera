@@ -22,6 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
  */
 @Composable
 fun AdminSiagaFlowScreen(
+    laporanList: List<AdminLaporanItem> = emptyList(),
+    onSelectLaporanId: (String) -> Unit = {},
     onBackToDashboard: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -38,7 +40,11 @@ fun AdminSiagaFlowScreen(
     when (currentScreen) {
         AdminSiagaRoute.LAPORAN_MASUK -> {
             LaporanMasukScreen(
-                onNavigateToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
+                laporanList = laporanList,
+                onNavigateToDetail = { lapId ->
+                    onSelectLaporanId(lapId)
+                    currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                },
                 onBack = onBackToDashboard,
                 onNavClick = handleNavClick
             )

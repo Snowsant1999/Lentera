@@ -69,6 +69,7 @@ fun LenteraNavGraph(navController: NavHostController) {
     val magangState by magangViewModel.uiState.collectAsState()
     val adminViewModel: AdminViewModel = viewModel()
     val adminState by adminViewModel.uiState.collectAsState()
+    val loginViewModel: LoginViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -137,7 +138,9 @@ fun LenteraNavGraph(navController: NavHostController) {
             LupaPasswordScreen(
                 onBackToLogin = { navController.popBackStack() },
                 onSendReset = { email ->
-                    navController.navigate(Routes.verifikasiPemulihan(email))
+                    loginViewModel.requestPasswordReset(email) {
+                        navController.navigate(Routes.verifikasiPemulihan(email))
+                    }
                 }
             )
         }
@@ -151,10 +154,15 @@ fun LenteraNavGraph(navController: NavHostController) {
             VerifikasiPemulihanScreen(
                 email = email,
                 onBackToLupaPassword = { navController.popBackStack() },
-                onVerified = {
-                    navController.navigate(Routes.resetPassword(email)) {
-                        popUpTo(Routes.LUPA_PASSWORD) { inclusive = true }
+                onVerified = { token ->
+                    loginViewModel.verifyRecoveryOtp(email, token) {
+                        navController.navigate(Routes.resetPassword(email)) {
+                            popUpTo(Routes.LUPA_PASSWORD) { inclusive = true }
+                        }
                     }
+                },
+                onResendOtp = {
+                    loginViewModel.requestPasswordReset(email)
                 },
                 onChangeEmail = {
                     navController.popBackStack()
@@ -174,9 +182,11 @@ fun LenteraNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             ResetPasswordScreen(
                 onBackToVerifikasi = { navController.popBackStack() },
-                onPasswordSaved = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
+                onPasswordSaved = { newPassword ->
+                    loginViewModel.updatePassword(newPassword) {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
                     }
                 },
                 onBackToLogin = {
@@ -574,7 +584,29 @@ fun LenteraNavGraph(navController: NavHostController) {
                 adminViewModel.loadSemuaLaporan()
             }
 
+            val laporanAdminItems = adminState.semuaLaporanList.map { lap ->
+                val (bgCol, txtCol) = when (lap.status.lowercase()) {
+                    "baru" -> Pair(Color(0xFFFEF3C7), Color(0xFFB45309))
+                    "penanganan", "investigasi" -> Pair(Color(0xFFFFE4E6), Color(0xFFE11D48))
+                    "selesai" -> Pair(Color(0xFFE8F4F1), Color(0xFF2F7078))
+                    "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
+                    else -> Pair(Color(0xFFFFEDD5), Color(0xFFC2410C))
+                }
+                AdminLaporanItem(
+                    id = lap.nomorLaporan,
+                    judul = lap.judul,
+                    tanggal = "${lap.tanggalKejadian} · ${if (lap.isAnonim) "Anonim" else "Terverifikasi"}",
+                    status = lap.status.replaceFirstChar { it.uppercase() },
+                    statusBgColor = bgCol,
+                    statusTextColor = txtCol
+                )
+            }
+
             AdminSiagaFlowScreen(
+                laporanList = laporanAdminItems,
+                onSelectLaporanId = { nomorOrId ->
+                    adminViewModel.selectLaporan(nomorOrId)
+                },
                 onBackToDashboard = { navController.navigate(Routes.ADMIN_DASHBOARD) },
                 onNavClick = { item ->
                     when (item) {
@@ -742,6 +774,27 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Tambah Tempat Magang
         composable(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) {
             TambahTempatMagangScreen(
+                onSimpanSuccess = { navController.popBackStack() },
+                onSimpanTempatMagang = { nama, bidang, cabang, desk, alamat, kota, prov, sk, kontak, email, telp, web, onSuccess ->
+                    val entity = com.PPBM.lentera.backend.admin.model.TempatMagangEntity(
+                        namaPerusahaan = nama,
+                        bidangUsaha = bidang,
+                        namaCabang = cabang,
+                        deskripsi = desk,
+                        alamatLengkap = alamat,
+                        kota = kota,
+                        provinsi = prov,
+                        sistemKerja = if (sk.contains("kantor", ignoreCase = true)) "wfo" else "hybrid",
+                        namaKontak = kontak,
+                        emailKontak = email,
+                        teleponKontak = telp,
+                        situsWeb = web,
+                        status = "aktif"
+                    )
+                    adminViewModel.tambahTempatMagang(entity) {
+                        onSuccess()
+                    }
+                },
                 onBackToTempatMagang = { navController.popBackStack() },
                 onNavClick = { item ->
                     when (item) {
@@ -815,8 +868,28 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Form Tambah / Edit Lowongan
         composable(Routes.ADMIN_FORM_LOWONGAN) {
+            val tempatId = adminState.tempatMagangList.firstOrNull()?.id ?: "00000000-0000-0000-0000-000000000000"
             FormLowonganScreen(
                 onBackToDaftarLowongan = { navController.popBackStack() },
+                onNavigateToPublikasiLowongan = { navController.popBackStack() },
+                onSubmitLowongan = { pos, lok, sk, desk, persy, per, bat, kuo, st, onSuccess ->
+                    val entity = com.PPBM.lentera.backend.admin.model.LowonganEntity(
+                        tempatMagangId = tempatId,
+                        posisi = pos,
+                        kategori = "Teknologi",
+                        lokasi = lok,
+                        sistemKerja = sk,
+                        deskripsiPekerjaan = desk,
+                        persyaratan = persy,
+                        periodeMagang = per,
+                        batasPendaftaran = bat,
+                        kuota = kuo,
+                        status = st
+                    )
+                    adminViewModel.tambahLowongan(entity) {
+                        onSuccess()
+                    }
+                },
                 onNavClick = { item ->
                     when (item) {
                         LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
@@ -873,10 +946,26 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Detail Validasi Berkas Lamaran
         composable(Routes.ADMIN_DETAIL_VALIDASI_LAMARAN) {
+            val lamaran = adminState.lamaranMasukList.firstOrNull()
             DetailValidasiLamaranScreen(
                 onBackClick = { navController.popBackStack() },
                 onStatusUpdated = { newStatus, newCatatan ->
-                    navController.popBackStack()
+                    lamaran?.id?.let { lamId ->
+                        val statusBackend = when (newStatus) {
+                            "Wawancara" -> "wawancara"
+                            "Diterima" -> "diterima"
+                            "Ditolak" -> "ditolak"
+                            "Perlu Perbaikan" -> "perlu_perbaikan"
+                            else -> "verifikasi_berkas"
+                        }
+                        adminViewModel.validasiLamaranMahasiswa(
+                            lamaranId = lamId,
+                            status = statusBackend,
+                            catatanAdmin = newCatatan.ifBlank { null }
+                        ) {
+                            navController.popBackStack()
+                        }
+                    } ?: navController.popBackStack()
                 },
                 onNavClick = { item ->
                     when (item) {

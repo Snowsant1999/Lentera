@@ -45,7 +45,8 @@ import kotlinx.coroutines.delay
 fun VerifikasiPemulihanScreen(
     email: String = "mahasiswa@student.ac.id",
     onBackToLupaPassword: () -> Unit = {},
-    onVerified: () -> Unit = {},
+    onVerified: (String) -> Unit = {},
+    onResendOtp: () -> Unit = {},
     onChangeEmail: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
@@ -307,7 +308,7 @@ fun VerifikasiPemulihanScreen(
                             indication = null
                         ) {
                             if (otpCode.length == 6) {
-                                onVerified()
+                                onVerified(otpCode)
                             }
                         }
                 ) {
@@ -356,6 +357,7 @@ fun VerifikasiPemulihanScreen(
                         ) {
                             timeLeftInSeconds = 300
                             timerRunning = true
+                            onResendOtp()
                         }
                     )
                 }

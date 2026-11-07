@@ -53,6 +53,21 @@ import com.PPBM.lentera.R
 @Composable
 fun TambahTempatMagangScreen(
     onSimpanSuccess: () -> Unit = {},
+    onSimpanTempatMagang: ((
+        namaPerusahaan: String,
+        bidangUsaha: String,
+        namaTempat: String,
+        deskripsi: String,
+        alamat: String,
+        kota: String,
+        provinsi: String,
+        sistemKerja: String,
+        namaKontak: String,
+        email: String,
+        telepon: String,
+        situsWeb: String?,
+        onSuccess: () -> Unit
+    ) -> Unit)? = null,
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -469,6 +484,26 @@ fun TambahTempatMagangScreen(
                             feedbackMessage = "Mohon lengkapi Nama Perusahaan dan Nama Tempat sebelum menyimpan."
                             feedbackIsSuccess = false
                             showFeedback = true
+                        } else if (onSimpanTempatMagang != null) {
+                            onSimpanTempatMagang(
+                                namaPerusahaan,
+                                bidangUsaha,
+                                namaTempat,
+                                deskripsiTempat,
+                                alamatLengkap,
+                                kota,
+                                provinsi,
+                                sistemKerja,
+                                namaKontak,
+                                emailPerusahaan,
+                                nomorTelepon,
+                                situsWeb.ifBlank { null }
+                            ) {
+                                feedbackTitle = "Tempat Magang Berhasil Disimpan"
+                                feedbackMessage = "Data mitra tempat magang $namaPerusahaan berhasil disimpan ke Supabase."
+                                feedbackIsSuccess = true
+                                showFeedback = true
+                            }
                         } else {
                             feedbackTitle = "Tempat Magang Berhasil Disimpan"
                             feedbackMessage = "Data mitra tempat magang $namaPerusahaan berhasil disimpan ke sistem."

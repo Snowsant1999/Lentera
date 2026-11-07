@@ -51,6 +51,18 @@ import com.PPBM.lentera.R
 fun FormLowonganScreen(
     onNavigateToPublikasiLowongan: () -> Unit = {},
     onSimpanLowongan: () -> Unit = {},
+    onSubmitLowongan: ((
+        posisi: String,
+        lokasi: String,
+        sistemKerja: String,
+        deskripsi: String,
+        persyaratan: String,
+        periode: String,
+        batas: String,
+        kuota: Int,
+        status: String,
+        onSuccess: () -> Unit
+    ) -> Unit)? = null,
     onBackToDaftarLowongan: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -352,6 +364,29 @@ fun FormLowonganScreen(
                                 feedbackMessage = "Mohon masukkan judul posisi lowongan sebelum menyimpan."
                                 feedbackIsSuccess = false
                                 showFeedback = true
+                            } else if (onSubmitLowongan != null) {
+                                val kuotaInt = kuota.filter { it.isDigit() }.toIntOrNull() ?: 2
+                                val sk = when {
+                                    sistemKerja.contains("kantor", ignoreCase = true) -> "wfo"
+                                    sistemKerja.contains("rumah", ignoreCase = true) -> "wfh"
+                                    else -> "hybrid"
+                                }
+                                onSubmitLowongan(
+                                    posisi,
+                                    lokasi,
+                                    sk,
+                                    deskripsiPekerjaan,
+                                    persyaratan,
+                                    periodeMagang,
+                                    batasPendaftaran,
+                                    kuotaInt,
+                                    "draf"
+                                ) {
+                                    feedbackTitle = "Lowongan Berhasil Disimpan"
+                                    feedbackMessage = "Lowongan $posisi berhasil disimpan ke Supabase sebagai draf."
+                                    feedbackIsSuccess = true
+                                    showFeedback = true
+                                }
                             } else {
                                 feedbackTitle = "Lowongan Berhasil Disimpan"
                                 feedbackMessage = "Lowongan $posisi di PT. Maju Mundur berhasil disimpan sebagai draf."
