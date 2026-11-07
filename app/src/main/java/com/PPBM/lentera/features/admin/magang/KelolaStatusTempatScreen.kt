@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,7 +46,8 @@ import com.PPBM.lentera.R
 @Composable
 fun KelolaStatusTempatScreen(
     onSimpanStatus: () -> Unit = {},
-    onBackToDetailTempat: () -> Unit = {}
+    onBackToDetailTempat: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var selectedStatus by remember { mutableStateOf("Draf") }
     var catatanAdmin by remember {
@@ -61,7 +63,7 @@ fun KelolaStatusTempatScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->

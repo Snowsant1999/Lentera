@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -31,9 +33,11 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun AdminDashboardScreen(
+    userName: String = "Rina Wulandari",
     onNavigateToMahasiswa: () -> Unit = {},
     onNavigateToSiaga: () -> Unit = {},
     onNavigateToMagang: () -> Unit = {},
+    onNavigateToLowongan: () -> Unit = onNavigateToMagang,
     onNavigateToProfil: () -> Unit = {},
     onNavigateToNotifikasi: () -> Unit = {},
     onTambahMahasiswa: () -> Unit = onNavigateToMahasiswa,
@@ -53,11 +57,12 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ScreenBackground)
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             // 1. Header Profil Biru Lengkung Konsisten dengan Mahasiswa Dashboard
             item {
                 HeaderAdmin(
+                    userName = userName,
                     onProfileClick = onNavigateToProfil,
                     onNotificationClick = onNavigateToNotifikasi
                 )
@@ -79,7 +84,7 @@ fun AdminDashboardScreen(
                         onMahasiswaClick = onNavigateToMahasiswa,
                         onSiagaClick = onNavigateToSiaga,
                         onTempatMagangClick = onNavigateToMagang,
-                        onLowonganClick = onNavigateToMagang
+                        onLowonganClick = onNavigateToLowongan
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -105,56 +110,68 @@ fun AdminDashboardScreen(
 
 @Composable
 fun HeaderAdmin(
+    userName: String = "Rina Wulandari",
+    userRole: String = "Admin Kampus · LENTERA",
     onProfileClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
 ) {
     Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+            .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
             .background(
                 brush = Brush.horizontalGradient(
                     colors = listOf(LenteraBlueDark, LenteraBlueLight)
                 )
             )
-            .padding(horizontal = 24.dp, vertical = 18.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // 1. Bagian Avatar
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
                     .clickable { onProfileClick() }
-                    .background(Color.White, CircleShape),
-                contentAlignment = Alignment.Center
+                    .background(Color.White, CircleShape)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_profile_circle_fill),
+                Image(
+                    painter = painterResource(id = R.drawable.ic_avatar_2),
                     contentDescription = "Profile",
-                    tint = NavyDark,
-                    modifier = Modifier.size(34.dp)
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // 2. Bagian Teks Sapaan
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
                 Text(
-                    text = "Halo, Rina Wulandari",
+                    text = "Halo, $userName",
                     style = TextStyle(
                         fontSize = 16.sp,
+                        lineHeight = 20.sp,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 )
                 Text(
-                    text = "Admin Kampus · LENTERA",
+                    text = userRole,
                     style = TextStyle(
                         fontSize = 12.sp,
+                        lineHeight = 15.sp,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Normal,
                         color = Color(0xFFE6F1E9)
@@ -163,12 +180,13 @@ fun HeaderAdmin(
             }
         }
 
+        // 3. Bagian Lonceng Notifikasi
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(44.dp)
+                .size(48.dp)
                 .clip(CircleShape)
-                .clickable { onNotificationClick() }
+                .clickable(onClick = onNotificationClick)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_bell_outline),
@@ -219,13 +237,17 @@ fun GridStatistik(
     onLowonganClick: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Baris 1: Mahasiswa & Lentera Siaga
+        // Baris 1: Mahasiswa & Lentera Siaga (Tinggi simetris seimbang)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 bgColor = LenteraTealBg,
                 iconId = R.drawable.ic_student_accounts,
                 iconTint = LenteraTeal,
@@ -235,7 +257,9 @@ fun GridStatistik(
                 onClick = onMahasiswaClick
             )
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 bgColor = LenteraTealBg,
                 iconId = R.drawable.ic_shield,
                 iconTint = LenteraTeal,
@@ -246,15 +270,19 @@ fun GridStatistik(
             )
         }
 
-        // Baris 2: Tempat Magang & Lowongan
+        // Baris 2: Tempat Magang & Lowongan (Tinggi simetris seimbang)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 bgColor = LenteraYellowBg,
-                iconId = R.drawable.logo_company,
+                iconId = R.drawable.ic_briefcase_business,
                 iconTint = LenteraYellow,
                 count = "12",
                 title = "TEMPAT MAGANG",
@@ -262,7 +290,9 @@ fun GridStatistik(
                 onClick = onTempatMagangClick
             )
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 bgColor = LenteraYellowBg,
                 iconId = R.drawable.ic_folder_open,
                 iconTint = LenteraYellow,
@@ -326,8 +356,10 @@ fun StatCard(
         )
         Text(
             text = subtitle,
+            minLines = 2,
             style = TextStyle(
                 fontSize = 11.sp,
+                lineHeight = 15.sp,
                 fontFamily = PlusJakartaSans,
                 fontWeight = FontWeight.Normal,
                 color = SlateGray

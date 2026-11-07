@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -44,7 +47,8 @@ import com.PPBM.lentera.R
 fun DetailLowonganScreen(
     onNavigateToPublikasiLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
-    onBackToDaftarLowongan: () -> Unit = {}
+    onBackToDaftarLowongan: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -55,7 +59,7 @@ fun DetailLowonganScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->
@@ -87,11 +91,13 @@ fun DetailLowonganScreen(
                                     .background(Color(0xFFEAF2F8)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.logo_company_mark),
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_avatar_2),
                                     contentDescription = "Logo",
-                                    tint = MagangNavyDark,
-                                    modifier = Modifier.size(26.dp)
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
                                 )
                             }
 

@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -51,7 +55,8 @@ fun DaftarLowonganScreen(
     onNavigateToTambahLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
     onNavigateToPublikasiLowongan: () -> Unit = {},
-    onBackToTempatMagang: () -> Unit = {}
+    onBackToTempatMagang: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -66,7 +71,7 @@ fun DaftarLowonganScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->
@@ -77,6 +82,53 @@ fun DaftarLowonganScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 0. Sub-tab Pills (Tempat Magang / Kelola Lowongan)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Inactive Tab: Tempat Magang
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MagangPillInactive)
+                            .clickable { onBackToTempatMagang() }
+                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "← Tempat Magang",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF475569)
+                            )
+                        )
+                    }
+
+                    // Active Tab: Kelola Lowongan
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MagangPillOrange)
+                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Kelola Lowongan",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Bold,
+                                color = MagangNavyDark
+                            )
+                        )
+                    }
+                }
+            }
+
             // 1. Primary Action Button: + Tambah Lowongan
             item {
                 Button(
@@ -156,7 +208,7 @@ fun DaftarLowonganScreen(
             // 5. Card 1: UI/UX Design (Draf)
             item {
                 LowonganItemCard(
-                    logoRes = R.drawable.logo_company_mark,
+                    logoRes = R.drawable.ic_avatar_2,
                     title = "UI/UX Design",
                     company = "PT. Maju Mundur",
                     metaText = "Periode Jan–Mar 2027 · 0 lamaran",
@@ -174,7 +226,7 @@ fun DaftarLowonganScreen(
             // 6. Card 2: Web Developer (Terbit)
             item {
                 LowonganItemCard(
-                    logoRes = R.drawable.logo_company_mark_1,
+                    logoRes = R.drawable.ic_avatar_2,
                     title = "Web Developer",
                     company = "PT. Bismillah Berkah",
                     metaText = "Bontang · 8 lamaran",
@@ -332,17 +384,19 @@ fun LowonganItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier //ini test
+                    modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(CircleShape)
                         .background(Color(0xFFEAF2F8)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painter = painterResource(id = logoRes),
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_avatar_2),
                         contentDescription = company,
-                        tint = MagangNavyDark,
-                        modifier = Modifier.size(24.dp)
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
                     )
                 }
 

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -69,11 +71,12 @@ fun MahasiswaNotifikasiScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(LenteraBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
@@ -263,11 +266,7 @@ fun MahasiswaNotifikasiScreen(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Bottom Navigation Bar
-        LenteraBottomBar(
-            currentTab = LenteraTab.BERANDA,
-            onTabSelected = onTabSelected
-        )
+
     }
 }
 

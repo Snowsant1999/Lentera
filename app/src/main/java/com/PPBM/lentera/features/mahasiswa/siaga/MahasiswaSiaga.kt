@@ -144,26 +144,16 @@ fun MahasiswaSiagaScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Header Bagian Atas dengan Gradien Lengkung
-            SiagaHeader(
-                userName = userName,
-                userRole = userRole,
-                onProfileClick = onProfileClick,
-                onNotificationClick = onNotificationClick,
-                fontFamily = plusJakarta
-            )
-
-            // 2. Konten Utama
+            // Konten Utama
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
                 // Judul Halaman
                 Text(
                     text = "LENTERA SIAGA",
@@ -283,98 +273,7 @@ fun SiagaScreen(
     )
 }
 
-// ============================================================================
-// Komponen Header
-// ============================================================================
 
-@Composable
-private fun SiagaHeader(
-    userName: String,
-    userRole: String,
-    onProfileClick: () -> Unit,
-    onNotificationClick: () -> Unit,
-    fontFamily: FontFamily
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(SiagaHeaderTealDark, SiagaHeaderTealLight)
-                )
-            )
-            .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 1. Bagian Avatar
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable { onProfileClick() }
-                    .background(Color.White, CircleShape)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                    contentDescription = "User Avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            // Nama & Peran Pengguna
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "Halo, $userName",
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = fontFamilyFallback(fontFamily),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = userRole,
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = fontFamilyFallback(fontFamily),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.White.copy(alpha = 0.82f)
-                    )
-                )
-            }
-
-            // 3. Bagian Lonceng Notifikasi
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onNotificationClick)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_bell_outline),
-                    contentDescription = "Notifikasi",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
 
 // ============================================================================
 // Komponen Banner Informasi Kerahasiaan

@@ -1,6 +1,13 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,7 +53,8 @@ import com.PPBM.lentera.R
 @Composable
 fun TambahTempatMagangScreen(
     onSimpanSuccess: () -> Unit = {},
-    onBackToTempatMagang: () -> Unit = {}
+    onBackToTempatMagang: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var namaPerusahaan by remember { mutableStateOf("PT. Sinar Karya") }
     var bidangUsaha by remember { mutableStateOf("Teknologi Informasi") }
@@ -63,6 +71,42 @@ fun TambahTempatMagangScreen(
     var nomorTelepon by remember { mutableStateOf("0812 3456 7800") }
     var situsWeb by remember { mutableStateOf("www.sinarkarya.co.id") }
 
+    var uploadedDocName by remember { mutableStateOf<String?>(null) }
+    var uploadedDocMeta by remember { mutableStateOf<String?>(null) }
+    var showFeedback by remember { mutableStateOf(false) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
+
+    val context = LocalContext.current
+    val docPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            var name = "dokumen_referensi.pdf"
+            var sizeStr = "512 KB"
+            try {
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (cursor.moveToFirst()) {
+                        if (nameIndex != -1) name = cursor.getString(nameIndex) ?: name
+                        if (sizeIndex != -1) {
+                            val bytes = cursor.getLong(sizeIndex)
+                            sizeStr = if (bytes > 1024 * 1024) String.format(java.util.Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0)) else "${bytes / 1024} KB"
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+            uploadedDocName = name
+            uploadedDocMeta = "PDF/Gambar · $sizeStr · Terunggah"
+            feedbackTitle = "Dokumen Berhasil Dipilih"
+            feedbackMessage = "Berkas $name ($sizeStr) siap disimpan sebagai dokumen referensi tempat magang."
+            feedbackIsSuccess = true
+            showFeedback = true
+        }
+    }
+
     Scaffold(
         topBar = {
             AdminMagangHeader(
@@ -72,7 +116,7 @@ fun TambahTempatMagangScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->
@@ -307,6 +351,16 @@ fun TambahTempatMagangScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
+                        if (uploadedDocName != null) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            DocumentItemBox(
+                                name = uploadedDocName!!,
+                                meta = uploadedDocMeta ?: "Terunggah"
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
                         // Unggah Dokumen Button
                         Box(
                             modifier = Modifier
@@ -314,12 +368,12 @@ fun TambahTempatMagangScreen(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color.White)
                                 .border(1.dp, MagangNavyDark, RoundedCornerShape(12.dp))
-                                .clickable { /* Unggah */ }
+                                .clickable { docPickerLauncher.launch("*/*") }
                                 .padding(vertical = 12.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Unggah Dokumen",
+                                text = if (uploadedDocName != null) "Ganti Dokumen" else "Unggah Dokumen",
                                 style = TextStyle(
                                     fontSize = 13.sp,
                                     fontFamily = PlusJakartaFont,
@@ -409,7 +463,19 @@ fun TambahTempatMagangScreen(
             // Button 1: Simpan Tempat Magang
             item {
                 Button(
-                    onClick = onSimpanSuccess,
+                    onClick = {
+                        if (namaPerusahaan.isBlank() || namaTempat.isBlank()) {
+                            feedbackTitle = "Data Belum Lengkap"
+                            feedbackMessage = "Mohon lengkapi Nama Perusahaan dan Nama Tempat sebelum menyimpan."
+                            feedbackIsSuccess = false
+                            showFeedback = true
+                        } else {
+                            feedbackTitle = "Tempat Magang Berhasil Disimpan"
+                            feedbackMessage = "Data mitra tempat magang $namaPerusahaan berhasil disimpan ke sistem."
+                            feedbackIsSuccess = true
+                            showFeedback = true
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
@@ -460,6 +526,19 @@ fun TambahTempatMagangScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
+        LenteraFeedbackDialog(
+            show = showFeedback,
+            isSuccess = feedbackIsSuccess,
+            title = feedbackTitle,
+            message = feedbackMessage,
+            onDismiss = {
+                showFeedback = false
+                if (feedbackIsSuccess) {
+                    onSimpanSuccess()
+                }
+            }
+        )
     }
 }
 

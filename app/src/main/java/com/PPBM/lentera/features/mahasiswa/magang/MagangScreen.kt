@@ -69,7 +69,7 @@ data class LowonganCardData(
     val tipe: String,
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
-    val logoDrawable: Int = R.drawable.ic_company_maju_mundur,
+    val logoDrawable: Int = R.drawable.ic_avatar_2,
     val isBookmarked: Boolean = false
 )
 
@@ -98,6 +98,7 @@ fun MagangScreen(
     onLamaranItemClick: (LamaranItemData) -> Unit = {},
     onViewAllLowonganClick: () -> Unit = {},
     onLowonganClick: (LowonganCardData) -> Unit = {},
+    bookmarkedIds: Set<String> = emptySet(),
     onBookmarkClick: (LowonganCardData) -> Unit = {},
     selectedNavTab: MagangNavTab = MagangNavTab.MAGANG_HUB,
     onNavTabClick: (MagangNavTab) -> Unit = {}
@@ -136,7 +137,7 @@ fun MagangScreen(
                 tipe = "Penuh Waktu",
                 persentaseCocok = 92,
                 batasHari = 5,
-                logoDrawable = R.drawable.ic_company_maju_mundur
+                logoDrawable = R.drawable.ic_avatar_2
             ),
             LowonganCardData(
                 id = "2",
@@ -147,7 +148,7 @@ fun MagangScreen(
                 tipe = "Penuh Waktu",
                 persentaseCocok = 92,
                 batasHari = 5,
-                logoDrawable = R.drawable.logo_company_studio_mark
+                logoDrawable = R.drawable.ic_avatar_2
             )
         )
     }
@@ -165,28 +166,18 @@ fun MagangScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Header Lengkung Golden Amber
-            MagangHeader(
-                userName = userName,
-                userRole = userRole,
-                onNotificationClick = onNotificationClick,
-                onProfileClick = onProfileClick,
-                fontFamily = plusJakarta
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
             ) {
-                // 2. Judul Besar "MAGANG"
+                // 2. Judul Besar "MAGANG HUB"
                 Text(
-                    text = "MAGANG",
+                    text = "MAGANG HUB",
                     style = TextStyle(
                         fontFamily = plusJakarta,
                         fontSize = 28.sp,
@@ -244,6 +235,7 @@ fun MagangScreen(
                 LamaranSection(
                     lamaranList = sampleLamaranList,
                     onItemClick = onLamaranItemClick,
+                    onViewAllClick = onLihatLamaranClick,
                     fontFamily = plusJakarta
                 )
 
@@ -288,8 +280,9 @@ fun MagangScreen(
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     items(sampleLowonganList) { item ->
+                        val isBookmarked = bookmarkedIds.contains(item.id)
                         LowonganHorizontalCard(
-                            data = item,
+                            data = item.copy(isBookmarked = isBookmarked),
                             onClick = { onLowonganClick(item) },
                             onBookmarkClick = { onBookmarkClick(item) },
                             fontFamily = plusJakarta
@@ -301,109 +294,7 @@ fun MagangScreen(
     }
 }
 
-// ============================================================================
-// Komponen Header Lengkung Golden Amber
-// ============================================================================
 
-@Composable
-private fun MagangHeader(
-    userName: String,
-    userRole: String,
-    onNotificationClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    fontFamily: FontFamily
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MagangAmberHeaderDark,
-                        MagangAmberHeaderLight
-                    )
-                )
-            )
-            .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 18.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Sisi Kiri: Avatar & Sapaan
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onProfileClick)
-            ) {
-                // 1. Bagian Avatar
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .clickable { onProfileClick() }
-                        .background(Color.White, CircleShape)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_avatar_2),
-                        contentDescription = "User Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column {
-                    Text(
-                        text = "Halo, $userName",
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 15.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NavyDark
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Text(
-                        text = userRole,
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = NavyDark.copy(alpha = 0.8f)
-                        )
-                    )
-                }
-            }
-
-            // 3. Bagian Lonceng Notifikasi
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onNotificationClick)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_bell_outline),
-                    contentDescription = "Notifikasi",
-                    tint = NavyDark,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
 
 // ============================================================================
 // Komponen Kartu "Lengkapi profil 70%"
@@ -732,6 +623,7 @@ private fun StatusPillButton(
 private fun LamaranSection(
     lamaranList: List<LamaranItemData>,
     onItemClick: (LamaranItemData) -> Unit,
+    onViewAllClick: () -> Unit = {},
     fontFamily: FontFamily
 ) {
     Card(
@@ -746,19 +638,39 @@ private fun LamaranSection(
                 .fillMaxWidth()
                 .padding(18.dp)
         ) {
-            Text(
-                text = "Lamaran",
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = NavyDark
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Lamaran",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NavyDark
+                    )
                 )
-            )
+
+                Text(
+                    text = "Lihat Lainnya",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClick = onViewAllClick)
+                        .padding(4.dp),
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = SlateGray
+                    )
+                )
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            lamaranList.forEachIndexed { index, item ->
+            lamaranList.take(2).forEachIndexed { index, item ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -888,13 +800,14 @@ private fun LowonganHorizontalCard(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
+                            .background(if (data.isBookmarked) MagangAmberPillBg else Color.Transparent)
                             .clickable(onClick = onBookmarkClick),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_bookmark),
+                            painter = painterResource(id = if (data.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
                             contentDescription = "Bookmark",
-                            tint = NavyDark,
+                            tint = if (data.isBookmarked) MagangAmberPrimary else NavyDark,
                             modifier = Modifier.size(16.dp)
                         )
                     }

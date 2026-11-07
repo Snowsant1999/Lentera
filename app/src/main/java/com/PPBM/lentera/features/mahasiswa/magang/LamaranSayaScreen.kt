@@ -35,7 +35,7 @@ data class RiwayatLamaranModel(
     val status: String,
     val statusBg: Color,
     val statusText: Color,
-    val logoRes: Int = R.drawable.ic_company_maju_mundur
+    val logoRes: Int = R.drawable.ic_avatar_2
 )
 
 /**
@@ -61,7 +61,7 @@ fun LamaranSayaScreen(
                 status = "Direview",
                 statusBg = MagangAmberPillBg,
                 statusText = MagangAmberPillText,
-                logoRes = R.drawable.ic_company_maju_mundur
+                logoRes = R.drawable.ic_avatar_2
             ),
             RiwayatLamaranModel(
                 id = "LNT-MG-02",
@@ -71,7 +71,7 @@ fun LamaranSayaScreen(
                 status = "Diterima",
                 statusBg = MagangPillGreenBg,
                 statusText = MagangPillGreenText,
-                logoRes = R.drawable.ic_company_bismillah
+                logoRes = R.drawable.ic_avatar_2
             ),
             RiwayatLamaranModel(
                 id = "LNT-MG-03",
@@ -81,7 +81,7 @@ fun LamaranSayaScreen(
                 status = "Ditolak",
                 statusBg = MagangPillRedBg,
                 statusText = MagangPillRedText,
-                logoRes = R.drawable.ic_company_maju_mundur
+                logoRes = R.drawable.ic_avatar_2
             )
         )
     }

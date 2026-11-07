@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +34,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -47,7 +51,8 @@ import com.PPBM.lentera.R
 fun FormLowonganScreen(
     onNavigateToPublikasiLowongan: () -> Unit = {},
     onSimpanLowongan: () -> Unit = {},
-    onBackToDaftarLowongan: () -> Unit = {}
+    onBackToDaftarLowongan: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var posisi by remember { mutableStateOf("UI/UX Design") }
     var lokasi by remember { mutableStateOf("Bontang") }
@@ -67,6 +72,11 @@ fun FormLowonganScreen(
     var batasPendaftaran by remember { mutableStateOf("30 November 2026") }
     var kuota by remember { mutableStateOf("2 mahasiswa") }
 
+    var showFeedback by remember { mutableStateOf(false) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
+
     Scaffold(
         topBar = {
             AdminMagangHeader(
@@ -76,7 +86,7 @@ fun FormLowonganScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->
@@ -131,20 +141,14 @@ fun FormLowonganScreen(
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_avatar_2),
+                                contentDescription = "Logo",
+                                contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .size(42.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFEAF2F8)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.logo_company_mark),
-                                    contentDescription = "Logo",
-                                    tint = MagangNavyDark,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
+                            )
 
                             Spacer(modifier = Modifier.width(12.dp))
 
@@ -342,7 +346,19 @@ fun FormLowonganScreen(
                         .clip(RoundedCornerShape(14.dp))
                         .background(Color.White)
                         .border(1.dp, MagangNavyDark, RoundedCornerShape(14.dp))
-                        .clickable { onSimpanLowongan() }
+                        .clickable {
+                            if (posisi.isBlank()) {
+                                feedbackTitle = "Posisi Kosong"
+                                feedbackMessage = "Mohon masukkan judul posisi lowongan sebelum menyimpan."
+                                feedbackIsSuccess = false
+                                showFeedback = true
+                            } else {
+                                feedbackTitle = "Lowongan Berhasil Disimpan"
+                                feedbackMessage = "Lowongan $posisi di PT. Maju Mundur berhasil disimpan sebagai draf."
+                                feedbackIsSuccess = true
+                                showFeedback = true
+                            }
+                        }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -426,6 +442,19 @@ fun FormLowonganScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
+        LenteraFeedbackDialog(
+            show = showFeedback,
+            isSuccess = feedbackIsSuccess,
+            title = feedbackTitle,
+            message = feedbackMessage,
+            onDismiss = {
+                showFeedback = false
+                if (feedbackIsSuccess) {
+                    onSimpanLowongan()
+                }
+            }
+        )
     }
 }
 

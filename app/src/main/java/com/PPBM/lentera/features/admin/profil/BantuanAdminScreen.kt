@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.core.designsystem.theme.*
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 
 data class KategoriBantuan(
     val judul: String,
@@ -85,6 +86,7 @@ fun BantuanAdminScreen(
 ) {
     var query by remember { mutableStateOf("") }
     var terbuka by remember { mutableStateOf<Int?>(0) }
+    var showDukunganDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = LenteraColors.Background,
@@ -116,7 +118,17 @@ fun BantuanAdminScreen(
                 placeholder = "Cari topik bantuan...",
                 height = 48.dp
             )
-            KategoriBantuanRow(kategori = kategori, onClick = onKategoriClick)
+            KategoriBantuanRow(
+                kategori = kategori,
+                onClick = { item ->
+                    query = when (item.judul) {
+                        "Kelola Akun Mahasiswa" -> "mahasiswa"
+                        "Verifikasi Laporan" -> "laporan"
+                        else -> item.judul
+                    }
+                    onKategoriClick(item)
+                }
+            )
             Text(
                 text = "Pertanyaan umum",
                 color = LenteraColors.NavyDark,
@@ -132,10 +144,22 @@ fun BantuanAdminScreen(
             )
             DukunganCard(
                 jamLayanan = jamLayanan,
-                onHubungiClick = onHubungiDukunganClick
+                onHubungiClick = {
+                    showDukunganDialog = true
+                    onHubungiDukunganClick()
+                }
             )
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showDukunganDialog,
+        isSuccess = true,
+        title = "Hubungi Dukungan LENTERA",
+        message = "Layanan bantuan teknis dan operasional admin kampus:\n\n• Email: dukungan@lentera.ac.id\n• Hotline: (0541) 741234\n• Layanan WhatsApp: +62 811-2345-6789\n• Jam Operasional: $jamLayanan",
+        buttonText = "Tutup",
+        onDismiss = { showDukunganDialog = false }
+    )
 }
 
 @Composable

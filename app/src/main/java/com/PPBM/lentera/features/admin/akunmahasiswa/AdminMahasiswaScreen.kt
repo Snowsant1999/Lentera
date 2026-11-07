@@ -9,16 +9,18 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import com.PPBM.lentera.R
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,9 +36,11 @@ import com.PPBM.lentera.core.designsystem.theme.*
 fun AdminMahasiswaScreen(
     onNavigateToBuatAkun: () -> Unit = {},
     onNavigateToDetail: () -> Unit = {},
-    onBack: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf("Semua 128") }
+
     Scaffold(
         containerColor = ScreenBackground,
         bottomBar = {
@@ -50,71 +54,102 @@ fun AdminMahasiswaScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ScreenBackground)
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            TopBarMahasiswa(onBackClick = onBack, onAddClick = onNavigateToBuatAkun)
-            SearchBarMahasiswa()
-            TabsMahasiswa()
+            TopBarMahasiswa(onAddClick = onNavigateToBuatAkun)
+            SearchBarMahasiswa(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it }
+            )
+            TabsMahasiswa(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { selectedFilter = it }
+            )
             Spacer(modifier = Modifier.height(14.dp))
-            ListMahasiswa(onItemClick = onNavigateToDetail)
+            ListMahasiswa(
+                searchQuery = searchQuery,
+                selectedFilter = selectedFilter,
+                onItemClick = onNavigateToDetail
+            )
         }
     }
 }
 
 @Composable
 fun TopBarMahasiswa(
-    onBackClick: () -> Unit = {},
     onAddClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 18.dp),
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            tint = NavyDark,
-            contentDescription = "Back",
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { onBackClick() }
-        )
-
-        Text(
-            text = "Akun Mahasiswa",
-            style = TextStyle(
-                fontSize = 18.sp,
-                fontFamily = PlusJakartaSans,
-                fontWeight = FontWeight.Bold,
-                color = NavyDark
+        Column {
+            Text(
+                text = "AKUN MAHASISWA",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = NavyDark,
+                    letterSpacing = 0.5.sp
+                )
             )
-        )
+            Text(
+                text = "LENTERA · Admin Kampus",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Normal,
+                    color = SlateGray
+                )
+            )
+        }
 
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .height(42.dp)
+                .clip(RoundedCornerShape(14.dp))
                 .clickable { onAddClick() }
-                .background(NavyDark, RoundedCornerShape(10.dp)),
+                .background(NavyDark)
+                .padding(horizontal = 14.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "+",
-                style = TextStyle(
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.Bold
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "+",
+                    style = TextStyle(
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
+                Text(
+                    text = "Tambah",
+                    style = TextStyle(
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
         }
     }
 }
 
 @Composable
-fun SearchBarMahasiswa() {
+fun SearchBarMahasiswa(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,21 +166,40 @@ fun SearchBarMahasiswa() {
             contentDescription = "Search",
             modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Cari nama atau NIM...",
-            style = TextStyle(
-                color = SlateGray,
-                fontSize = 14.sp,
-                fontFamily = PlusJakartaSans
-            ),
-            modifier = Modifier.weight(1f)
-        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(modifier = Modifier.weight(1f)) {
+            if (query.isEmpty()) {
+                Text(
+                    text = "Cari nama atau NIM...",
+                    style = TextStyle(
+                        color = SlateGray,
+                        fontSize = 14.sp,
+                        fontFamily = PlusJakartaSans
+                    )
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = NavyDark,
+                    fontSize = 14.sp,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
 @Composable
-fun TabsMahasiswa() {
+fun TabsMahasiswa(
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit
+) {
+    val filters = listOf("Semua 128", "Aktif 124", "Belum Aktivasi 4", "Lulus 0")
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,86 +207,99 @@ fun TabsMahasiswa() {
         contentPadding = PaddingValues(horizontal = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item { TabItem(text = "Semua 128", isSelected = true) }
-        item { TabItem(text = "Aktif 124", isSelected = false) }
-        item { TabItem(text = "Belum Aktivasi 4", isSelected = false) }
-        item { TabItem(text = "Lulus 0", isSelected = false) }
+        items(filters.size) { index ->
+            val filterText = filters[index]
+            val isSelected = filterText == selectedFilter
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        color = if (isSelected) NavyDark else Color.White
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (isSelected) Color.Transparent else CardBorder,
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clickable { onFilterSelected(filterText) }
+                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = filterText,
+                    style = TextStyle(
+                        color = if (isSelected) Color.White else SlateGray,
+                        fontSize = 12.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                    )
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun TabItem(text: String, isSelected: Boolean) {
-    Box(
-        modifier = Modifier
-            .background(
-                color = if (isSelected) NavyDark else Color.White,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Color.Transparent else CardBorder,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .padding(horizontal = 16.dp, vertical = 7.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = TextStyle(
-                color = if (isSelected) Color.White else SlateGray,
-                fontSize = 12.sp,
-                fontFamily = PlusJakartaSans,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
-            )
-        )
-    }
-}
+fun ListMahasiswa(
+    searchQuery: String = "",
+    selectedFilter: String = "Semua 128",
+    onItemClick: () -> Unit = {}
+) {
+    val allStudents = listOf(
+        Triple("Rina Wulandari", "NIM: 22001011", "Aktif"),
+        Triple("Budi Santoso", "NIM: 22001012", "Belum Aktivasi"),
+        Triple("Siti Aminah", "NIM: 22001013", "Aktif"),
+        Triple("Andi Wijaya", "NIM: 22001014", "Aktif")
+    )
 
-@Composable
-fun ListMahasiswa(onItemClick: () -> Unit = {}) {
+    val filtered = allStudents.filter { (name, nim, status) ->
+        val matchesSearch = searchQuery.isBlank() ||
+                name.contains(searchQuery, ignoreCase = true) ||
+                nim.contains(searchQuery, ignoreCase = true)
+        val matchesTab = when {
+            selectedFilter.startsWith("Semua") -> true
+            selectedFilter.startsWith("Aktif") -> status == "Aktif"
+            selectedFilter.startsWith("Belum") -> status == "Belum Aktivasi"
+            selectedFilter.startsWith("Lulus") -> status == "Lulus"
+            else -> true
+        }
+        matchesSearch && matchesTab
+    }
+
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        item {
-            StudentCard(
-                name = "Rina Wulandari",
-                nim = "NIM: 22001011",
-                status = "Aktif",
-                statusColor = LenteraGreen,
-                bgColor = LenteraGreenBg,
-                onClick = onItemClick
-            )
-        }
-        item {
-            StudentCard(
-                name = "Budi Santoso",
-                nim = "NIM: 22001012",
-                status = "Belum Aktivasi",
-                statusColor = ErrorRed,
-                bgColor = ErrorRedLight,
-                onClick = onItemClick
-            )
-        }
-        item {
-            StudentCard(
-                name = "Siti Aminah",
-                nim = "NIM: 22001013",
-                status = "Aktif",
-                statusColor = LenteraGreen,
-                bgColor = LenteraGreenBg,
-                onClick = onItemClick
-            )
-        }
-        item {
-            StudentCard(
-                name = "Andi Wijaya",
-                nim = "NIM: 22001014",
-                status = "Aktif",
-                statusColor = LenteraGreen,
-                bgColor = LenteraGreenBg,
-                onClick = onItemClick
-            )
+        if (filtered.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Text(
+                        text = "Tidak ada akun mahasiswa yang sesuai dengan pencarian atau filter.",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = SlateGray
+                        ),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        } else {
+            items(filtered.size) { index ->
+                val (name, nim, status) = filtered[index]
+                StudentCard(
+                    name = name,
+                    nim = nim,
+                    status = status,
+                    statusColor = if (status == "Aktif") LenteraGreen else ErrorRed,
+                    bgColor = if (status == "Aktif") LenteraGreenBg else ErrorRedLight,
+                    onClick = onItemClick
+                )
+            }
         }
     }
 }
@@ -260,10 +327,10 @@ fun StudentCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
+            Image(
+                painter = painterResource(id = R.drawable.ic_avatar_2),
                 contentDescription = "Avatar",
-                tint = NavyDark,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)

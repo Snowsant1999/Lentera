@@ -1,4 +1,5 @@
 package com.PPBM.lentera.core.designsystem.components
+import androidx.compose.foundation.Image
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,14 +34,13 @@ enum class LenteraNavItem {
 
 @Composable
 fun LenteraBackIcon(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back),
-            contentDescription = "Back",
-            tint = LenteraColors.NavyPrimary,
-            modifier = Modifier.size(24.dp)
-        )
-    }
+    Image(
+        painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back_button),
+        contentDescription = "Back",
+        modifier = Modifier
+            .size(44.dp)
+            .clickable(onClick = onClick)
+    )
 }
 
 @Composable
@@ -51,10 +51,13 @@ fun LenteraBackHeader(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(vertical = 4.dp)
     ) {
         LenteraBackIcon(onClick = onBackClick)
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(14.dp))
         Column {
             Text(
                 text = title,
@@ -209,7 +212,6 @@ fun ProfileAvatar(
     modifier: Modifier = Modifier
 ) {
     val actualBg = if (containerColor != Color.Unspecified) containerColor else LenteraColors.Background
-    val actualTint = if (iconTint != Color.Unspecified) iconTint else LenteraColors.NavyPrimary
     Box(
         modifier = modifier
             .size(size)
@@ -217,11 +219,13 @@ fun ProfileAvatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_nav_mahasiswa),
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
             contentDescription = "Avatar",
-            tint = actualTint,
-            modifier = Modifier.size(size * 0.6f)
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
         )
     }
 }

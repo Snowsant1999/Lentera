@@ -1,4 +1,5 @@
 package com.PPBM.lentera.features.admin.magang.components
+import androidx.compose.foundation.Image
 
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -80,28 +82,27 @@ enum class AdminMagangRoute {
 fun AdminMagangHeader(
     title: String,
     subtitle: String = "LENTERA · Admin Kampus",
-    onBackClick: () -> Unit = {}
+    onBackClick: (() -> Unit)? = null
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .background(MagangBgColor)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_back),
+        if (onBackClick != null) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_back_button),
                 contentDescription = "Kembali",
-                tint = MagangNavyDark,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(44.dp)
+                    .clickable(onClick = onBackClick)
             )
-        }
 
-        Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+        }
 
         Column {
             Text(
@@ -249,7 +250,8 @@ fun MagangInfoBox(
 @Composable
 fun AdminMagangBottomBar(
     currentRoute: String = "Magang",
-    onTabSelected: (String) -> Unit = {}
+    onTabSelected: (String) -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     val selectedItem = when (currentRoute) {
         "Beranda" -> LenteraNavItem.BERANDA
@@ -261,6 +263,7 @@ fun AdminMagangBottomBar(
     AdminBottomBar(
         selected = selectedItem,
         onItemClick = { item ->
+            onNavClick(item)
             onTabSelected(
                 when (item) {
                     LenteraNavItem.BERANDA -> "Beranda"

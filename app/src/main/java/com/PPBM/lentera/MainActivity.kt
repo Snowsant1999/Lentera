@@ -1,5 +1,6 @@
 package com.PPBM.lentera
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -75,8 +76,12 @@ import com.PPBM.lentera.features.admin.magang.TempatMagangScreen
 import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
 import com.PPBM.lentera.features.admin.profil.BantuanAdminScreen
 import com.PPBM.lentera.features.admin.profil.DataAkunAdminScreen
+import com.PPBM.lentera.features.admin.profil.EmailPemulihanScreen
+import com.PPBM.lentera.features.admin.profil.KeamananAkunScreen
 import com.PPBM.lentera.features.admin.profil.KonfirmasiLogoutAdminScreen
+import com.PPBM.lentera.features.admin.profil.PerangkatTerhubungScreen
 import com.PPBM.lentera.features.admin.profil.ProfilAdminScreen
+import com.PPBM.lentera.features.admin.profil.RiwayatLoginScreen
 
 enum class ScreenState {
     // Auth Flow
@@ -139,6 +144,10 @@ enum class ScreenState {
     ADMIN_MAGANG_DETAIL_LOWONGAN,
     ADMIN_PROFIL,
     ADMIN_DATA_AKUN,
+    ADMIN_KEAMANAN_AKUN,
+    ADMIN_PERANGKAT_TERHUBUNG,
+    ADMIN_RIWAYAT_LOGIN,
+    ADMIN_EMAIL_PEMULIHAN,
     ADMIN_BANTUAN,
     ADMIN_LOGOUT,
     ADMIN_NOTIFIKASI
@@ -166,6 +175,14 @@ fun LenteraApp() {
     var siagaDetailOrigin by remember { mutableStateOf(ScreenState.PENGADUAN) }
     var magangLowonganOrigin by remember { mutableStateOf(ScreenState.BERANDA) }
     var magangDetailOrigin by remember { mutableStateOf(ScreenState.MAGANG_HUB) }
+    var notifikasiOrigin by remember { mutableStateOf(ScreenState.BERANDA) }
+    var userProfilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var userNamaLengkap by remember { mutableStateOf("Budi Santoso") }
+    var bookmarkedLowonganIds by remember { mutableStateOf(setOf<String>()) }
+    var adminNama by remember { mutableStateOf("Rina Wulandari") }
+    var adminEmail by remember { mutableStateOf("rina.wulandari@lentera.ac.id") }
+    var adminTelepon by remember { mutableStateOf("081234567890") }
+    var adminNotifikasiOrigin by remember { mutableStateOf(ScreenState.ADMIN_DASHBOARD) }
 
     val mahasiswaDashboard = remember { MahasiswaDashboard() }
     val mahasiswaSettings = remember { MahasiswaSettings() }
@@ -245,7 +262,12 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.BERANDA -> {
                 mahasiswaDashboard.mhsDashboard(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    photoUri = userProfilePhotoUri,
+                    userName = userNamaLengkap,
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.BERANDA
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL
@@ -283,9 +305,14 @@ fun LenteraApp() {
             }
             ScreenState.PROFIL -> {
                 mahasiswaSettings.mhsProfilScreen(
+                    photoUri = userProfilePhotoUri,
+                    namaLengkap = userNamaLengkap,
                     onNavigateToDataDiri = { currentScreen = ScreenState.DATA_DIRI },
                     onNavigateToDokumen = { currentScreen = ScreenState.DOKUMEN_SAYA },
-                    onNavigateToNotifikasi = { currentScreen = ScreenState.NOTIFIKASI },
+                    onNavigateToNotifikasi = {
+                        notifikasiOrigin = ScreenState.PROFIL
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onNavigateToBantuan = { currentScreen = ScreenState.BANTUAN },
                     onNavigateToTentang = { currentScreen = ScreenState.TENTANG_APLIKASI },
                     onLogoutConfirmed = {
@@ -296,6 +323,10 @@ fun LenteraApp() {
             }
             ScreenState.DATA_DIRI -> {
                 DataDiriScreen(
+                    initialPhotoUri = userProfilePhotoUri,
+                    onPhotoUpdated = { userProfilePhotoUri = it },
+                    initialNama = userNamaLengkap,
+                    onNamaUpdated = { userNamaLengkap = it },
                     onBackClick = { currentScreen = ScreenState.PROFIL },
                     onTabSelected = handleTabSelected
                 )
@@ -309,10 +340,12 @@ fun LenteraApp() {
             ScreenState.NOTIFIKASI -> {
                 MahasiswaNotifikasiScreen(
                     onBackClick = {
-                        if (currentTab == LenteraTab.PROFIL) {
-                            currentScreen = ScreenState.PROFIL
-                        } else {
-                            currentScreen = ScreenState.BERANDA
+                        currentScreen = notifikasiOrigin
+                        currentTab = when (notifikasiOrigin) {
+                            ScreenState.MAGANG_HUB -> LenteraTab.MAGANG_HUB
+                            ScreenState.PENGADUAN -> LenteraTab.PENGADUAN
+                            ScreenState.PROFIL -> LenteraTab.PROFIL
+                            else -> LenteraTab.BERANDA
                         }
                     },
                     onTabSelected = handleTabSelected
@@ -336,7 +369,10 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.PENGADUAN -> {
                 MahasiswaSiagaScreen(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.PENGADUAN
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL
@@ -471,12 +507,8 @@ fun LenteraApp() {
                         }
                     },
                     onKembaliKeDashboard = {
-                        currentScreen = siagaRiwayatOrigin
-                        if (siagaRiwayatOrigin == ScreenState.BERANDA) {
-                            currentTab = LenteraTab.BERANDA
-                        } else {
-                            currentTab = LenteraTab.PENGADUAN
-                        }
+                        currentTab = LenteraTab.PENGADUAN
+                        currentScreen = ScreenState.PENGADUAN
                     }
                 )
             }
@@ -517,7 +549,18 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.MAGANG_HUB -> {
                 MagangScreen(
-                    onNotificationClick = { currentScreen = ScreenState.NOTIFIKASI },
+                    bookmarkedIds = bookmarkedLowonganIds,
+                    onBookmarkClick = { card ->
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(card.id)) {
+                            bookmarkedLowonganIds - card.id
+                        } else {
+                            bookmarkedLowonganIds + card.id
+                        }
+                    },
+                    onNotificationClick = {
+                        notifikasiOrigin = ScreenState.MAGANG_HUB
+                        currentScreen = ScreenState.NOTIFIKASI
+                    },
                     onProfileClick = {
                         currentTab = LenteraTab.PROFIL
                         currentScreen = ScreenState.PROFIL
@@ -559,6 +602,14 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_LOWONGAN -> {
                 LowonganScreen(
+                    bookmarkedIds = bookmarkedLowonganIds,
+                    onBookmarkToggle = { item ->
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(item.id)) {
+                            bookmarkedLowonganIds - item.id
+                        } else {
+                            bookmarkedLowonganIds + item.id
+                        }
+                    },
                     onBackClick = {
                         currentScreen = magangLowonganOrigin
                         if (magangLowonganOrigin == ScreenState.BERANDA) {
@@ -575,6 +626,15 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_DETAIL -> {
                 DetailMagangScreen(
+                    isBookmarked = bookmarkedLowonganIds.contains("1"),
+                    onBookmarkToggle = {
+                        val id = "1"
+                        bookmarkedLowonganIds = if (bookmarkedLowonganIds.contains(id)) {
+                            bookmarkedLowonganIds - id
+                        } else {
+                            bookmarkedLowonganIds + id
+                        }
+                    },
                     onBackClick = {
                         currentScreen = magangDetailOrigin
                         if (magangDetailOrigin == ScreenState.BERANDA) {
@@ -595,7 +655,10 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_LAMARAN_SAYA -> {
                 LamaranSayaScreen(
-                    onBackClick = { currentScreen = ScreenState.MAGANG_HUB },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onStatusClick = { item ->
                         if (item.status == "Diterima") {
                             currentScreen = ScreenState.MAGANG_STATUS_FINAL
@@ -609,7 +672,10 @@ fun LenteraApp() {
                 StatusLamaranScreen(
                     needsCorrection = true,
                     isFinalAccepted = false,
-                    onBackClick = { currentScreen = ScreenState.MAGANG_LAMARAN_SAYA },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onPerbaikiDokumenClick = { currentScreen = ScreenState.MAGANG_PERBAIKAN_DOKUMEN },
                     onInformasiPenerimaanClick = { currentScreen = ScreenState.MAGANG_INFORMASI }
                 )
@@ -618,7 +684,10 @@ fun LenteraApp() {
                 StatusLamaranScreen(
                     needsCorrection = false,
                     isFinalAccepted = true,
-                    onBackClick = { currentScreen = ScreenState.MAGANG_LAMARAN_SAYA },
+                    onBackClick = {
+                        currentTab = LenteraTab.MAGANG_HUB
+                        currentScreen = ScreenState.MAGANG_HUB
+                    },
                     onInformasiPenerimaanClick = { currentScreen = ScreenState.MAGANG_INFORMASI_FINAL }
                 )
             }
@@ -651,11 +720,16 @@ fun LenteraApp() {
             // ================================================================
             ScreenState.ADMIN_DASHBOARD -> {
                 AdminDashboardScreen(
+                    userName = adminNama,
                     onNavigateToMahasiswa = { currentScreen = ScreenState.ADMIN_MAHASISWA },
                     onNavigateToSiaga = { currentScreen = ScreenState.ADMIN_SIAGA },
                     onNavigateToMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
                     onNavigateToProfil = { currentScreen = ScreenState.ADMIN_PROFIL },
-                    onNavigateToNotifikasi = { currentScreen = ScreenState.ADMIN_NOTIFIKASI },
+                    onNavigateToNotifikasi = {
+                        adminNotifikasiOrigin = ScreenState.ADMIN_DASHBOARD
+                        currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                    },
                     onTambahMahasiswa = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
                     onTambahTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavClick = handleAdminNavClick
@@ -665,7 +739,6 @@ fun LenteraApp() {
                 AdminMahasiswaScreen(
                     onNavigateToBuatAkun = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
                     onNavigateToDetail = { currentScreen = ScreenState.ADMIN_DETAIL_AKUN_MAHASISWA },
-                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -685,7 +758,8 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_SIAGA -> {
                 AdminSiagaFlowScreen(
-                    onBackToDashboard = { currentScreen = ScreenState.ADMIN_DASHBOARD }
+                    onBackToDashboard = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TEMPAT -> {
@@ -693,25 +767,29 @@ fun LenteraApp() {
                     onNavigateToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
                     onNavigateToTambahTempat = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
-                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD }
+                    onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT -> {
                 TambahTempatMagangScreen(
                     onSimpanSuccess = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT -> {
                 DetailTempatMagangScreen(
                     onNavigateToKelolaStatus = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_STATUS },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_KELOLA_STATUS -> {
                 KelolaStatusTempatScreen(
                     onSimpanStatus = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
-                    onBackToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT }
+                    onBackToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_LOWONGAN -> {
@@ -719,36 +797,86 @@ fun LenteraApp() {
                     onNavigateToTambahLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToFormLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToDetailLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN },
-                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT }
+                    onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN -> {
                 FormLowonganScreen(
                     onSimpanLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
-                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN }
+                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN -> {
                 DetailLowonganScreen(
-                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN }
+                    onBackToDaftarLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_PROFIL -> {
                 ProfilAdminScreen(
+                    nama = adminNama,
                     onMenuClick = { menuItem ->
                         when (menuItem.judul) {
                             "Data Akun" -> currentScreen = ScreenState.ADMIN_DATA_AKUN
+                            "Keamanan Akun" -> currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN
                             "Bantuan Admin" -> currentScreen = ScreenState.ADMIN_BANTUAN
-                            "Notifikasi" -> currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                            "Notifikasi" -> {
+                                adminNotifikasiOrigin = ScreenState.ADMIN_PROFIL
+                                currentScreen = ScreenState.ADMIN_NOTIFIKASI
+                            }
                         }
                     },
+                    onAvatarClick = { currentScreen = ScreenState.ADMIN_DATA_AKUN },
                     onKeluarClick = { currentScreen = ScreenState.ADMIN_LOGOUT },
                     onNavClick = handleAdminNavClick
                 )
             }
             ScreenState.ADMIN_DATA_AKUN -> {
                 DataAkunAdminScreen(
+                    nama = adminNama,
+                    email = adminEmail,
+                    nomorTelepon = adminTelepon,
                     onBackClick = { currentScreen = ScreenState.ADMIN_PROFIL },
+                    onDataUpdated = { newNama, newEmail, newTelepon ->
+                        adminNama = newNama
+                        adminEmail = newEmail
+                        adminTelepon = newTelepon
+                    },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_KEAMANAN_AKUN -> {
+                KeamananAkunScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_PROFIL },
+                    onPerangkatTerhubungClick = { currentScreen = ScreenState.ADMIN_PERANGKAT_TERHUBUNG },
+                    onRiwayatLoginClick = { currentScreen = ScreenState.ADMIN_RIWAYAT_LOGIN },
+                    onEmailPemulihanClick = { currentScreen = ScreenState.ADMIN_EMAIL_PEMULIHAN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_PERANGKAT_TERHUBUNG -> {
+                PerangkatTerhubungScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_RIWAYAT_LOGIN -> {
+                RiwayatLoginScreen(
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_EMAIL_PEMULIHAN -> {
+                EmailPemulihanScreen(
+                    currentEmail = adminEmail,
+                    onBackClick = { currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN },
+                    onKirimVerifikasiClick = { newEmail ->
+                        if (newEmail.isNotBlank()) {
+                            adminEmail = newEmail
+                        }
+                    },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -766,7 +894,8 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_NOTIFIKASI -> {
                 AdminNotifikasiScreen(
-                    onBackClick = { currentScreen = ScreenState.ADMIN_DASHBOARD },
+                    onBackClick = { currentScreen = adminNotifikasiOrigin },
+                    onAvatarClick = { currentScreen = ScreenState.ADMIN_PROFIL },
                     onNavClick = handleAdminNavClick
                 )
             }

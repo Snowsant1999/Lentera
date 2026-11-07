@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,7 +43,8 @@ import com.PPBM.lentera.R
 @Composable
 fun DetailTempatMagangScreen(
     onNavigateToKelolaStatus: () -> Unit = {},
-    onBackToTempatMagang: () -> Unit = {}
+    onBackToTempatMagang: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -53,7 +55,7 @@ fun DetailTempatMagangScreen(
             )
         },
         bottomBar = {
-            AdminMagangBottomBar(currentRoute = "Magang")
+            AdminMagangBottomBar(currentRoute = "Magang", onNavClick = onNavClick)
         },
         containerColor = MagangBgColor
     ) { paddingValues ->

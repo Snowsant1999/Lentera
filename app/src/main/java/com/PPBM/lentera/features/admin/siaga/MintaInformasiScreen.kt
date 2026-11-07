@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +42,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun MintaInformasiScreen(
     onKirimPermintaan: (String) -> Unit = {},
-    onBackToDetail: () -> Unit = {}
+    onBackToDetail: () -> Unit = {},
+    onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var pesanText by remember { mutableStateOf("Tulis permintaan informasi tambahan untuk pelapor") }
 
@@ -219,7 +221,7 @@ fun MintaInformasiScreen(
         }
 
         // 3. Bottom Bar
-        AdminSiagaBottomBar(currentRoute = "Laporan")
+        AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
     }
 }
 

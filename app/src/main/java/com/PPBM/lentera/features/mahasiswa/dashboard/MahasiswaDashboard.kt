@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.net.Uri
+import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
@@ -61,6 +65,8 @@ class MahasiswaDashboard {
     @Composable
     fun mhsDashboard(
         modifier: Modifier = Modifier,
+        photoUri: Uri? = null,
+        userName: String = "Budi Santoso",
         onNotificationClick: () -> Unit = {},
         onTabSelected: (LenteraTab) -> Unit = {},
         onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
@@ -113,13 +119,9 @@ class MahasiswaDashboard {
                                 .clickable { onProfileClick() }
                                 .background(Color.White, CircleShape)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_avatar_2),
-                                contentDescription = "User Avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
+                            ProfileAvatarImage(
+                                photoUri = photoUri,
+                                modifier = Modifier.size(40.dp)
                             )
                         }
 
@@ -129,7 +131,7 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "Halo, Budi Santoso",
+                                text = "Halo, $userName",
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
@@ -198,7 +200,9 @@ class MahasiswaDashboard {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.Top,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
                     ) {
                         // Kartu 1: Lentera Siaga
                         Column(
@@ -206,6 +210,7 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
                                 .clickable { onSiagaClick() }
                                 .background(
@@ -242,6 +247,7 @@ class MahasiswaDashboard {
                             )
                             Text(
                                 text = "1 Diperiksa\n2 Selesai",
+                                minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     lineHeight = 15.sp,
@@ -258,6 +264,7 @@ class MahasiswaDashboard {
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
                                 .clickable { onMagangClick() }
                                 .background(
@@ -294,6 +301,7 @@ class MahasiswaDashboard {
                             )
                             Text(
                                 text = "Tidak ada Update!",
+                                minLines = 2,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     lineHeight = 15.sp,
