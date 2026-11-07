@@ -4,9 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.PPBM.lentera.backend.admin.model.AdminDashboardStats
 import com.PPBM.lentera.backend.admin.model.AdminLaporan
+import com.PPBM.lentera.backend.admin.model.LowonganEntity
+import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
+import com.PPBM.lentera.backend.admin.repository.AdminMagangRepository
 import com.PPBM.lentera.backend.admin.repository.AdminMahasiswaRepository
 import com.PPBM.lentera.backend.admin.repository.AdminSiagaRepository
 import com.PPBM.lentera.backend.auth.model.UserProfile
+import com.PPBM.lentera.backend.mahasiswa.model.LamaranSaya
 import com.PPBM.lentera.features.admin.akunmahasiswa.Mahasiswa
 import com.PPBM.lentera.features.admin.akunmahasiswa.StatusAkun
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,15 +26,22 @@ data class AdminUiState(
     val selectedLaporan: AdminLaporan? = null,
     val mahasiswaList: List<UserProfile> = emptyList(),
     val selectedMahasiswa: UserProfile? = null,
+    val tempatMagangList: List<TempatMagangEntity> = emptyList(),
+    val lowonganAdminList: List<LowonganEntity> = emptyList(),
+    val lamaranMasukList: List<LamaranSaya> = emptyList(),
+    val selectedTempatMagang: TempatMagangEntity? = null,
+    val selectedLowonganAdmin: LowonganEntity? = null,
     val isCreatingMahasiswa: Boolean = false,
     val isUpdatingLaporan: Boolean = false,
+    val isSubmittingMagang: Boolean = false,
     val errorMessage: String? = null,
     val actionSuccessMessage: String? = null
 )
 
 class AdminViewModel(
     private val adminMhsRepo: AdminMahasiswaRepository = AdminMahasiswaRepository(),
-    private val adminSiagaRepo: AdminSiagaRepository = AdminSiagaRepository()
+    private val adminSiagaRepo: AdminSiagaRepository = AdminSiagaRepository(),
+    private val adminMagangRepo: AdminMagangRepository = AdminMagangRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminUiState())
@@ -266,6 +277,122 @@ class AdminViewModel(
             result.onSuccess {
                 loadMahasiswaList()
                 onComplete()
+            }
+        }
+    }
+
+    // ========================================================================
+    // Operasi Admin Magang
+    // ========================================================================
+
+    /**
+     * Memuat seluruh daftar tempat magang / mitra
+     */
+    fun loadTempatMagangList() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = adminMagangRepo.getTempatMagangList()
+            res.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(isLoading = false, tempatMagangList = list)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    /**
+     * Memuat seluruh daftar lowongan magang
+     */
+    fun loadLowonganAdminList() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = adminMagangRepo.getLowonganList()
+            res.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(isLoading = false, lowonganAdminList = list)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    /**
+     * Memuat seluruh daftar lamaran masuk dari mahasiswa
+     */
+    fun loadLamaranMasukList() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = adminMagangRepo.getAllLamaranMasuk()
+            res.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(isLoading = false, lamaranMasukList = list)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    /**
+     * Menambah tempat magang baru
+     */
+    fun tambahTempatMagang(entity: TempatMagangEntity, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true)
+            val res = adminMagangRepo.createTempatMagang(entity)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+                loadTempatMagangList()
+                loadDashboardData()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    errorMessage = err.message ?: "Gagal menambah tempat magang"
+                )
+            }
+        }
+    }
+
+    /**
+     * Menambah lowongan magang baru
+     */
+    fun tambahLowongan(entity: LowonganEntity, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true)
+            val res = adminMagangRepo.createLowongan(entity)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+                loadLowonganAdminList()
+                loadDashboardData()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    errorMessage = err.message ?: "Gagal membuat lowongan magang"
+                )
+            }
+        }
+    }
+
+    /**
+     * Memvalidasi berkas lamaran mahasiswa
+     */
+    fun validasiLamaranMahasiswa(
+        lamaranId: String,
+        status: String,
+        catatanAdmin: String? = null,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true)
+            val res = adminMagangRepo.validasiLamaran(lamaranId, status, catatanAdmin)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+                loadLamaranMasukList()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    errorMessage = err.message ?: "Gagal memvalidasi berkas lamaran"
+                )
             }
         }
     }

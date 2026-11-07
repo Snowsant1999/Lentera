@@ -44,6 +44,7 @@ import com.PPBM.lentera.features.admin.profil.*
 import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
 import com.PPBM.lentera.features.admin.siaga.*
 import com.PPBM.lentera.features.admin.siaga.components.AdminLaporanItem
+import com.PPBM.lentera.features.admin.magang.*
 import com.PPBM.lentera.features.auth.*
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboardViewModel
@@ -698,6 +699,185 @@ fun LenteraNavGraph(navController: NavHostController) {
                     }
                 },
                 onBackToDetail = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // ====================================================================
+        // Fitur Magang Hub Admin (Mitra, Lowongan, Validasi Lamaran)
+        // ====================================================================
+
+        // Halaman Utama Admin Magang / Tempat Magang
+        composable(Routes.ADMIN_MAGANG) {
+            LaunchedEffect(Unit) {
+                adminViewModel.loadTempatMagangList()
+            }
+
+            TempatMagangScreen(
+                onNavigateToDetailTempat = { navController.navigate(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) },
+                onNavigateToTambahTempat = { navController.navigate(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) },
+                onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
+                onNavigateToLamaran = { navController.navigate(Routes.ADMIN_KELOLA_LAMARAN) },
+                onBack = { navController.navigate(Routes.ADMIN_DASHBOARD) },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> {}
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Tambah Tempat Magang
+        composable(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) {
+            TambahTempatMagangScreen(
+                onBackToTempatMagang = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Detail Tempat Magang
+        composable(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) {
+            DetailTempatMagangScreen(
+                onNavigateToKelolaStatus = { navController.navigate(Routes.ADMIN_KELOLA_STATUS_TEMPAT) },
+                onBackToTempatMagang = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Kelola Status Tempat Magang
+        composable(Routes.ADMIN_KELOLA_STATUS_TEMPAT) {
+            KelolaStatusTempatScreen(
+                onSimpanStatus = { navController.popBackStack() },
+                onBackToDetailTempat = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Daftar Lowongan Admin
+        composable(Routes.ADMIN_DAFTAR_LOWONGAN) {
+            LaunchedEffect(Unit) {
+                adminViewModel.loadLowonganAdminList()
+            }
+
+            DaftarLowonganScreen(
+                onNavigateToDetailLowongan = { navController.navigate(Routes.ADMIN_DETAIL_LOWONGAN) },
+                onNavigateToFormLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
+                onNavigateToTambahLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
+                onNavigateToLamaran = { navController.navigate(Routes.ADMIN_KELOLA_LAMARAN) },
+                onBackToTempatMagang = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Form Tambah / Edit Lowongan
+        composable(Routes.ADMIN_FORM_LOWONGAN) {
+            FormLowonganScreen(
+                onBackToDaftarLowongan = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Detail Lowongan
+        composable(Routes.ADMIN_DETAIL_LOWONGAN) {
+            DetailLowonganScreen(
+                onNavigateToPublikasiLowongan = { navController.popBackStack() },
+                onNavigateToFormLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
+                onBackToDaftarLowongan = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Kelola Lamaran Masuk Mahasiswa
+        composable(Routes.ADMIN_KELOLA_LAMARAN) {
+            LaunchedEffect(Unit) {
+                adminViewModel.loadLamaranMasukList()
+            }
+
+            KelolaLamaranScreen(
+                onNavigateToDetailValidasi = { pelamar ->
+                    navController.navigate(Routes.ADMIN_DETAIL_VALIDASI_LAMARAN)
+                },
+                onNavigateToMitra = { navController.navigate(Routes.ADMIN_MAGANG) },
+                onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Detail Validasi Berkas Lamaran
+        composable(Routes.ADMIN_DETAIL_VALIDASI_LAMARAN) {
+            DetailValidasiLamaranScreen(
+                onBackClick = { navController.popBackStack() },
+                onStatusUpdated = { newStatus, newCatatan ->
+                    navController.popBackStack()
+                },
                 onNavClick = { item ->
                     when (item) {
                         LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
