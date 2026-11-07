@@ -52,6 +52,8 @@ fun LenteraNavGraph(navController: NavHostController) {
     val siagaState by siagaViewModel.uiState.collectAsState()
     val profilViewModel: ProfilViewModel = viewModel()
     val profilState by profilViewModel.uiState.collectAsState()
+    val magangViewModel: MagangViewModel = viewModel()
+    val magangState by magangViewModel.uiState.collectAsState()
 
     NavHost(
         navController = navController,
@@ -700,13 +702,33 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Utama Magang (Magang.png)
         composable(Routes.MAGANG) {
+            val totalLam = magangState.lamaranSayaList.size
+            val dtr = magangState.lamaranSayaList.count { it.status == "diterima" }
+            val dtl = magangState.lamaranSayaList.count { it.status == "ditolak" }
+            val drv = magangState.lamaranSayaList.count {
+                it.status == "terkirim" || it.status == "verifikasi_berkas" || it.status == "wawancara" || it.status == "perlu_perbaikan"
+            }
+
             MagangScreen(
+                userName = profilState.profile?.namaLengkap ?: "Budi Santoso",
+                totalLamaran = totalLam,
+                jumlahDiterima = dtr,
+                jumlahDitolak = dtl,
+                jumlahDireview = drv,
+                bookmarkedIds = magangState.bookmarkedIds,
+                onBookmarkClick = { lowongan ->
+                    magangViewModel.toggleBookmark(lowongan.id)
+                },
                 onSearchClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
                 onViewAllLowonganClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
-                onLowonganClick = { navController.navigate(Routes.DETAIL_MAGANG) },
+                onLowonganClick = { item ->
+                    navController.navigate(Routes.detailMagang(item.id))
+                },
                 onLihatLamaranClick = { navController.navigate(Routes.LAMARAN_SAYA) },
                 onStatusClick = { navController.navigate(Routes.LAMARAN_SAYA) },
-                onLamaranItemClick = { navController.navigate(Routes.STATUS_LAMARAN) },
+                onLamaranItemClick = { item ->
+                    navController.navigate(Routes.statusLamaran(item.id))
+                },
                 onProfileClick = { navController.navigate(Routes.MAHASISWA_PROFIL) },
                 onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onNavTabClick = { tab ->
@@ -723,13 +745,68 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Halaman Daftar Lowongan Magang (Lowongan.png)
         composable(Routes.LOWONGAN_MAGANG) {
             LowonganScreen(
+                bookmarkedIds = magangState.bookmarkedIds,
+                onBookmarkToggle = { lowongan ->
+                    magangViewModel.toggleBookmark(lowongan.id)
+                },
                 onBackClick = { navController.popBackStack() },
-                onLowonganClick = { navController.navigate(Routes.DETAIL_MAGANG) }
+                onLowonganClick = { item ->
+                    navController.navigate(Routes.detailMagang(item.id))
+                }
             )
         }
 
         // Halaman Detail Magang (Detail Magang.png)
+        composable(
+            route = Routes.DETAIL_MAGANG_ROUTE,
+            arguments = listOf(navArgument("id") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val idArg = backStackEntry.arguments?.getString("id").orEmpty()
+            val targetId = if (idArg.isNotBlank()) idArg else (magangState.lowonganList.firstOrNull()?.id ?: "")
+
+            LaunchedEffect(targetId) {
+                if (targetId.isNotBlank()) {
+                    magangViewModel.loadDetailLowongan(targetId)
+                }
+            }
+
+            val lowongan = magangState.selectedLowongan ?: magangState.lowonganList.find { it.id == targetId }
+            val detailData = if (lowongan != null) {
+                DetailMagangData(
+                    id = lowongan.id,
+                    posisi = lowongan.posisi.uppercase(),
+                    perusahaan = lowongan.namaPerusahaan,
+                    lokasi = lowongan.kota,
+                    durasi = lowongan.periodeMagang,
+                    status = "Available",
+                    deskripsiPekerjaan = lowongan.deskripsiPekerjaan,
+                    persyaratan = lowongan.persyaratan.split("\n", ",").map { it.trim() }.filter { it.isNotEmpty() },
+                    periodePendaftaran = "s/d ${lowongan.batasPendaftaran}"
+                )
+            } else {
+                DetailMagangData()
+            }
+
+            DetailMagangScreen(
+                data = detailData,
+                isBookmarked = magangState.bookmarkedIds.contains(detailData.id),
+                onBackClick = { navController.popBackStack() },
+                onBookmarkToggle = { magangViewModel.toggleBookmark(detailData.id) },
+                onLamarSekarangClick = { navController.navigate(Routes.FORMULIR_LAMARAN) }
+            )
+        }
+
+        // Fallback route lama tanpa query
         composable(Routes.DETAIL_MAGANG) {
+            val targetId = magangState.lowonganList.firstOrNull()?.id ?: ""
+            LaunchedEffect(targetId) {
+                if (targetId.isNotBlank()) {
+                    magangViewModel.loadDetailLowongan(targetId)
+                }
+            }
             DetailMagangScreen(
                 onBackClick = { navController.popBackStack() },
                 onLamarSekarangClick = { navController.navigate(Routes.FORMULIR_LAMARAN) }
@@ -738,9 +815,19 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Formulir Lamaran Magang (Step 1, 2, 3, 4)
         composable(Routes.FORMULIR_LAMARAN) {
+            val lowongan = magangState.selectedLowongan
+            val posisi = lowongan?.posisi ?: "UI/UX Designer Intern"
+            val perusahaan = lowongan?.namaPerusahaan ?: "PT Teknologi Nusantara"
+
             FormulirLamaranScreen(
+                posisiJudul = posisi,
+                perusahaan = perusahaan,
                 onBackClick = { navController.popBackStack() },
-                onCekStatusLamaran = { navController.navigate(Routes.STATUS_LAMARAN) },
+                onCekStatusLamaran = {
+                    navController.navigate(Routes.STATUS_LAMARAN) {
+                        popUpTo(Routes.MAGANG) { inclusive = false }
+                    }
+                },
                 onKembaliKeBeranda = {
                     navController.navigate(Routes.MAGANG) {
                         popUpTo(Routes.MAGANG) { inclusive = true }
@@ -763,11 +850,17 @@ fun LenteraNavGraph(navController: NavHostController) {
             )
         }
 
-        // Status Lamaran - Butuh Perbaikan Dokumen (Status Lamaran.png)
+        // Status Lamaran
         composable(Routes.STATUS_LAMARAN) {
+            val lamaran = magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
+            val isPerluPerbaikan = lamaran?.status == "perlu_perbaikan"
+            val isDiterima = lamaran?.status == "diterima"
+
             StatusLamaranScreen(
-                needsCorrection = true,
-                isFinalAccepted = false,
+                posisi = lamaran?.namaLengkap ?: "UI/UX Designer Intern",
+                nomorLamaran = lamaran?.nomorLamaran ?: "LNT-MG-2026-0891",
+                needsCorrection = isPerluPerbaikan,
+                isFinalAccepted = isDiterima,
                 onBackClick = { navController.popBackStack() },
                 onPerbaikiDokumenClick = { navController.navigate(Routes.PERBAIKAN_DOKUMEN) },
                 onInformasiPenerimaanClick = { navController.navigate(Routes.INFORMASI_PENERIMAAN) }
