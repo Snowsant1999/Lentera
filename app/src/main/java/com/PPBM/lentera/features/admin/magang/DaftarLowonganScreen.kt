@@ -1,4 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.PPBM.lentera.features.admin.magang.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
@@ -55,6 +57,7 @@ fun DaftarLowonganScreen(
     onNavigateToTambahLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
     onNavigateToPublikasiLowongan: () -> Unit = {},
+    onNavigateToLamaran: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -65,8 +68,8 @@ fun DaftarLowonganScreen(
     Scaffold(
         topBar = {
             AdminMagangHeader(
-                title = "DAFTAR LOWONGAN",
-                subtitle = "LENTERA · Admin Kampus",
+                title = "MAGANG HUB",
+                subtitle = "Kelola Lowongan · LENTERA",
                 onBackClick = onBackToTempatMagang
             )
         },
@@ -82,25 +85,27 @@ fun DaftarLowonganScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 0. Sub-tab Pills (Tempat Magang / Kelola Lowongan)
+            // 0. Sub-tab Pills (Mitra Magang / Kelola Lowongan / Lamaran Masuk)
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Inactive Tab: Tempat Magang
+                    // Inactive Tab: Mitra Magang
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(MagangPillInactive)
                             .clickable { onBackToTempatMagang() }
-                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                            .padding(horizontal = 16.dp, vertical = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "← Tempat Magang",
+                            text = "Mitra Magang",
                             style = TextStyle(
-                                fontSize = 13.sp,
+                                fontSize = 12.5.sp,
                                 fontFamily = PlusJakartaFont,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF475569)
@@ -113,16 +118,36 @@ fun DaftarLowonganScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(MagangPillOrange)
-                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                            .padding(horizontal = 16.dp, vertical = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "Kelola Lowongan",
                             style = TextStyle(
-                                fontSize = 13.sp,
+                                fontSize = 12.5.sp,
                                 fontFamily = PlusJakartaFont,
                                 fontWeight = FontWeight.Bold,
                                 color = MagangNavyDark
+                            )
+                        )
+                    }
+
+                    // Inactive Tab: Lamaran Masuk
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MagangPillInactive)
+                            .clickable { onNavigateToLamaran() }
+                            .padding(horizontal = 16.dp, vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Lamaran Masuk",
+                            style = TextStyle(
+                                fontSize = 12.5.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF475569)
                             )
                         )
                     }

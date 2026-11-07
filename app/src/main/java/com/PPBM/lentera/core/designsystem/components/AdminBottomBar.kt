@@ -47,7 +47,7 @@ fun AdminBottomBar(
             .fillMaxWidth()
             .background(SiagaNavBg)
             .navigationBarsPadding()
-            .padding(vertical = 8.dp, horizontal = 4.dp)
+            .padding(vertical = 8.dp, horizontal = 2.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -59,7 +59,7 @@ fun AdminBottomBar(
                     LenteraNavItem.BERANDA -> "Beranda"
                     LenteraNavItem.MAHASISWA -> "Mahasiswa"
                     LenteraNavItem.LAPORAN -> "Laporan"
-                    LenteraNavItem.MAGANG -> "Magang"
+                    LenteraNavItem.MAGANG -> "Magang Hub"
                     LenteraNavItem.PROFIL -> "Profil"
                 }
                 val iconRes = when (item) {
@@ -87,7 +87,7 @@ fun AdminBottomBar(
                     modifier = Modifier
                         .weight(1f)
                         .height(54.dp)
-                        .padding(horizontal = 2.dp),
+                        .padding(horizontal = 1.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isSelected) {
@@ -120,6 +120,7 @@ fun AdminBottomBar(
                                     fontFamily = PlusJakartaSans,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 10.sp,
+                                    letterSpacing = (-0.2).sp,
                                     color = activeContentColor,
                                     maxLines = 1,
                                     softWrap = false
@@ -155,6 +156,7 @@ fun AdminBottomBar(
                                     fontFamily = PlusJakartaSans,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 10.sp,
+                                    letterSpacing = (-0.2).sp,
                                     color = SiagaNavUnselected,
                                     maxLines = 1,
                                     softWrap = false

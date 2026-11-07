@@ -73,6 +73,10 @@ import com.PPBM.lentera.features.admin.magang.FormLowonganScreen
 import com.PPBM.lentera.features.admin.magang.KelolaStatusTempatScreen
 import com.PPBM.lentera.features.admin.magang.TambahTempatMagangScreen
 import com.PPBM.lentera.features.admin.magang.TempatMagangScreen
+import com.PPBM.lentera.features.admin.magang.KelolaLamaranScreen
+import com.PPBM.lentera.features.admin.magang.DetailValidasiLamaranScreen
+import com.PPBM.lentera.features.admin.magang.PelamarLamaranItem
+import com.PPBM.lentera.features.admin.magang.SampleDaftarLamaran
 import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
 import com.PPBM.lentera.features.admin.profil.BantuanAdminScreen
 import com.PPBM.lentera.features.admin.profil.DataAkunAdminScreen
@@ -142,6 +146,8 @@ enum class ScreenState {
     ADMIN_MAGANG_LOWONGAN,
     ADMIN_MAGANG_TAMBAH_LOWONGAN,
     ADMIN_MAGANG_DETAIL_LOWONGAN,
+    ADMIN_MAGANG_KELOLA_LAMARAN,
+    ADMIN_MAGANG_DETAIL_VALIDASI,
     ADMIN_PROFIL,
     ADMIN_DATA_AKUN,
     ADMIN_KEAMANAN_AKUN,
@@ -183,6 +189,8 @@ fun LenteraApp() {
     var adminEmail by remember { mutableStateOf("rina.wulandari@lentera.ac.id") }
     var adminTelepon by remember { mutableStateOf("081234567890") }
     var adminNotifikasiOrigin by remember { mutableStateOf(ScreenState.ADMIN_DASHBOARD) }
+    var daftarPelamarList by remember { mutableStateOf(SampleDaftarLamaran) }
+    var selectedPelamar by remember { mutableStateOf(SampleDaftarLamaran.first()) }
 
     val mahasiswaDashboard = remember { MahasiswaDashboard() }
     val mahasiswaSettings = remember { MahasiswaSettings() }
@@ -670,8 +678,11 @@ fun LenteraApp() {
             }
             ScreenState.MAGANG_STATUS -> {
                 StatusLamaranScreen(
-                    needsCorrection = true,
-                    isFinalAccepted = false,
+                    posisi = selectedPelamar.posisi,
+                    perusahaan = selectedPelamar.mitra,
+                    nomorLamaran = selectedPelamar.id,
+                    needsCorrection = selectedPelamar.status == "Perlu Perbaikan",
+                    isFinalAccepted = selectedPelamar.status == "Diterima",
                     onBackClick = {
                         currentTab = LenteraTab.MAGANG_HUB
                         currentScreen = ScreenState.MAGANG_HUB
@@ -730,8 +741,6 @@ fun LenteraApp() {
                         adminNotifikasiOrigin = ScreenState.ADMIN_DASHBOARD
                         currentScreen = ScreenState.ADMIN_NOTIFIKASI
                     },
-                    onTambahMahasiswa = { currentScreen = ScreenState.ADMIN_BUAT_AKUN_MAHASISWA },
-                    onTambahTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -767,6 +776,7 @@ fun LenteraApp() {
                     onNavigateToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
                     onNavigateToTambahTempat = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_TEMPAT },
                     onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavigateToLamaran = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_LAMARAN },
                     onBack = { currentScreen = ScreenState.ADMIN_DASHBOARD },
                     onNavClick = handleAdminNavClick
                 )
@@ -797,7 +807,39 @@ fun LenteraApp() {
                     onNavigateToTambahLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToFormLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToDetailLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN },
+                    onNavigateToLamaran = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_LAMARAN },
                     onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_MAGANG_KELOLA_LAMARAN -> {
+                KelolaLamaranScreen(
+                    lamaranList = daftarPelamarList,
+                    onNavigateToDetailValidasi = { pelamar ->
+                        selectedPelamar = pelamar
+                        currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_VALIDASI
+                    },
+                    onNavigateToMitra = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
+                    onNavigateToLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_LOWONGAN },
+                    onNavClick = handleAdminNavClick
+                )
+            }
+            ScreenState.ADMIN_MAGANG_DETAIL_VALIDASI -> {
+                DetailValidasiLamaranScreen(
+                    pelamar = selectedPelamar,
+                    onBackClick = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_LAMARAN },
+                    onStatusUpdated = { newStatus, newCatatan ->
+                        daftarPelamarList = daftarPelamarList.map {
+                            if (it.id == selectedPelamar.id) it.copy(
+                                status = newStatus,
+                                catatanRevisi = if (newCatatan.isNotBlank()) newCatatan else it.catatanRevisi
+                            ) else it
+                        }
+                        selectedPelamar = selectedPelamar.copy(
+                            status = newStatus,
+                            catatanRevisi = if (newCatatan.isNotBlank()) newCatatan else selectedPelamar.catatanRevisi
+                        )
+                    },
                     onNavClick = handleAdminNavClick
                 )
             }
@@ -820,12 +862,12 @@ fun LenteraApp() {
                     onMenuClick = { menuItem ->
                         when (menuItem.judul) {
                             "Data Akun" -> currentScreen = ScreenState.ADMIN_DATA_AKUN
-                            "Keamanan Akun" -> currentScreen = ScreenState.ADMIN_KEAMANAN_AKUN
                             "Bantuan Admin" -> currentScreen = ScreenState.ADMIN_BANTUAN
                             "Notifikasi" -> {
                                 adminNotifikasiOrigin = ScreenState.ADMIN_PROFIL
                                 currentScreen = ScreenState.ADMIN_NOTIFIKASI
                             }
+                            "Tentang Aplikasi" -> currentScreen = ScreenState.TENTANG_APLIKASI
                         }
                     },
                     onAvatarClick = { currentScreen = ScreenState.ADMIN_DATA_AKUN },

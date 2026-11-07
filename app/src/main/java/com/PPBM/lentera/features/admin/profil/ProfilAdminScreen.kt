@@ -2,6 +2,7 @@ package com.PPBM.lentera.features.admin.profil
 import com.PPBM.lentera.core.designsystem.components.*
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,12 +13,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,17 +35,17 @@ data class MenuProfilItem(
 )
 
 private val SampleMenuProfil = listOf(
-    MenuProfilItem("Data Akun", "Informasi pribadi dan peran admin", R.drawable.ic_profile_circle),
-    MenuProfilItem("Keamanan Akun", "Ubah kata sandi dan autentikasi", R.drawable.ic_shield_alert),
-    MenuProfilItem("Notifikasi", "Pembaruan layanan kampus", R.drawable.ic_bell),
-    MenuProfilItem("Bantuan Admin", "Panduan dan dukungan operasional", R.drawable.ic_help_circle)
+    MenuProfilItem("Data Akun", "Informasi pribadi dan peran admin", R.drawable.ic_menu_symbol),
+    MenuProfilItem("Notifikasi", "Atur pembaruan layanan dan operasional", R.drawable.ic_menu_symbol_3),
+    MenuProfilItem("Bantuan Admin", "Panduan dan dukungan operasional", R.drawable.ic_support_symbol),
+    MenuProfilItem("Tentang Aplikasi", "Versi 1.0.0 · LENTERA POLNES", R.drawable.ic_menu_symbol_4)
 )
 
 @Composable
 fun ProfilAdminScreen(
     nama: String = "Rina Wulandari",
-    peran: String = "Admin Kampus · LENTERA",
-    badge: String = "Akses admin penuh",
+    peran: String = "NIP. 198803152015042001 · Admin Kampus",
+    badge: String = "Admin aktif",
     versi: String = "1.0.0",
     menu: List<MenuProfilItem> = SampleMenuProfil,
     onMenuClick: (MenuProfilItem) -> Unit = {},
@@ -63,35 +67,55 @@ fun ProfilAdminScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "PROFIL ADMIN",
-                color = LenteraColors.NavyDark,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
-                fontFamily = PlusJakartaSans,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(30.dp))
+            // Header Judul Layar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = "PROFIL ADMIN",
+                    color = LenteraNavy,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = PlusJakartaSans
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Avatar dan Ringkasan Profil
             RingkasanProfil(
                 nama = nama,
                 peran = peran,
                 badge = badge,
                 onAvatarClick = onAvatarClick
             )
+
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Menu Profil Card (Identik dengan Mahasiswa)
             MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
-            Spacer(modifier = Modifier.height(14.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
             KeluarCard(onClick = onKeluarClick)
-            Spacer(modifier = Modifier.height(18.dp))
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Footer Versi Aplikasi
             Text(
                 text = "LENTERA · Versi $versi",
-                color = LenteraColors.SlateText,
+                color = LenteraTextSecondary,
                 fontSize = 12.sp,
-                fontFamily = PlusJakartaSans
+                fontFamily = PlusJakartaSans,
+                textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -104,29 +128,53 @@ private fun RingkasanProfil(
     onAvatarClick: () -> Unit = {}
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        ProfileAvatar(
-            size = 100.dp,
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
+                .size(96.dp)
+                .background(Color.White, CircleShape)
+                .shadow(
+                    elevation = 6.dp,
+                    shape = CircleShape,
+                    spotColor = Color(0x15173B57)
+                )
                 .clip(CircleShape)
                 .clickable(onClick = onAvatarClick)
-        )
-        Spacer(modifier = Modifier.height(20.dp))
+        ) {
+            ProfileAvatar(
+                size = 88.dp
+            )
+        }
+        Spacer(modifier = Modifier.height(14.dp))
         Text(
             text = nama,
-            color = LenteraColors.NavyDark,
-            fontSize = 24.sp,
+            color = LenteraNavy,
+            fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
             fontFamily = PlusJakartaSans
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = peran,
-            color = LenteraColors.SlateText,
-            fontSize = 14.sp,
+            color = LenteraTextSecondary,
+            fontSize = 13.sp,
             fontFamily = PlusJakartaSans
         )
         Spacer(modifier = Modifier.height(10.dp))
-        LenteraBadge(text = badge)
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(LenteraBadgeBg)
+                .padding(horizontal = 14.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = badge,
+                color = LenteraTeal,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = PlusJakartaSans
+            )
+        }
     }
 }
 
@@ -135,12 +183,23 @@ private fun MenuProfilCard(
     menu: List<MenuProfilItem>,
     onMenuClick: (MenuProfilItem) -> Unit
 ) {
-    LenteraCard(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        withShadow = true
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 12.dp,
+                spotColor = Color(0x09173B57),
+                ambientColor = Color(0x09173B57),
+                shape = RoundedCornerShape(24.dp)
+            )
+            .background(Color.White, shape = RoundedCornerShape(24.dp))
+            .padding(vertical = 8.dp)
     ) {
         menu.forEach { item ->
-            MenuProfilRow(item = item, onClick = { onMenuClick(item) })
+            MenuProfilRow(
+                item = item,
+                onClick = { onMenuClick(item) }
+            )
         }
     }
 }
@@ -154,44 +213,45 @@ private fun MenuProfilRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 17.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(LenteraColors.Background),
-            contentAlignment = Alignment.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(
+            Image(
                 painter = painterResource(id = item.iconRes),
-                contentDescription = null,
-                tint = LenteraColors.NavyDark,
-                modifier = Modifier.size(22.dp)
+                contentDescription = item.judul,
+                modifier = Modifier.size(40.dp)
             )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = item.judul,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = LenteraNavy
+                )
+                Text(
+                    text = item.deskripsi,
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 12.sp,
+                    color = LenteraTextSecondary
+                )
+            }
         }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = item.judul,
-                color = LenteraColors.NavyDark,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = PlusJakartaSans
-            )
-            Text(
-                text = item.deskripsi,
-                color = LenteraColors.SlateText,
-                fontSize = 12.sp,
-                fontFamily = PlusJakartaSans
-            )
-        }
+
         Icon(
-            painter = painterResource(id = R.drawable.ic_chevron_right),
+            painter = painterResource(id = R.drawable.ic_open_answer),
             contentDescription = null,
-            tint = LenteraColors.SlateText,
-            modifier = Modifier.size(18.dp)
+            tint = LenteraTextSecondary,
+            modifier = Modifier.size(16.dp)
         )
     }
 }
@@ -201,32 +261,37 @@ private fun KeluarCard(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(LenteraColors.RoseSoft)
+            .clip(RoundedCornerShape(18.dp))
+            .background(LenteraRedBg)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_log),
+                contentDescription = "Keluar",
+                tint = LenteraRedMuted,
+                modifier = Modifier.size(22.dp)
+            )
+            Text(
+                text = "Keluar",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = LenteraRedMuted
+            )
+        }
+
         Icon(
-            painter = painterResource(id = R.drawable.ic_log_out),
+            painter = painterResource(id = R.drawable.ic_open_answer),
             contentDescription = null,
-            tint = LenteraColors.Rose,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(14.dp))
-        Text(
-            text = "Keluar",
-            color = LenteraColors.Rose,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PlusJakartaSans,
-            modifier = Modifier.weight(1f)
-        )
-        Icon(
-            painter = painterResource(id = R.drawable.ic_chevron_right),
-            contentDescription = null,
-            tint = LenteraColors.Rose,
-            modifier = Modifier.size(18.dp)
+            tint = LenteraRedMuted,
+            modifier = Modifier.size(16.dp)
         )
     }
 }

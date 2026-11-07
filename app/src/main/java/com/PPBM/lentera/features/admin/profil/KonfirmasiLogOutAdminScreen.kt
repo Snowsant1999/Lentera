@@ -1,27 +1,33 @@
 package com.PPBM.lentera.features.admin.profil
-import com.PPBM.lentera.core.designsystem.components.*
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
 
-/** Halaman Profil Admin dengan dialog konfirmasi keluar di atasnya. */
+/**
+ * Halaman Profil Admin dengan dialog konfirmasi keluar di atasnya.
+ * Mengadopsi dialog konfirmasi logout sisi Mahasiswa secara identik.
+ */
 @Composable
 fun KonfirmasiLogoutAdminScreen(
     onDismiss: () -> Unit = {},
@@ -37,8 +43,8 @@ fun KonfirmasiLogoutAdminScreen(
 }
 
 /**
- * Scrim + kartu dialog. Bisa dipasang langsung di ProfilAdminScreen
- * saat state `tampilkanDialogKeluar` bernilai true.
+ * Scrim + kartu dialog konfirmasi logout.
+ * Desain seragam dengan Konfirmasi Logout Mahasiswa.
  */
 @Composable
 fun LogoutConfirmationOverlay(
@@ -49,7 +55,7 @@ fun LogoutConfirmationOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(LenteraColors.Scrim)
+            .background(Color(0x66000000))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -61,9 +67,9 @@ fun LogoutConfirmationOverlay(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp))
-                .background(LenteraColors.Surface)
-                // Mencegah klik pada kartu ikut menutup dialog.
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                // Mencegah klik pada kartu ikut menutup dialog
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -72,57 +78,81 @@ fun LogoutConfirmationOverlay(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            IkonKeluar()
+            // Simbol Keluar (Sesuai referensi Mahasiswa)
+            Image(
+                painter = painterResource(id = R.drawable.ic_simbol_keluar),
+                contentDescription = "Keluar",
+                modifier = Modifier.size(56.dp)
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "Keluar dari akun?",
-                color = LenteraColors.NavyDark,
-                fontSize = 22.sp,
+                fontFamily = PlusJakartaSans,
                 fontWeight = FontWeight.ExtraBold,
-                fontFamily = PlusJakartaSans
+                fontSize = 20.sp,
+                color = LenteraNavy
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
                 text = "Apakah Anda yakin ingin keluar?",
-                color = LenteraColors.SlateText,
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
-                fontFamily = PlusJakartaSans
+                color = LenteraTextSecondary,
+                textAlign = TextAlign.Center
             )
+
             Spacer(modifier = Modifier.height(24.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                LenteraButton(
-                    text = "Batal",
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Tombol Batal
+                Button(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    containerColor = LenteraColors.Background,
-                    contentColor = LenteraColors.NavyDark
-                )
-                LenteraButton(
-                    text = "Ya, Keluar",
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEFF5FD),
+                        contentColor = LenteraNavy
+                    )
+                ) {
+                    Text(
+                        text = "Batal",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+
+                // Tombol Ya, Keluar
+                Button(
                     onClick = onConfirm,
-                    modifier = Modifier.weight(1f),
-                    containerColor = LenteraColors.Rose
-                )
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraRedMuted,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Ya, Keluar",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun IkonKeluar() {
-    Box(
-        modifier = Modifier
-            .size(52.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(LenteraColors.RoseSoft),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_log_out),
-            contentDescription = null,
-            tint = LenteraColors.Rose,
-            modifier = Modifier.size(24.dp)
-        )
     }
 }
 

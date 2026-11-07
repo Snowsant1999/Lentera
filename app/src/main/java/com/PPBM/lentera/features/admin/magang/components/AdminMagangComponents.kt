@@ -71,7 +71,9 @@ enum class AdminMagangRoute {
     TAMBAH_TEMPAT_MAGANG,
     FORM_LOWONGAN,
     KELOLA_STATUS_TEMPAT,
-    PUBLIKASI_LOWONGAN
+    PUBLIKASI_LOWONGAN,
+    KELOLA_LAMARAN,
+    DETAIL_VALIDASI_LAMARAN
 }
 
 // ==========================================

@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.core.designsystem.theme.*
 
-// Menggunakan PlusJakartaSans dari core design system theme
-
 @Composable
 fun BuatAkunMahasiswaScreen(
     onBackClick: () -> Unit = {},
@@ -32,12 +30,10 @@ fun BuatAkunMahasiswaScreen(
 ) {
     var namaLengkap by remember { mutableStateOf("Dewi Lestari") }
     var nim by remember { mutableStateOf("2026110009") }
-    var perguruanTinggi by remember { mutableStateOf("Universitas Contoh") }
+    var jurusan by remember { mutableStateOf("Teknologi Informasi") }
     var programStudi by remember { mutableStateOf("Teknik Informatika") }
     var angkatan by remember { mutableStateOf("2026") }
     var emailKampus by remember { mutableStateOf("dewi.lestari@kampus.ac.id") }
-    var metodeAkses by remember { mutableStateOf("Kirim tautan aktivasi ke email") }
-    var kirimEmail by remember { mutableStateOf(true) }
 
     var showFeedback by remember { mutableStateOf(false) }
     var feedbackTitle by remember { mutableStateOf("") }
@@ -76,11 +72,11 @@ fun BuatAkunMahasiswaScreen(
                 )
             }
 
-            // Card 2: Informasi Akademik
+            // Card 2: Informasi Akademik (Jurusan, Prodi, Angkatan, Email)
             item {
                 CardInformasiAkademik(
-                    perguruanTinggi = perguruanTinggi,
-                    onPerguruanTinggiChange = { perguruanTinggi = it },
+                    jurusan = jurusan,
+                    onJurusanChange = { jurusan = it },
                     programStudi = programStudi,
                     onProgramStudiChange = { programStudi = it },
                     angkatan = angkatan,
@@ -90,33 +86,18 @@ fun BuatAkunMahasiswaScreen(
                 )
             }
 
-            // Card 3: Akses Akun Awal
-            item {
-                CardAksesAkunAwal(
-                    metodeAkses = metodeAkses,
-                    onMetodeAksesChange = { metodeAkses = it },
-                    kirimEmail = kirimEmail,
-                    onKirimEmailChange = { kirimEmail = it }
-                )
-            }
-
-            // Info Notice Banner
-            item {
-                InfoNoticeBanner()
-            }
-
             // Action Buttons
             item {
                 ActionButtons(
                     onSimpan = {
-                        if (namaLengkap.isBlank() || nim.isBlank() || emailKampus.isBlank()) {
+                        if (namaLengkap.isBlank() || nim.isBlank() || emailKampus.isBlank() || jurusan.isBlank()) {
                             feedbackTitle = "Data Belum Lengkap"
-                            feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, dan Email Kampus."
+                            feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, Jurusan, dan Email Kampus."
                             feedbackIsSuccess = false
                             showFeedback = true
                         } else {
                             feedbackTitle = "Akun Berhasil Dibuat"
-                            feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan dan siap digunakan."
+                            feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan dan langsung aktif digunakan."
                             feedbackIsSuccess = true
                             showFeedback = true
                         }
@@ -143,42 +124,44 @@ fun BuatAkunMahasiswaScreen(
 
 @Composable
 fun HeaderTopBar(onBackClick: () -> Unit = {}) {
-    Column(modifier = Modifier.statusBarsPadding()) {
+    Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
             Image(
                 painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back_button),
-                contentDescription = "Back",
+                contentDescription = "Kembali",
                 modifier = Modifier
                     .size(44.dp)
-                    .clickable { onBackClick() }
+                    .clickable(onClick = onBackClick)
             )
             Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
-                    text = "BUAT AKUN MAHASISWA",
+                    text = "TAMBAH MAHASISWA",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     fontFamily = PlusJakartaSans,
                     color = Color(0xFF1E3A5F)
                 )
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "LENTERA · Admin Kampus",
+                    text = "LENTERA · Administrator Kampus",
                     fontSize = 12.sp,
                     fontFamily = PlusJakartaSans,
                     color = Color(0xFF7A8B9B)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(20.dp))
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            text = "Tambahkan mahasiswa dan siapkan akses awalnya.",
-            fontSize = 14.sp,
+            text = "Formulir pendaftaran akun mahasiswa baru. Akun yang dibuat akan langsung aktif dan dapat digunakan untuk masuk ke aplikasi LENTERA.",
+            fontSize = 13.sp,
             fontFamily = PlusJakartaSans,
-            color = Color(0xFF7A8B9B)
+            color = Color(0xFF7A8B9B),
+            lineHeight = 18.sp
         )
     }
 }
@@ -268,25 +251,11 @@ fun CardIdentitasMahasiswa(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "10 digit · NIM harus unik dan sesuai data akademik.",
+                    text = "NIM harus unik dan sesuai dengan data akademik mahasiswa.",
                     fontSize = 11.sp,
                     fontFamily = PlusJakartaSans,
                     color = Color(0xFF7A8B9B)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFE6F3F0), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "NIM belum terdaftar",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PlusJakartaSans,
-                        color = Color(0xFF2E7D32)
-                    )
-                }
             }
         }
     }
@@ -294,8 +263,8 @@ fun CardIdentitasMahasiswa(
 
 @Composable
 fun CardInformasiAkademik(
-    perguruanTinggi: String,
-    onPerguruanTinggiChange: (String) -> Unit,
+    jurusan: String,
+    onJurusanChange: (String) -> Unit,
     programStudi: String,
     onProgramStudiChange: (String) -> Unit,
     angkatan: String,
@@ -321,10 +290,10 @@ fun CardInformasiAkademik(
                 color = Color(0xFF1E3A5F)
             )
 
-            // Perguruan tinggi *
+            // Jurusan * (Menggantikan Perguruan Tinggi)
             Column {
                 Text(
-                    text = "Perguruan tinggi *",
+                    text = "Jurusan *",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PlusJakartaSans,
@@ -332,8 +301,8 @@ fun CardInformasiAkademik(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
-                    value = perguruanTinggi,
-                    onValueChange = onPerguruanTinggiChange,
+                    value = jurusan,
+                    onValueChange = onJurusanChange,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     textStyle = TextStyle(
@@ -382,14 +351,6 @@ fun CardInformasiAkademik(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
-                                contentDescription = "Select Program Studi",
-                                tint = Color(0xFF1E3A5F),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
                         singleLine = true
                     )
                 }
@@ -420,14 +381,6 @@ fun CardInformasiAkademik(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
-                                contentDescription = "Select Angkatan",
-                                tint = Color(0xFF1E3A5F),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
                         singleLine = true
                     )
                 }
@@ -463,153 +416,12 @@ fun CardInformasiAkademik(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Gunakan email kampus yang dapat diakses mahasiswa.",
+                    text = "Gunakan email resmi kampus yang aktif.",
                     fontSize = 11.sp,
                     fontFamily = PlusJakartaSans,
                     color = Color(0xFF7A8B9B)
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun CardAksesAkunAwal(
-    metodeAkses: String,
-    onMetodeAksesChange: (String) -> Unit,
-    kirimEmail: Boolean,
-    onKirimEmailChange: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Akses akun awal",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = PlusJakartaSans,
-                color = Color(0xFF1E3A5F)
-            )
-
-            // Metode pemberian akses
-            Column {
-                Text(
-                    text = "Metode pemberian akses",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = PlusJakartaSans,
-                    color = Color(0xFF1E3A5F)
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = metodeAkses,
-                    onValueChange = onMetodeAksesChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = TextStyle(
-                        fontFamily = PlusJakartaSans,
-                        fontSize = 14.sp,
-                        color = Color(0xFF1E3A5F)
-                    ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1E3A5F),
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    ),
-                    trailingIcon = {
-                        Icon(
-                            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_chevron_down_alt),
-                            contentDescription = "Select Metode",
-                            tint = Color(0xFF1E3A5F),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Mahasiswa masuk dengan NIM atau email kampus, lalu membuat password sendiri melalui tautan yang berlaku 24 jam.",
-                    fontSize = 12.sp,
-                    fontFamily = PlusJakartaSans,
-                    color = Color(0xFF7A8B9B),
-                    lineHeight = 18.sp
-                )
-            }
-
-            HorizontalDivider(color = Color(0xFFF0F0F0))
-
-            // Kirim email setelah disimpan
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Kirim email setelah disimpan",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PlusJakartaSans,
-                        color = Color(0xFF1E3A5F)
-                    )
-                    Switch(
-                        checked = kirimEmail,
-                        onCheckedChange = onKirimEmailChange,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF2E7D32),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color(0xFFE0E0E0)
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Akun berstatus Belum aktivasi sampai mahasiswa membuat password. Jangan kirim password melalui pesan biasa.",
-                    fontSize = 12.sp,
-                    fontFamily = PlusJakartaSans,
-                    color = Color(0xFF7A8B9B),
-                    lineHeight = 18.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun InfoNoticeBanner() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F0F7)),
-        shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_info_alt),
-                contentDescription = "Info",
-                tint = Color(0xFF1E3A5F),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Kolom bertanda * wajib diisi. Periksa NIM dan email sebelum menyimpan akun.",
-                fontSize = 12.sp,
-                fontFamily = PlusJakartaSans,
-                color = Color(0xFF1E3A5F),
-                lineHeight = 18.sp
-            )
         }
     }
 }
@@ -660,11 +472,6 @@ fun ActionButtons(
             )
         }
     }
-}
-
-@Composable
-fun BuatAkunMahasiswaBottomBar() {
-    AdminBottomBar(selected = LenteraNavItem.MAHASISWA)
 }
 
 @Preview(showBackground = true)

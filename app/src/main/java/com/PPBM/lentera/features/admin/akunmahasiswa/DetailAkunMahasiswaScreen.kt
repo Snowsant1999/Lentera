@@ -26,7 +26,7 @@ private val SampleDetailMahasiswa = Mahasiswa(
 @Composable
 fun DetailAkunMahasiswaScreen(
     mahasiswa: Mahasiswa = SampleDetailMahasiswa,
-    perguruanTinggi: String = "Universitas Contoh",
+    jurusan: String = "Teknologi Informasi",
     angkatan: String = "2026",
     emailKampus: String = "email kampus tersimpan",
     metodeAkses: String = "Kirim tautan aktivasi ke email",
@@ -68,7 +68,7 @@ fun DetailAkunMahasiswaScreen(
             )
             IdentitasCard(mahasiswa = mahasiswa)
             InformasiAkademikCard(
-                perguruanTinggi = perguruanTinggi,
+                jurusan = jurusan,
                 programStudi = mahasiswa.prodi,
                 angkatan = angkatan,
                 emailKampus = emailKampus
@@ -127,7 +127,7 @@ private fun IdentitasCard(mahasiswa: Mahasiswa) {
 
 @Composable
 private fun InformasiAkademikCard(
-    perguruanTinggi: String,
+    jurusan: String,
     programStudi: String,
     angkatan: String,
     emailKampus: String
@@ -135,7 +135,7 @@ private fun InformasiAkademikCard(
     LenteraCard {
         LenteraCardTitle(text = "Informasi akademik")
         Spacer(modifier = Modifier.height(14.dp))
-        LenteraReadOnlyField(label = "Perguruan tinggi", value = perguruanTinggi)
+        LenteraReadOnlyField(label = "Jurusan", value = jurusan)
         Spacer(modifier = Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             LenteraReadOnlyField(
