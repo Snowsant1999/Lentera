@@ -17,12 +17,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.SessionManager
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.features.admin.dashboard.AdminDashboardScreen
 import com.PPBM.lentera.features.auth.*
+import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
 import com.PPBM.lentera.features.mahasiswa.siaga.*
 import com.PPBM.lentera.features.mahasiswa.notifikasi.MahasiswaNotifikasiScreen
 import com.PPBM.lentera.features.mahasiswa.magang.*
@@ -70,8 +76,8 @@ fun LenteraNavGraph(navController: NavHostController) {
             exitTransition = { fadeOut(animationSpec = tween(500)) }
         ) {
             SplashScreen(
-                onSplashFinished = {
-                    navController.navigate(Routes.LOGIN) {
+                onSplashFinished = { targetRoute ->
+                    navController.navigate(targetRoute) {
                         popUpTo(Routes.SPLASH) { inclusive = true }
                     }
                 }
@@ -81,8 +87,13 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Login Screen
         composable(Routes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Routes.DASHBOARD_PLACEHOLDER) {
+                onLoginSuccess = { role ->
+                    val destination = if (role.equals("admin", ignoreCase = true)) {
+                        Routes.ADMIN_DASHBOARD
+                    } else {
+                        Routes.MAHASISWA_DASHBOARD
+                    }
+                    navController.navigate(destination) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 },
@@ -151,8 +162,10 @@ fun LenteraNavGraph(navController: NavHostController) {
         composable(Routes.DASHBOARD_PLACEHOLDER) {
             DashboardPlaceholderScreen(
                 onLogout = {
+                    val session = SessionManager.getInstance(navController.context)
+                    session.clearSession()
                     navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.DASHBOARD_PLACEHOLDER) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 },
                 onOpenSiaga = {
@@ -160,6 +173,52 @@ fun LenteraNavGraph(navController: NavHostController) {
                 },
                 onOpenMagang = {
                     navController.navigate(Routes.MAGANG)
+                }
+            )
+        }
+
+        // Mahasiswa Dashboard
+        composable(Routes.MAHASISWA_DASHBOARD) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+            MahasiswaDashboard().mhsDashboard(
+                userName = profile?.namaLengkap ?: "Budi Mahasiswa",
+                onTabSelected = { tab ->
+                    when (tab) {
+                        LenteraTab.BERANDA -> { /* tetap di beranda */ }
+                        LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
+                        LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
+                        LenteraTab.PROFIL -> {
+                            session.clearSession()
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
+                },
+                onSiagaClick = { navController.navigate(Routes.SIAGA) },
+                onMagangClick = { navController.navigate(Routes.MAGANG) }
+            )
+        }
+
+        // Admin Dashboard
+        composable(Routes.ADMIN_DASHBOARD) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+            AdminDashboardScreen(
+                userName = profile?.namaLengkap ?: "Admin Lentera",
+                onNavigateToMahasiswa = { /* modul mahasiswa admin */ },
+                onNavigateToSiaga = { /* modul siaga admin */ },
+                onNavigateToMagang = { /* modul magang admin */ },
+                onNavClick = { item ->
+                    if (item == LenteraNavItem.PROFIL) {
+                        session.clearSession()
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 }
             )
         }

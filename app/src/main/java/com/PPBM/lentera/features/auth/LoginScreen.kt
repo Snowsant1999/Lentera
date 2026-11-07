@@ -51,32 +51,26 @@ import com.PPBM.lentera.core.designsystem.theme.*
  */
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
-    onLoginMahasiswa: () -> Unit = onLoginSuccess,
-    onLoginAdmin: () -> Unit = onLoginSuccess,
+    onLoginSuccess: (role: String) -> Unit = {},
+    onLoginMahasiswa: () -> Unit = { onLoginSuccess("mahasiswa") },
+    onLoginAdmin: () -> Unit = { onLoginSuccess("admin") },
     onForgotPassword: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val viewModel = remember { LoginViewModel(context.applicationContext as android.app.Application) }
+    val uiState by viewModel.uiState.collectAsState()
+
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     val focusManager = LocalFocusManager.current
 
     var nimOrEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var showError by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
 
-    // Simulasi login dummy tanpa backend
     fun doLogin() {
-        if (nimOrEmail.isBlank() || password.isBlank()) {
-            showError = true
-            return
-        }
-        isLoading = true
-        showError = false
-        if (nimOrEmail.contains("admin", ignoreCase = true)) {
-            onLoginAdmin()
-        } else {
-            onLoginMahasiswa()
+        focusManager.clearFocus()
+        viewModel.login(nimOrEmail, password) { role ->
+            onLoginSuccess(role)
         }
     }
 
@@ -156,7 +150,7 @@ fun LoginScreen(
             ) {
                 // Error banner
                 AnimatedVisibility(
-                    visible = showError,
+                    visible = uiState.errorMessage != null,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -191,7 +185,7 @@ fun LoginScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "NIM / email atau password salah. Periksa kembali dan coba lagi.",
+                                    text = uiState.errorMessage ?: "NIM / email atau password salah. Periksa kembali dan coba lagi.",
                                     style = TextStyle(
                                         fontSize = 12.sp,
                                         lineHeight = 18.sp,
@@ -227,7 +221,7 @@ fun LoginScreen(
                         .height(52.dp)
                         .border(
                             width = 1.dp,
-                            color = if (showError) ErrorRedBorder else InputBorder,
+                            color = if (uiState.errorMessage != null) ErrorRedBorder else InputBorder,
                             shape = RoundedCornerShape(14.dp)
                         )
                         .background(InputBackground, RoundedCornerShape(14.dp))
@@ -246,7 +240,7 @@ fun LoginScreen(
                         value = nimOrEmail,
                         onValueChange = {
                             nimOrEmail = it
-                            if (showError) showError = false
+                            viewModel.clearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -331,7 +325,7 @@ fun LoginScreen(
                         .height(52.dp)
                         .border(
                             width = 1.dp,
-                            color = if (showError) ErrorRedBorder else InputBorder,
+                            color = if (uiState.errorMessage != null) ErrorRedBorder else InputBorder,
                             shape = RoundedCornerShape(14.dp)
                         )
                         .background(InputBackground, RoundedCornerShape(14.dp))
@@ -350,7 +344,7 @@ fun LoginScreen(
                         value = password,
                         onValueChange = {
                             password = it
-                            if (showError) showError = false
+                            viewModel.clearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -445,14 +439,18 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(NavyMedium, RoundedCornerShape(16.dp))
+                        .background(
+                            if (uiState.isLoading) NavyMedium.copy(alpha = 0.7f) else NavyMedium,
+                            RoundedCornerShape(16.dp)
+                        )
                         .clickable(
+                            enabled = !uiState.isLoading,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) { doLogin() }
                 ) {
                     Text(
-                        text = if (showError) "Coba Masuk Lagi" else "Masuk",
+                        text = if (uiState.isLoading) "Memproses..." else if (uiState.errorMessage != null) "Coba Masuk Lagi" else "Masuk",
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontFamily = plusJakarta,
@@ -490,7 +488,13 @@ fun LoginScreen(
                             .height(44.dp)
                             .border(1.dp, NavyMedium, RoundedCornerShape(12.dp))
                             .background(Color.White, RoundedCornerShape(12.dp))
-                            .clickable { onLoginMahasiswa() }
+                            .clickable(enabled = !uiState.isLoading) {
+                                nimOrEmail = "2024010001"
+                                password = "Password123!"
+                                viewModel.login("2024010001", "Password123!") { role ->
+                                    onLoginSuccess(role)
+                                }
+                            }
                     ) {
                         Text(
                             text = "Demo Mahasiswa",
@@ -509,7 +513,13 @@ fun LoginScreen(
                             .weight(1f)
                             .height(44.dp)
                             .background(Color(0xFFEEB042), RoundedCornerShape(12.dp))
-                            .clickable { onLoginAdmin() }
+                            .clickable(enabled = !uiState.isLoading) {
+                                nimOrEmail = "admin@lentera.ac.id"
+                                password = "Password123!"
+                                viewModel.login("admin@lentera.ac.id", "Password123!") { role ->
+                                    onLoginSuccess(role)
+                                }
+                            }
                     ) {
                         Text(
                             text = "Demo Admin",

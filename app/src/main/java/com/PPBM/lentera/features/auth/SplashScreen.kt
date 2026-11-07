@@ -28,12 +28,13 @@ import kotlinx.coroutines.delay
  * Splash Screen — AUTH-001
  *
  * Menampilkan logo LENTERA dengan tagline dan progress bar loading.
- * Otomatis navigasi ke Login setelah 2.5 detik.
+ * Otomatis mengecek sesi pengguna dan mengarahkan ke Dashboard atau Login.
  */
 @Composable
 fun SplashScreen(
-    onSplashFinished: () -> Unit = {}
+    onSplashFinished: (destinationRoute: String) -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
 
     // Animasi progress bar
@@ -48,10 +49,16 @@ fun SplashScreen(
         label = "progress"
     )
 
-    // Timer untuk navigasi
+    // Timer untuk navigasi & pengecekan sesi auto-login
     LaunchedEffect(Unit) {
-        delay(2500)
-        onSplashFinished()
+        delay(2000)
+        val session = com.PPBM.lentera.backend.core.SessionManager.getInstance(context)
+        val destination = when {
+            session.isLoggedIn() && session.getRole() == "admin" -> com.PPBM.lentera.core.navigation.Routes.ADMIN_DASHBOARD
+            session.isLoggedIn() -> com.PPBM.lentera.core.navigation.Routes.MAHASISWA_DASHBOARD
+            else -> com.PPBM.lentera.core.navigation.Routes.LOGIN
+        }
+        onSplashFinished(destination)
     }
 
     Box(

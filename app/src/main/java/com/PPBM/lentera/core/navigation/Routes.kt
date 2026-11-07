@@ -10,6 +10,8 @@ object Routes {
     const val VERIFIKASI_PEMULIHAN = "verifikasi_pemulihan/{email}"
     const val RESET_PASSWORD = "reset_password/{email}"
     const val DASHBOARD_PLACEHOLDER = "dashboard_placeholder"
+    const val ADMIN_DASHBOARD = "admin_dashboard"
+    const val MAHASISWA_DASHBOARD = "mahasiswa_dashboard"
     const val SIAGA = "siaga"
     const val BUAT_LAPORAN = "buat_laporan"
     const val UPLOAD_BUKTI = "upload_bukti"
