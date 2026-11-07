@@ -18,9 +18,12 @@ data class AdminUiState(
     val isLoading: Boolean = false,
     val stats: AdminDashboardStats = AdminDashboardStats(),
     val laporanTerbaruList: List<AdminLaporan> = emptyList(),
+    val semuaLaporanList: List<AdminLaporan> = emptyList(),
+    val selectedLaporan: AdminLaporan? = null,
     val mahasiswaList: List<UserProfile> = emptyList(),
     val selectedMahasiswa: UserProfile? = null,
     val isCreatingMahasiswa: Boolean = false,
+    val isUpdatingLaporan: Boolean = false,
     val errorMessage: String? = null,
     val actionSuccessMessage: String? = null
 )
@@ -46,12 +49,137 @@ class AdminViewModel(
 
             val statsResult = adminMhsRepo.getDashboardStats()
             val laporanResult = adminSiagaRepo.getAllLaporan()
+            val laporanList = laporanResult.getOrDefault(emptyList())
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stats = statsResult.getOrDefault(AdminDashboardStats()),
-                laporanTerbaruList = laporanResult.getOrDefault(emptyList()).take(5)
+                semuaLaporanList = laporanList,
+                laporanTerbaruList = laporanList.take(5)
             )
+        }
+    }
+
+    /**
+     * Memuat seluruh daftar laporan pengaduan admin
+     */
+    fun loadSemuaLaporan() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = adminSiagaRepo.getAllLaporan()
+            result.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    semuaLaporanList = list,
+                    laporanTerbaruList = list.take(5)
+                )
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = err.message ?: "Gagal memuat daftar laporan"
+                )
+            }
+        }
+    }
+
+    /**
+     * Memilih salah satu laporan untuk dilihat detailnya
+     */
+    fun selectLaporan(idOrNomor: String) {
+        val found = _uiState.value.semuaLaporanList.find { it.id == idOrNomor || it.nomorLaporan == idOrNomor }
+        if (found != null) {
+            _uiState.value = _uiState.value.copy(selectedLaporan = found)
+        } else {
+            viewModelScope.launch {
+                val res = adminSiagaRepo.getDetailLaporan(idOrNomor)
+                res.onSuccess {
+                    _uiState.value = _uiState.value.copy(selectedLaporan = it)
+                }
+            }
+        }
+    }
+
+    /**
+     * Memperbarui status / verifikasi laporan (misal: penugasan atau penolakan)
+     */
+    fun updateStatusLaporan(
+        laporanId: String,
+        status: String,
+        unitPenanganan: String? = null,
+        jalurTindakLanjut: String? = null,
+        catatanPenugasan: String? = null,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdatingLaporan = true)
+            val res = adminSiagaRepo.updateStatusLaporan(
+                laporanId = laporanId,
+                status = status,
+                unitPenanganan = unitPenanganan,
+                jalurTindakLanjut = jalurTindakLanjut,
+                catatanPenugasan = catatanPenugasan
+            )
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isUpdatingLaporan = false)
+                loadSemuaLaporan()
+                selectLaporan(laporanId)
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isUpdatingLaporan = false,
+                    errorMessage = err.message ?: "Gagal memperbarui status laporan"
+                )
+            }
+        }
+    }
+
+    /**
+     * Menambahkan catatan tindakan penanganan kasus
+     */
+    fun addCatatanTindakan(
+        laporanId: String,
+        judul: String,
+        deskripsi: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdatingLaporan = true)
+            val res = adminSiagaRepo.addLogTindakan(laporanId, judul, deskripsi)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isUpdatingLaporan = false)
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isUpdatingLaporan = false,
+                    errorMessage = err.message ?: "Gagal menyimpan catatan tindakan"
+                )
+            }
+        }
+    }
+
+    /**
+     * Menyelesaikan laporan pengaduan
+     */
+    fun selesaikanLaporan(
+        laporanId: String,
+        hasilPenanganan: String,
+        hasilDipublikasi: Boolean,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdatingLaporan = true)
+            val res = adminSiagaRepo.selesaikanLaporan(laporanId, hasilPenanganan, hasilDipublikasi)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isUpdatingLaporan = false)
+                loadSemuaLaporan()
+                loadDashboardData()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isUpdatingLaporan = false,
+                    errorMessage = err.message ?: "Gagal menyelesaikan laporan"
+                )
+            }
         }
     }
 

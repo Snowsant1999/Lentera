@@ -42,6 +42,8 @@ import com.PPBM.lentera.features.admin.dashboard.DashboardLaporanItem
 import com.PPBM.lentera.features.admin.dashboard.DashboardLowonganItem
 import com.PPBM.lentera.features.admin.profil.*
 import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
+import com.PPBM.lentera.features.admin.siaga.*
+import com.PPBM.lentera.features.admin.siaga.components.AdminLaporanItem
 import com.PPBM.lentera.features.auth.*
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboardViewModel
@@ -549,6 +551,153 @@ fun LenteraNavGraph(navController: NavHostController) {
         composable(Routes.ADMIN_NOTIFIKASI) {
             AdminNotifikasiScreen(
                 onBackClick = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // ====================================================================
+        // Fitur Lentera Siaga Admin (Penanganan Laporan)
+        // ====================================================================
+
+        // Alur Terpadu Admin Siaga
+        composable(Routes.ADMIN_SIAGA) {
+            LaunchedEffect(Unit) {
+                adminViewModel.loadSemuaLaporan()
+            }
+
+            AdminSiagaFlowScreen(
+                onBackToDashboard = { navController.navigate(Routes.ADMIN_DASHBOARD) },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> {}
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Halaman Detail Laporan Admin Spesifik
+        composable(
+            route = Routes.ADMIN_DETAIL_LAPORAN_ROUTE,
+            arguments = listOf(navArgument("id") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val idArg = backStackEntry.arguments?.getString("id").orEmpty()
+            LaunchedEffect(idArg) {
+                if (idArg.isNotBlank()) {
+                    adminViewModel.selectLaporan(idArg)
+                }
+            }
+
+            AdminDetailLaporanScreen(
+                onNavigateToVerifikasi = { navController.navigate(Routes.ADMIN_SIAGA) },
+                onNavigateToMintaInformasi = { navController.navigate(Routes.ADMIN_MINTA_INFORMASI) },
+                onNavigateToPenugasan = { navController.navigate(Routes.ADMIN_PENUGASAN_LAPORAN) },
+                onNavigateToCatatanTindakan = { navController.navigate(Routes.ADMIN_CATATAN_TINDAKAN) },
+                onNavigateToHasilPenyelesaian = { navController.navigate(Routes.ADMIN_HASIL_PENYELESAIAN) },
+                onBackToList = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Catatan Tindakan Laporan
+        composable(Routes.ADMIN_CATATAN_TINDAKAN) {
+            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            CatatanTindakanScreen(
+                onHasilPenyelesaian = { navController.navigate(Routes.ADMIN_HASIL_PENYELESAIAN) },
+                onSimpanCatatan = { catatan ->
+                    selectedLaporan?.id?.let { lapId ->
+                        adminViewModel.addCatatanTindakan(
+                            laporanId = lapId,
+                            judul = "Catatan Penanganan Admin",
+                            deskripsi = catatan
+                        ) {
+                            navController.popBackStack()
+                        }
+                    }
+                },
+                onBackToDetail = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Penugasan Laporan
+        composable(Routes.ADMIN_PENUGASAN_LAPORAN) {
+            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            PenugasanLaporanScreen(
+                onSimpanPenugasan = {
+                    selectedLaporan?.id?.let { lapId ->
+                        adminViewModel.updateStatusLaporan(
+                            laporanId = lapId,
+                            status = "penanganan",
+                            unitPenanganan = "Tim Advokasi Kampus",
+                            jalurTindakLanjut = "Alihkan ke pihak berwenang",
+                            catatanPenugasan = "Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor."
+                        ) {
+                            navController.navigate(Routes.ADMIN_CATATAN_TINDAKAN)
+                        }
+                    }
+                },
+                onBackToDetail = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Hasil & Penyelesaian Laporan
+        composable(Routes.ADMIN_HASIL_PENYELESAIAN) {
+            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            HasilPenyelesaianScreen(
+                onSimpanDanSelesaikan = {
+                    selectedLaporan?.id?.let { lapId ->
+                        adminViewModel.selesaikanLaporan(
+                            laporanId = lapId,
+                            hasilPenanganan = "Laporan telah selesai ditangani secara resmi oleh Tim Advokasi dan Administrasi Kampus.",
+                            hasilDipublikasi = true
+                        ) {
+                            navController.navigate(Routes.ADMIN_SIAGA) {
+                                popUpTo(Routes.ADMIN_SIAGA) { inclusive = true }
+                            }
+                        }
+                    }
+                },
+                onBackToDetail = { navController.popBackStack() },
                 onNavClick = { item ->
                     when (item) {
                         LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
