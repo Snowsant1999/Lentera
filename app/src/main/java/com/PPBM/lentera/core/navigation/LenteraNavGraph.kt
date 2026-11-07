@@ -31,7 +31,17 @@ import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.features.admin.AdminViewModel
+import com.PPBM.lentera.features.admin.akunmahasiswa.AdminMahasiswaScreen
+import com.PPBM.lentera.features.admin.akunmahasiswa.BuatAkunMahasiswaScreen
+import com.PPBM.lentera.features.admin.akunmahasiswa.DetailAkunMahasiswaScreen
+import com.PPBM.lentera.features.admin.akunmahasiswa.Mahasiswa
+import com.PPBM.lentera.features.admin.akunmahasiswa.StatusAkun
 import com.PPBM.lentera.features.admin.dashboard.AdminDashboardScreen
+import com.PPBM.lentera.features.admin.dashboard.DashboardLaporanItem
+import com.PPBM.lentera.features.admin.dashboard.DashboardLowonganItem
+import com.PPBM.lentera.features.admin.profil.*
+import com.PPBM.lentera.features.admin.notifikasi.AdminNotifikasiScreen
 import com.PPBM.lentera.features.auth.*
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboard
 import com.PPBM.lentera.features.mahasiswa.dashboard.MahasiswaDashboardViewModel
@@ -54,6 +64,8 @@ fun LenteraNavGraph(navController: NavHostController) {
     val profilState by profilViewModel.uiState.collectAsState()
     val magangViewModel: MagangViewModel = viewModel()
     val magangState by magangViewModel.uiState.collectAsState()
+    val adminViewModel: AdminViewModel = viewModel()
+    val adminState by adminViewModel.uiState.collectAsState()
 
     NavHost(
         navController = navController,
@@ -236,17 +248,314 @@ fun LenteraNavGraph(navController: NavHostController) {
             val context = LocalContext.current
             val session = SessionManager.getInstance(context)
             val profile = session.getProfile()
+
+            LaunchedEffect(Unit) {
+                adminViewModel.loadDashboardData()
+            }
+
             AdminDashboardScreen(
                 userName = profile?.namaLengkap ?: "Admin Lentera",
-                onNavigateToMahasiswa = { /* modul mahasiswa admin */ },
-                onNavigateToSiaga = { /* modul siaga admin */ },
-                onNavigateToMagang = { /* modul magang admin */ },
+                onNavigateToMahasiswa = { navController.navigate(Routes.ADMIN_MAHASISWA) },
+                onNavigateToSiaga = { navController.navigate(Routes.ADMIN_SIAGA) },
+                onNavigateToMagang = { navController.navigate(Routes.ADMIN_MAGANG) },
+                onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
+                onNavigateToProfil = { navController.navigate(Routes.ADMIN_PROFIL) },
+                onNavigateToNotifikasi = { navController.navigate(Routes.ADMIN_NOTIFIKASI) },
                 onNavClick = { item ->
-                    if (item == LenteraNavItem.PROFIL) {
-                        session.clearSession()
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                    when (item) {
+                        LenteraNavItem.BERANDA -> {}
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // ====================================================================
+        // Fitur Kelola Akun Mahasiswa (Admin)
+        // ====================================================================
+
+        // Daftar Akun Mahasiswa
+        composable(Routes.ADMIN_MAHASISWA) {
+            LaunchedEffect(Unit) {
+                adminViewModel.loadMahasiswaList()
+            }
+
+            val studentsTriple = adminState.mahasiswaList.map { mhs ->
+                val statusStr = if (mhs.statusAkun.equals("aktif", ignoreCase = true)) "Aktif" else "Belum Aktivasi"
+                Triple(mhs.namaLengkap, mhs.nim ?: "-", statusStr)
+            }
+
+            AdminMahasiswaScreen(
+                studentList = studentsTriple,
+                onNavigateToBuatAkun = { navController.navigate(Routes.ADMIN_BUAT_AKUN_MAHASISWA) },
+                onNavigateToDetail = { nim ->
+                    adminViewModel.selectMahasiswa(nim)
+                    navController.navigate(Routes.adminDetailMahasiswa(nim))
+                },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> {}
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Buat Akun Mahasiswa Baru
+        composable(Routes.ADMIN_BUAT_AKUN_MAHASISWA) {
+            BuatAkunMahasiswaScreen(
+                onBackClick = { navController.popBackStack() },
+                onSimpanSuccess = { navController.popBackStack() },
+                onSimpanAkun = { nama, nim, email, jurusan, prodi, angkatan, onSuccess ->
+                    adminViewModel.buatAkunMahasiswa(
+                        namaLengkap = nama,
+                        nim = nim,
+                        email = email,
+                        jurusan = jurusan,
+                        programStudi = prodi,
+                        angkatan = angkatan,
+                        onSuccess = { onSuccess() }
+                    )
+                },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Detail Akun Mahasiswa
+        composable(
+            route = Routes.ADMIN_DETAIL_MAHASISWA_ROUTE,
+            arguments = listOf(navArgument("id") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val idArg = backStackEntry.arguments?.getString("id").orEmpty()
+            LaunchedEffect(idArg) {
+                if (idArg.isNotBlank()) {
+                    adminViewModel.selectMahasiswa(idArg)
+                }
+            }
+
+            val mhs = adminState.selectedMahasiswa
+            val mahasiswaObj = if (mhs != null) {
+                val statusEnum = if (mhs.statusAkun.equals("aktif", ignoreCase = true)) StatusAkun.AKTIF else StatusAkun.BELUM_AKTIVASI
+                Mahasiswa(
+                    nama = mhs.namaLengkap,
+                    nim = mhs.nim ?: "-",
+                    prodi = mhs.programStudi ?: "Teknik Informatika",
+                    status = statusEnum
+                )
+            } else {
+                Mahasiswa(
+                    nama = "Mahasiswa Lentera",
+                    nim = idArg.ifBlank { "2024010001" },
+                    prodi = "Teknik Informatika",
+                    status = StatusAkun.AKTIF
+                )
+            }
+
+            DetailAkunMahasiswaScreen(
+                mahasiswa = mahasiswaObj,
+                jurusan = mhs?.jurusan ?: "Teknologi Informasi",
+                angkatan = mhs?.angkatan ?: "2026",
+                emailKampus = mhs?.email ?: "mahasiswa@lentera.ac.id",
+                metodeAkses = "Akun aktif terdaftar di database Supabase",
+                onBackClick = { navController.popBackStack() },
+                onKembaliClick = { navController.popBackStack() },
+                onKirimUlangTautanClick = {
+                    mhs?.id?.let { uid ->
+                        adminViewModel.toggleStatusMahasiswa(uid, "aktif")
+                    }
+                },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Fallback route detail akun mahasiswa tanpa query
+        composable(Routes.ADMIN_DETAIL_MAHASISWA) {
+            DetailAkunMahasiswaScreen(
+                onBackClick = { navController.popBackStack() },
+                onKembaliClick = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // ====================================================================
+        // Fitur Pengaturan & Profil Admin
+        // ====================================================================
+
+        // Halaman Utama Profil Admin
+        composable(Routes.ADMIN_PROFIL) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+
+            ProfilAdminScreen(
+                nama = profile?.namaLengkap ?: "Rina Wulandari",
+                peran = "${profile?.nim ?: "NIP. 198803152015042001"} · Admin Kampus",
+                badge = if (profile?.statusAkun.equals("aktif", ignoreCase = true)) "Admin aktif" else "Admin terdaftar",
+                onMenuClick = { menu ->
+                    when (menu.judul) {
+                        "Data Akun" -> navController.navigate(Routes.ADMIN_DATA_AKUN)
+                        "Notifikasi" -> navController.navigate(Routes.ADMIN_NOTIFIKASI)
+                        "Bantuan Admin" -> navController.navigate(Routes.ADMIN_BANTUAN)
+                        "Tentang Aplikasi" -> navController.navigate(Routes.MAHASISWA_TENTANG)
+                    }
+                },
+                onKeluarClick = {
+                    session.clearSession()
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> {}
+                    }
+                }
+            )
+        }
+
+        // Data Akun Admin
+        composable(Routes.ADMIN_DATA_AKUN) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+
+            DataAkunAdminScreen(
+                nama = profile?.namaLengkap ?: "Rina Wulandari",
+                peran = "Admin Kampus",
+                email = profile?.email ?: "admin@lentera.ac.id",
+                nomorTelepon = profile?.noTelepon ?: "081234567890",
+                onBackClick = { navController.popBackStack() },
+                onUbahClick = { navController.navigate(Routes.ADMIN_KEAMANAN_AKUN) },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Keamanan Akun Admin
+        composable(Routes.ADMIN_KEAMANAN_AKUN) {
+            KeamananAkunScreen(
+                onBackClick = { navController.popBackStack() },
+                onPerangkatTerhubungClick = { navController.navigate(Routes.ADMIN_PERANGKAT_TERHUBUNG) },
+                onRiwayatLoginClick = { navController.navigate(Routes.ADMIN_RIWAYAT_LOGIN) },
+                onEmailPemulihanClick = { navController.navigate(Routes.ADMIN_EMAIL_PEMULIHAN) },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Perangkat Terhubung
+        composable(Routes.ADMIN_PERANGKAT_TERHUBUNG) {
+            PerangkatTerhubungScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Riwayat Login
+        composable(Routes.ADMIN_RIWAYAT_LOGIN) {
+            RiwayatLoginScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Email Pemulihan
+        composable(Routes.ADMIN_EMAIL_PEMULIHAN) {
+            val context = LocalContext.current
+            val session = SessionManager.getInstance(context)
+            val profile = session.getProfile()
+
+            EmailPemulihanScreen(
+                currentEmail = profile?.email ?: "admin@lentera.ac.id",
+                onBackClick = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Bantuan Admin
+        composable(Routes.ADMIN_BANTUAN) {
+            BantuanAdminScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+                    }
+                }
+            )
+        }
+
+        // Notifikasi Admin
+        composable(Routes.ADMIN_NOTIFIKASI) {
+            AdminNotifikasiScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavClick = { item ->
+                    when (item) {
+                        LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
+                        LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
+                        LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
+                        LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
                     }
                 }
             )

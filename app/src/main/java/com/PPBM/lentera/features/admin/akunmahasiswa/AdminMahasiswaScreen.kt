@@ -34,12 +34,28 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun AdminMahasiswaScreen(
+    studentList: List<Triple<String, String, String>> = emptyList(),
     onNavigateToBuatAkun: () -> Unit = {},
-    onNavigateToDetail: () -> Unit = {},
+    onNavigateToDetail: (nim: String) -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("Semua 128") }
+    var selectedFilter by remember { mutableStateOf("Semua") }
+
+    val actualList = if (studentList.isNotEmpty()) {
+        studentList
+    } else {
+        listOf(
+            Triple("Rina Wulandari", "22001011", "Aktif"),
+            Triple("Budi Santoso", "2024010001", "Aktif"),
+            Triple("Siti Aminah", "22001013", "Aktif"),
+            Triple("Andi Wijaya", "22001014", "Belum Aktivasi")
+        )
+    }
+
+    val totalAll = actualList.size
+    val totalAktif = actualList.count { it.third.equals("Aktif", ignoreCase = true) }
+    val totalBelum = actualList.count { it.third.contains("Belum", ignoreCase = true) || it.third.contains("Nonaktif", ignoreCase = true) }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -61,16 +77,129 @@ fun AdminMahasiswaScreen(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it }
             )
-            TabsMahasiswa(
+            TabsMahasiswaDynamic(
+                totalAll = totalAll,
+                totalAktif = totalAktif,
+                totalBelum = totalBelum,
                 selectedFilter = selectedFilter,
                 onFilterSelected = { selectedFilter = it }
             )
             Spacer(modifier = Modifier.height(14.dp))
-            ListMahasiswa(
+            ListMahasiswaDynamic(
+                students = actualList,
                 searchQuery = searchQuery,
                 selectedFilter = selectedFilter,
                 onItemClick = onNavigateToDetail
             )
+        }
+    }
+}
+
+@Composable
+fun TabsMahasiswaDynamic(
+    totalAll: Int,
+    totalAktif: Int,
+    totalBelum: Int,
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit
+) {
+    val filters = listOf("Semua $totalAll", "Aktif $totalAktif", "Belum Aktivasi $totalBelum")
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 14.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(filters.size) { index ->
+            val filterText = filters[index]
+            val filterKey = filterText.split(" ").firstOrNull() ?: ""
+            val isSelected = selectedFilter.startsWith(filterKey)
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        color = if (isSelected) NavyDark else Color.White
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (isSelected) Color.Transparent else CardBorder,
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clickable { onFilterSelected(filterKey) }
+                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = filterText,
+                    style = TextStyle(
+                        color = if (isSelected) Color.White else SlateGray,
+                        fontSize = 12.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ListMahasiswaDynamic(
+    students: List<Triple<String, String, String>>,
+    searchQuery: String = "",
+    selectedFilter: String = "Semua",
+    onItemClick: (nim: String) -> Unit = {}
+) {
+    val filtered = students.filter { (name, rawNim, status) ->
+        val matchesSearch = searchQuery.isBlank() ||
+                name.contains(searchQuery, ignoreCase = true) ||
+                rawNim.contains(searchQuery, ignoreCase = true)
+        val matchesTab = when {
+            selectedFilter.startsWith("Semua") -> true
+            selectedFilter.startsWith("Aktif") -> status.equals("Aktif", ignoreCase = true)
+            selectedFilter.startsWith("Belum") -> status.contains("Belum", ignoreCase = true) || status.contains("Nonaktif", ignoreCase = true)
+            else -> true
+        }
+        matchesSearch && matchesTab
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (filtered.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Text(
+                        text = "Tidak ada akun mahasiswa yang sesuai dengan pencarian atau filter.",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = SlateGray
+                        ),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        } else {
+            items(filtered.size) { index ->
+                val (name, rawNim, status) = filtered[index]
+                val formattedNim = if (rawNim.startsWith("NIM:")) rawNim else "NIM: $rawNim"
+                val isAktif = status.equals("Aktif", ignoreCase = true)
+                StudentCard(
+                    name = name,
+                    nim = formattedNim,
+                    status = status,
+                    statusColor = if (isAktif) LenteraGreen else ErrorRed,
+                    bgColor = if (isAktif) LenteraGreenBg else ErrorRedLight,
+                    onClick = { onItemClick(rawNim) }
+                )
+            }
         }
     }
 }
