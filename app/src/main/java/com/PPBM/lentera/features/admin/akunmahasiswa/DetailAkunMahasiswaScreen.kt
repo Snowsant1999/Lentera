@@ -33,7 +33,7 @@ private val SampleDetailMahasiswa = Mahasiswa(
 @Composable
 fun DetailAkunMahasiswaScreen(
     mahasiswa: Mahasiswa = SampleDetailMahasiswa,
-    perguruanTinggi: String = "Politeknik Negeri Samarinda",
+    jurusan: String = "Teknologi Informasi",
     programStudi: String = mahasiswa.prodi,
     angkatan: String = "2026",
     emailKampus: String = "email kampus tersimpan",
@@ -164,15 +164,13 @@ fun DetailAkunMahasiswaScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 1. Perguruan tinggi (lebar penuh)
                     ReadOnlyField(
-                        label = "Perguruan tinggi",
-                        value = perguruanTinggi
+                        label = "Jurusan",
+                        value = jurusan
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 2. Row: Program studi dan Angkatan (proporsional 1f)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -191,7 +189,6 @@ fun DetailAkunMahasiswaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 3. Email kampus (lebar penuh)
                     ReadOnlyField(
                         label = "Email kampus",
                         value = emailKampus
