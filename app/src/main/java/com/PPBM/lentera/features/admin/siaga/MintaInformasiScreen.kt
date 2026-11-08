@@ -45,7 +45,7 @@ fun MintaInformasiScreen(
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var pesanText by remember { mutableStateOf("Tulis permintaan informasi tambahan untuk pelapor") }
+    var pesanText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -140,6 +140,16 @@ fun MintaInformasiScreen(
                     OutlinedTextField(
                         value = pesanText,
                         onValueChange = { pesanText = it },
+                        placeholder = {
+                            Text(
+                                text = "Tulis permintaan informasi tambahan untuk pelapor...",
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    color = SiagaTextSecondary
+                                )
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(110.dp),

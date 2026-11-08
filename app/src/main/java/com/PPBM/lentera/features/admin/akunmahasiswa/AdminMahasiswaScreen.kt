@@ -42,16 +42,7 @@ fun AdminMahasiswaScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Semua") }
 
-    val actualList = if (studentList.isNotEmpty()) {
-        studentList
-    } else {
-        listOf(
-            Triple("Rina Wulandari", "22001011", "Aktif"),
-            Triple("Budi Santoso", "2024010001", "Aktif"),
-            Triple("Siti Aminah", "22001013", "Aktif"),
-            Triple("Andi Wijaya", "22001014", "Belum Aktivasi")
-        )
-    }
+    val actualList = studentList
 
     val totalAll = actualList.size
     val totalAktif = actualList.count { it.third.equals("Aktif", ignoreCase = true) }

@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -224,6 +227,10 @@ fun LenteraNavGraph(navController: NavHostController) {
             val dashboardViewModel: MahasiswaDashboardViewModel = viewModel()
             val dashboardState by dashboardViewModel.uiState.collectAsState()
 
+            LaunchedEffect(Unit) {
+                dashboardViewModel.loadDashboardData()
+            }
+
             MahasiswaDashboard().mhsDashboard(
                 userName = profile?.namaLengkap ?: "Budi Mahasiswa",
                 totalLaporan = dashboardState.totalLaporan,
@@ -266,8 +273,43 @@ fun LenteraNavGraph(navController: NavHostController) {
                 adminViewModel.loadDashboardData()
             }
 
+            val laporanDashboard = adminState.laporanTerbaruList.map { item ->
+                val (bg, txt) = when (item.status.lowercase()) {
+                    "baru" -> Color(0xFFFEF3C7) to Color(0xFFB45309)
+                    "verifikasi", "investigasi" -> Color(0xFFFFEDD5) to Color(0xFFC2410C)
+                    "penanganan" -> Color(0xFFFFE4E6) to Color(0xFFE11D48)
+                    "selesai" -> Color(0xFFD1FAE5) to Color(0xFF047857)
+                    else -> Color(0xFFF1F5F9) to Color(0xFF64748B)
+                }
+                DashboardLaporanItem(
+                    id = item.nomorLaporan.ifEmpty { item.id },
+                    judul = item.judul,
+                    waktu = item.createdAt.take(10),
+                    status = item.status.replaceFirstChar { it.uppercase() },
+                    statusBg = bg,
+                    statusColor = txt
+                )
+            }
+
+            val lowonganDashboard = adminState.lowonganAdminList.take(3).map { item ->
+                DashboardLowonganItem(
+                    posisi = item.posisi,
+                    mitra = item.lokasi,
+                    totalPelamar = item.kuota,
+                    status = item.status.replaceFirstChar { it.uppercase() },
+                    statusBg = Color(0xFFE8F4F1),
+                    statusColor = Color(0xFF2F7078)
+                )
+            }
+
             AdminDashboardScreen(
                 userName = profile?.namaLengkap ?: "Admin Lentera",
+                totalMahasiswa = adminState.stats.totalMahasiswaAktif,
+                totalLaporan = adminState.stats.totalLaporan,
+                totalMitra = adminState.stats.totalTempatMagang,
+                totalLowongan = adminState.stats.totalLowonganAktif,
+                laporanList = laporanDashboard,
+                lowonganList = lowonganDashboard,
                 onNavigateToMahasiswa = { navController.navigate(Routes.ADMIN_MAHASISWA) },
                 onNavigateToSiaga = { navController.navigate(Routes.ADMIN_SIAGA) },
                 onNavigateToMagang = { navController.navigate(Routes.ADMIN_MAGANG) },
@@ -325,7 +367,7 @@ fun LenteraNavGraph(navController: NavHostController) {
             BuatAkunMahasiswaScreen(
                 onBackClick = { navController.popBackStack() },
                 onSimpanSuccess = { navController.popBackStack() },
-                onSimpanAkun = { nama, nim, email, jurusan, prodi, angkatan, onSuccess ->
+                onSimpanAkun = { nama, nim, email, jurusan, prodi, angkatan, onSuccess, onError ->
                     adminViewModel.buatAkunMahasiswa(
                         namaLengkap = nama,
                         nim = nim,
@@ -333,6 +375,7 @@ fun LenteraNavGraph(navController: NavHostController) {
                         jurusan = jurusan,
                         programStudi = prodi,
                         angkatan = angkatan,
+                        onError = { errMsg -> onError(errMsg) },
                         onSuccess = { onSuccess() }
                     )
                 },
@@ -434,7 +477,7 @@ fun LenteraNavGraph(navController: NavHostController) {
             val profile = session.getProfile()
 
             ProfilAdminScreen(
-                nama = profile?.namaLengkap ?: "Rina Wulandari",
+                nama = profile?.namaLengkap ?: "Admin Lentera",
                 peran = "${profile?.nim ?: "NIP. 198803152015042001"} · Admin Kampus",
                 badge = if (profile?.statusAkun.equals("aktif", ignoreCase = true)) "Admin aktif" else "Admin terdaftar",
                 onMenuClick = { menu ->
@@ -467,15 +510,26 @@ fun LenteraNavGraph(navController: NavHostController) {
         composable(Routes.ADMIN_DATA_AKUN) {
             val context = LocalContext.current
             val session = SessionManager.getInstance(context)
-            val profile = session.getProfile()
+            var currentProfile by remember { mutableStateOf(session.getProfile()) }
 
             DataAkunAdminScreen(
-                nama = profile?.namaLengkap ?: "Rina Wulandari",
+                nama = currentProfile?.namaLengkap ?: "Admin Lentera",
                 peran = "Admin Kampus",
-                email = profile?.email ?: "admin@lentera.ac.id",
-                nomorTelepon = profile?.noTelepon ?: "081234567890",
+                email = currentProfile?.email ?: "admin@lentera.ac.id",
+                nomorTelepon = currentProfile?.noTelepon ?: "081234567890",
                 onBackClick = { navController.popBackStack() },
-                onUbahClick = { navController.navigate(Routes.ADMIN_KEAMANAN_AKUN) },
+                onUbahClick = { },
+                onDataUpdated = { newNama, newEmail, newTelepon ->
+                    adminViewModel.updateAdminProfile(
+                        context = context,
+                        namaLengkap = newNama,
+                        email = newEmail,
+                        noTelepon = newTelepon,
+                        onSuccess = { updated ->
+                            currentProfile = updated
+                        }
+                    )
+                },
                 onNavClick = { item ->
                     when (item) {
                         LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
@@ -754,6 +808,7 @@ fun LenteraNavGraph(navController: NavHostController) {
             }
 
             TempatMagangScreen(
+                mitraList = adminState.tempatMagangList,
                 onNavigateToDetailTempat = { navController.navigate(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) },
                 onNavigateToTambahTempat = { navController.navigate(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) },
                 onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
@@ -849,6 +904,7 @@ fun LenteraNavGraph(navController: NavHostController) {
             }
 
             DaftarLowonganScreen(
+                lowonganList = adminState.lowonganAdminList,
                 onNavigateToDetailLowongan = { navController.navigate(Routes.ADMIN_DETAIL_LOWONGAN) },
                 onNavigateToFormLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
                 onNavigateToTambahLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
@@ -1006,7 +1062,7 @@ fun LenteraNavGraph(navController: NavHostController) {
 
             MahasiswaSiagaScreen(
                 userName = profile?.namaLengkap ?: "Mahasiswa Lentera",
-                laporanList = if (siagaState.laporanList.isEmpty()) sampleLaporanList else laporanItemList,
+                laporanList = laporanItemList,
                 onCreateReportClick = {
                     navController.navigate(Routes.BUAT_LAPORAN)
                 },
@@ -1057,18 +1113,14 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Upload Bukti (Langkah 3 dari 4)
         composable(Routes.UPLOAD_BUKTI) {
-            val buktiItems = if (siagaState.uploadedBuktiList.isEmpty()) {
-                sampleBuktiList
-            } else {
-                siagaState.uploadedBuktiList.mapIndexed { index, item ->
-                    BuktiFileItem(
-                        id = index.toString(),
-                        fileName = item.fileName,
-                        fileType = item.fileType,
-                        fileSize = item.fileSizeFormatted,
-                        isExcluded = item.isExcluded
-                    )
-                }
+            val buktiItems = siagaState.uploadedBuktiList.mapIndexed { index, item ->
+                BuktiFileItem(
+                    id = index.toString(),
+                    fileName = item.fileName,
+                    fileType = item.fileType,
+                    fileSize = item.fileSizeFormatted,
+                    isExcluded = item.isExcluded
+                )
             }
 
             UploadBuktiScreen(
@@ -1330,39 +1382,39 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Riwayat Laporan (Laporan Saya)
         composable(Routes.RIWAYAT_LAPORAN) {
-            val riwayatItems = if (siagaState.laporanList.isEmpty()) {
-                sampleRiwayatLaporan
-            } else {
-                siagaState.laporanList.map { item ->
-                    val isSelesai = item.status.lowercase() == "selesai"
-                    val badgeBg: Color
-                    val badgeText: Color
-                    when (item.status.lowercase()) {
-                        "selesai" -> {
-                            badgeBg = Color(0xFFE3F5EB)
-                            badgeText = Color(0xFF287D4A)
-                        }
-                        "ditolak" -> {
-                            badgeBg = Color(0xFFFFEBEE)
-                            badgeText = Color(0xFFC62828)
-                        }
-                        else -> {
-                            badgeBg = Color(0xFFE6B363)
-                            badgeText = Color.White
-                        }
+            LaunchedEffect(Unit) {
+                siagaViewModel.loadLaporanSaya()
+            }
+
+            val riwayatItems = siagaState.laporanList.map { item ->
+                val isSelesai = item.status.lowercase() == "selesai"
+                val badgeBg: Color
+                val badgeText: Color
+                when (item.status.lowercase()) {
+                    "selesai" -> {
+                        badgeBg = Color(0xFFE3F5EB)
+                        badgeText = Color(0xFF287D4A)
                     }
-                    RiwayatLaporanItem(
-                        id = item.id,
-                        nomorLaporan = item.nomorLaporan,
-                        judul = item.judul,
-                        kategori = item.kategori,
-                        waktu = item.tanggalKejadian,
-                        statusBadge = item.status.replaceFirstChar { it.uppercase() },
-                        badgeBgColor = badgeBg,
-                        badgeTextColor = badgeText,
-                        isSelesai = isSelesai
-                    )
+                    "ditolak" -> {
+                        badgeBg = Color(0xFFFFEBEE)
+                        badgeText = Color(0xFFC62828)
+                    }
+                    else -> {
+                        badgeBg = Color(0xFFE6B363)
+                        badgeText = Color.White
+                    }
                 }
+                RiwayatLaporanItem(
+                    id = item.id,
+                    nomorLaporan = item.nomorLaporan,
+                    judul = item.judul,
+                    kategori = item.kategori,
+                    waktu = item.tanggalKejadian,
+                    statusBadge = item.status.replaceFirstChar { it.uppercase() },
+                    badgeBgColor = badgeBg,
+                    badgeTextColor = badgeText,
+                    isSelesai = isSelesai
+                )
             }
 
             RiwayatLaporanScreen(
@@ -1429,11 +1481,47 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Utama Magang (Magang.png)
         composable(Routes.MAGANG) {
+            LaunchedEffect(Unit) {
+                magangViewModel.loadMagangData()
+            }
+
             val totalLam = magangState.lamaranSayaList.size
             val dtr = magangState.lamaranSayaList.count { it.status == "diterima" }
             val dtl = magangState.lamaranSayaList.count { it.status == "ditolak" }
             val drv = magangState.lamaranSayaList.count {
                 it.status == "terkirim" || it.status == "verifikasi_berkas" || it.status == "wawancara" || it.status == "perlu_perbaikan"
+            }
+
+            val mappedLamaran = magangState.lamaranSayaList.map { item ->
+                val (bg, txt) = when (item.status) {
+                    "diterima" -> MagangPillGreenBg to MagangPillGreenText
+                    "ditolak" -> Color(0xFFFFEBEE) to Color(0xFFC62828)
+                    else -> MagangPillOrangeBg to MagangPillOrangeText
+                }
+                val lwg = magangState.lowonganList.find { it.id == item.lowonganId }
+                LamaranItemData(
+                    id = item.id,
+                    posisi = lwg?.posisi ?: "Lamaran #${item.nomorLamaran}",
+                    perusahaan = lwg?.namaPerusahaan ?: "Mitra Magang",
+                    status = item.status.replaceFirstChar { it.uppercase() },
+                    statusBg = bg,
+                    statusText = txt
+                )
+            }
+
+            val mappedLowongan = magangState.lowonganList.map { item ->
+                LowonganCardData(
+                    id = item.id,
+                    posisi = item.posisi.uppercase(),
+                    perusahaan = item.namaPerusahaan,
+                    lokasi = item.kota,
+                    durasi = item.periodeMagang,
+                    tipe = item.sistemKerja.uppercase(),
+                    persentaseCocok = 90,
+                    batasHari = 7,
+                    logoDrawable = R.drawable.ic_avatar_2,
+                    isBookmarked = magangState.bookmarkedIds.contains(item.id)
+                )
             }
 
             MagangScreen(
@@ -1442,6 +1530,8 @@ fun LenteraNavGraph(navController: NavHostController) {
                 jumlahDiterima = dtr,
                 jumlahDitolak = dtl,
                 jumlahDireview = drv,
+                lamaranList = mappedLamaran,
+                lowonganList = mappedLowongan,
                 bookmarkedIds = magangState.bookmarkedIds,
                 onBookmarkClick = { lowongan ->
                     magangViewModel.toggleBookmark(lowongan.id)
@@ -1471,7 +1561,27 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Daftar Lowongan Magang (Lowongan.png)
         composable(Routes.LOWONGAN_MAGANG) {
+            LaunchedEffect(Unit) {
+                magangViewModel.loadMagangData()
+            }
+
+            val items = magangState.lowonganList.map { lw ->
+                LowonganItem(
+                    id = lw.id,
+                    posisi = lw.posisi,
+                    perusahaan = lw.namaPerusahaan,
+                    lokasi = lw.kota,
+                    durasi = lw.periodeMagang,
+                    kategori = lw.kategori ?: "Umum",
+                    status = if (lw.kuota > 0) "Available" else "Penuh",
+                    persentaseCocok = 90,
+                    batasHari = 7,
+                    logoDrawable = R.drawable.ic_avatar_2
+                )
+            }
+
             LowonganScreen(
+                lowonganList = items,
                 bookmarkedIds = magangState.bookmarkedIds,
                 onBookmarkToggle = { lowongan ->
                     magangViewModel.toggleBookmark(lowongan.id)
@@ -1545,11 +1655,40 @@ fun LenteraNavGraph(navController: NavHostController) {
             val lowongan = magangState.selectedLowongan
             val posisi = lowongan?.posisi ?: "UI/UX Designer Intern"
             val perusahaan = lowongan?.namaPerusahaan ?: "PT Teknologi Nusantara"
+            val targetLowonganId = lowongan?.id ?: magangState.lowonganList.firstOrNull()?.id ?: "00000000-0000-0000-0000-000000000000"
 
+            val mhsProfile = profilState.profile
             FormulirLamaranScreen(
                 posisiJudul = posisi,
                 perusahaan = perusahaan,
+                initialNama = mhsProfile?.namaLengkap.orEmpty(),
+                initialNim = mhsProfile?.nim.orEmpty(),
+                initialEmail = mhsProfile?.email.orEmpty(),
+                initialProdi = mhsProfile?.programStudi.orEmpty(),
+                initialNoWa = mhsProfile?.noTelepon.orEmpty(),
                 onBackClick = { navController.popBackStack() },
+                onSubmitLamaran = { onSuccess ->
+                    val mhsProfile = profilState.profile
+                    val payload = com.PPBM.lentera.backend.mahasiswa.model.SubmitLamaranPayload(
+                        mahasiswaId = mhsProfile?.id ?: "00000000-0000-0000-0000-000000000002",
+                        lowonganId = targetLowonganId,
+                        namaLengkap = mhsProfile?.namaLengkap ?: "Budi Santoso",
+                        nim = mhsProfile?.nim ?: "2024010001",
+                        tempatTanggalLahir = "Bontang, 10 Mei 2003",
+                        alamatKtp = "Jl. Mulawarman No. 10, Bontang",
+                        alamatDomisili = "Jl. Mulawarman No. 10, Bontang",
+                        agama = "Islam",
+                        noTelepon = mhsProfile?.noTelepon ?: "081234567890",
+                        email = mhsProfile?.email ?: "mahasiswa@student.ac.id",
+                        golonganDarah = "O"
+                    )
+                    magangViewModel.submitLamaran(
+                        payload = payload,
+                        dokumenFiles = emptyList()
+                    ) { nomorLamaran ->
+                        onSuccess()
+                    }
+                },
                 onCekStatusLamaran = {
                     navController.navigate(Routes.STATUS_LAMARAN) {
                         popUpTo(Routes.MAGANG) { inclusive = false }
@@ -1645,6 +1784,9 @@ fun LenteraNavGraph(navController: NavHostController) {
 
         // Halaman Utama Profil & Pengaturan (MahasiswaSettings.kt)
         composable(Routes.MAHASISWA_PROFIL) {
+            LaunchedEffect(Unit) {
+                profilViewModel.loadData()
+            }
             val user = profilState.profile
             val nama = user?.namaLengkap ?: "Budi Santoso"
             val nim = user?.nim ?: "2024010001"

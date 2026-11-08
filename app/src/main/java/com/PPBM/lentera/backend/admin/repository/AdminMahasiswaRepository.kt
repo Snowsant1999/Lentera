@@ -56,7 +56,7 @@ class AdminMahasiswaRepository {
                 if (angkatan != null) put("p_angkatan", angkatan.trim())
             }
 
-            val newUserId = client.postgrest.rpc("admin_create_mahasiswa", rpcParams).decodeAs<String>()
+            val newUserId = client.postgrest.rpc("admin_create_mahasiswa_v2", rpcParams).decodeAs<String>()
             Result.success(newUserId)
         } catch (e: Exception) {
             Result.failure(e)
@@ -105,6 +105,40 @@ class AdminMahasiswaRepository {
                     totalMahasiswaAktif = totalMhs
                 )
             )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Memperbarui profil akun admin (nama lengkap, email, no telepon).
+     */
+    suspend fun updateAdminProfile(
+        userId: String,
+        namaLengkap: String,
+        email: String,
+        noTelepon: String
+    ): Result<UserProfile> {
+        return try {
+            client.from("profiles").update(
+                buildJsonObject {
+                    put("nama_lengkap", namaLengkap.trim())
+                    put("email", email.trim().lowercase())
+                    put("no_telepon", noTelepon.trim())
+                }
+            ) {
+                filter {
+                    eq("id", userId)
+                }
+            }
+
+            val updatedProfile = client.from("profiles").select {
+                filter {
+                    eq("id", userId)
+                }
+            }.decodeSingle<UserProfile>()
+
+            Result.success(updatedProfile)
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -63,6 +63,7 @@ data class LowonganItem(
  */
 @Composable
 fun LowonganScreen(
+    lowonganList: List<LowonganItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onLowonganClick: (LowonganItem) -> Unit = {},
@@ -78,49 +79,10 @@ fun LowonganScreen(
         listOf("Semua", "Tersimpan", "Teknologi", "Desain", "Bisnis", "Remote")
     }
 
-    val lowonganList = remember {
-        listOf(
-            LowonganItem(
-                id = "1",
-                posisi = "UI/UX Design",
-                perusahaan = "PT. Maju Mundur",
-                lokasi = "Bontang",
-                durasi = "3 Bulan",
-                kategori = "Desain",
-                logoDrawable = R.drawable.ic_avatar_2
-            ),
-            LowonganItem(
-                id = "2",
-                posisi = "Web Developer",
-                perusahaan = "PT. Bismillah Berkah",
-                lokasi = "Bontang",
-                durasi = "3 Bulan",
-                kategori = "Teknologi",
-                logoDrawable = R.drawable.ic_avatar_2
-            ),
-            LowonganItem(
-                id = "3",
-                posisi = "Business Development",
-                perusahaan = "PT. Maju Mundur",
-                lokasi = "Samarinda",
-                durasi = "3 Bulan",
-                kategori = "Bisnis",
-                logoDrawable = R.drawable.ic_avatar_2
-            ),
-            LowonganItem(
-                id = "4",
-                posisi = "Product Designer",
-                perusahaan = "Studio Ruang Reka",
-                lokasi = "Remote",
-                durasi = "3 Bulan",
-                kategori = "Desain",
-                logoDrawable = R.drawable.ic_avatar_2
-            )
-        )
-    }
+    val displayList = lowonganList
 
-    val filteredList = remember(selectedCategory, searchQuery, bookmarkedIds) {
-        lowonganList.map { it.copy(isBookmarked = bookmarkedIds.contains(it.id)) }.filter { item ->
+    val filteredList = remember(displayList, selectedCategory, searchQuery, bookmarkedIds) {
+        displayList.map { it.copy(isBookmarked = bookmarkedIds.contains(it.id)) }.filter { item ->
             val matchCategory = when (selectedCategory) {
                 "Semua" -> true
                 "Tersimpan" -> item.isBookmarked

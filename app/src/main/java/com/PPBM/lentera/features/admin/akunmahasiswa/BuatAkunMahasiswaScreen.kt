@@ -26,14 +26,14 @@ import com.PPBM.lentera.core.designsystem.theme.*
 fun BuatAkunMahasiswaScreen(
     onBackClick: () -> Unit = {},
     onSimpanSuccess: () -> Unit = onBackClick,
-    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: () -> Unit) -> Unit)? = null,
+    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit)? = null,
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var namaLengkap by remember { mutableStateOf("") }
     var nim by remember { mutableStateOf("") }
-    var jurusan by remember { mutableStateOf("Teknologi Informasi") }
-    var programStudi by remember { mutableStateOf("Teknik Informatika") }
-    var angkatan by remember { mutableStateOf("2026") }
+    var jurusan by remember { mutableStateOf("") }
+    var programStudi by remember { mutableStateOf("") }
+    var angkatan by remember { mutableStateOf("") }
     var emailKampus by remember { mutableStateOf("") }
 
     var showFeedback by remember { mutableStateOf(false) }
@@ -103,13 +103,20 @@ fun BuatAkunMahasiswaScreen(
                                 emailKampus,
                                 jurusan,
                                 programStudi,
-                                angkatan
-                            ) {
-                                feedbackTitle = "Akun Berhasil Dibuat"
-                                feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan di Supabase."
-                                feedbackIsSuccess = true
-                                showFeedback = true
-                            }
+                                angkatan,
+                                {
+                                    feedbackTitle = "Akun Berhasil Dibuat"
+                                    feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan di Supabase."
+                                    feedbackIsSuccess = true
+                                    showFeedback = true
+                                },
+                                { errMsg ->
+                                    feedbackTitle = "Gagal Membuat Akun"
+                                    feedbackMessage = errMsg
+                                    feedbackIsSuccess = false
+                                    showFeedback = true
+                                }
+                            )
                         } else {
                             feedbackTitle = "Akun Berhasil Dibuat"
                             feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan dan langsung aktif digunakan."

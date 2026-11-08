@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import com.PPBM.lentera.core.navigation.LenteraNavGraph
 
 // Design System & Components
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -165,7 +167,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LenteraTheme {
-                LenteraApp()
+                val navController = rememberNavController()
+                LenteraNavGraph(navController = navController)
             }
         }
     }
@@ -227,6 +230,14 @@ fun LenteraApp() {
             }
             ScreenState.LOGIN -> {
                 LoginScreen(
+                    onLoginSuccess = { role ->
+                        if (role.equals("admin", ignoreCase = true)) {
+                            currentScreen = ScreenState.ADMIN_DASHBOARD
+                        } else {
+                            currentTab = LenteraTab.BERANDA
+                            currentScreen = ScreenState.BERANDA
+                        }
+                    },
                     onLoginMahasiswa = {
                         currentTab = LenteraTab.BERANDA
                         currentScreen = ScreenState.BERANDA

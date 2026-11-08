@@ -49,10 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.PPBM.lentera.backend.admin.model.LowonganEntity
 import com.PPBM.lentera.R
 
 @Composable
 fun DaftarLowonganScreen(
+    lowonganList: List<LowonganEntity> = emptyList(),
     onNavigateToDetailLowongan: () -> Unit = {},
     onNavigateToTambahLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
@@ -63,7 +65,11 @@ fun DaftarLowonganScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
-    val filterChips = listOf("Semua 8", "Draf 3", "Terbit 4", "Ditutup 1")
+    val totalCount = lowonganList.size
+    val drafCount = lowonganList.count { it.status.equals("draf", ignoreCase = true) }
+    val terbitCount = lowonganList.count { it.status.equals("terbit", ignoreCase = true) || it.status.equals("aktif", ignoreCase = true) }
+    val ditutupCount = lowonganList.count { it.status.equals("ditutup", ignoreCase = true) || it.status.equals("arsip", ignoreCase = true) }
+    val filterChips = listOf("Semua $totalCount", "Draf $drafCount", "Terbit $terbitCount", "Ditutup $ditutupCount")
 
     Scaffold(
         topBar = {
@@ -198,7 +204,7 @@ fun DaftarLowonganScreen(
                 )
             }
 
-            // 4. Summary Banner Card: 28 lamaran masuk
+            // 4. Summary Banner Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -208,7 +214,7 @@ fun DaftarLowonganScreen(
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
-                            text = "28 lamaran masuk",
+                            text = "${lowonganList.size} lowongan terdaftar",
                             style = TextStyle(
                                 fontSize = 16.sp,
                                 fontFamily = PlusJakartaFont,
@@ -218,7 +224,7 @@ fun DaftarLowonganScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "4 lowongan terbit · 3 draf · 1 ditutup",
+                            text = "$terbitCount lowongan terbit · $drafCount draf · $ditutupCount ditutup",
                             style = TextStyle(
                                 fontSize = 13.sp,
                                 fontFamily = PlusJakartaFont,
@@ -230,40 +236,57 @@ fun DaftarLowonganScreen(
                 }
             }
 
-            // 5. Card 1: UI/UX Design (Draf)
-            item {
-                LowonganItemCard(
-                    logoRes = R.drawable.ic_avatar_2,
-                    title = "UI/UX Design",
-                    company = "PT. Maju Mundur",
-                    metaText = "Periode Jan–Mar 2027 · 0 lamaran",
-                    badgeText = "Draf",
-                    badgeBg = MagangCreamBox,
-                    badgeColor = MagangNavyDark,
-                    onCardClick = onNavigateToDetailLowongan,
-                    onUbahClick = onNavigateToFormLowongan,
-                    actionPrimaryText = "Terbitkan",
-                    onActionPrimaryClick = onNavigateToPublikasiLowongan,
-                    onArsipkanClick = { /* Arsipkan */ }
-                )
+            val filteredLowongan = lowonganList.filter { item ->
+                val matchesSearch = searchQuery.isBlank() ||
+                        item.posisi.contains(searchQuery, ignoreCase = true) ||
+                        item.lokasi.contains(searchQuery, ignoreCase = true)
+                val matchesChip = when (selectedFilterIndex) {
+                    0 -> true
+                    1 -> item.status.equals("draf", ignoreCase = true)
+                    2 -> item.status.equals("terbit", ignoreCase = true) || item.status.equals("aktif", ignoreCase = true)
+                    3 -> item.status.equals("ditutup", ignoreCase = true) || item.status.equals("arsip", ignoreCase = true)
+                    else -> true
+                }
+                matchesSearch && matchesChip
             }
 
-            // 6. Card 2: Web Developer (Terbit)
-            item {
-                LowonganItemCard(
-                    logoRes = R.drawable.ic_avatar_2,
-                    title = "Web Developer",
-                    company = "PT. Bismillah Berkah",
-                    metaText = "Bontang · 8 lamaran",
-                    badgeText = "Terbit",
-                    badgeBg = MagangActiveGreenBg,
-                    badgeColor = MagangActiveGreenText,
-                    onCardClick = onNavigateToDetailLowongan,
-                    onUbahClick = onNavigateToFormLowongan,
-                    actionPrimaryText = "Tutup",
-                    onActionPrimaryClick = { /* Tutup lowongan */ },
-                    onArsipkanClick = { /* Arsipkan */ }
-                )
+            if (filteredLowongan.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Text(
+                            text = if (lowonganList.isEmpty()) "Belum ada lowongan terdaftar. Silakan buat lowongan baru." else "Tidak ada lowongan yang sesuai dengan filter pencarian.",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = MagangTextSecondary
+                            ),
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            } else {
+                items(filteredLowongan.size) { index ->
+                    val item = filteredLowongan[index]
+                    val isTerbit = item.status.equals("terbit", ignoreCase = true) || item.status.equals("aktif", ignoreCase = true)
+                    LowonganItemCard(
+                        logoRes = R.drawable.ic_avatar_2,
+                        title = item.posisi,
+                        company = item.lokasi,
+                        metaText = "Periode: ${item.periodeMagang} · Kuota: ${item.kuota}",
+                        badgeText = item.status.replaceFirstChar { it.uppercase() },
+                        badgeBg = if (isTerbit) MagangActiveGreenBg else MagangCreamBox,
+                        badgeColor = if (isTerbit) MagangActiveGreenText else MagangNavyDark,
+                        onCardClick = onNavigateToDetailLowongan,
+                        onUbahClick = onNavigateToFormLowongan,
+                        actionPrimaryText = if (isTerbit) "Tutup" else "Terbitkan",
+                        onActionPrimaryClick = onNavigateToPublikasiLowongan,
+                        onArsipkanClick = { /* Arsipkan */ }
+                    )
+                }
             }
 
             // 7. Caption Info

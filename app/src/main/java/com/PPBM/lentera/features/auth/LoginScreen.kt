@@ -51,6 +51,8 @@ import com.PPBM.lentera.core.designsystem.theme.*
 @Composable
 fun LoginScreen(
     onLoginSuccess: (role: String) -> Unit = {},
+    onLoginMahasiswa: () -> Unit = { onLoginSuccess("mahasiswa") },
+    onLoginAdmin: () -> Unit = { onLoginSuccess("admin") },
     onForgotPassword: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -68,6 +70,11 @@ fun LoginScreen(
         focusManager.clearFocus()
         viewModel.login(nimOrEmail, password) { role ->
             onLoginSuccess(role)
+            if (role.equals("admin", ignoreCase = true)) {
+                onLoginAdmin()
+            } else {
+                onLoginMahasiswa()
+            }
         }
     }
 

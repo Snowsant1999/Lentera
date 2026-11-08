@@ -47,10 +47,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 import com.PPBM.lentera.R
 
 @Composable
 fun TempatMagangScreen(
+    mitraList: List<TempatMagangEntity> = emptyList(),
     onNavigateToDetailTempat: () -> Unit = {},
     onNavigateToTambahTempat: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = {},
@@ -60,7 +62,11 @@ fun TempatMagangScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
-    val filterChips = listOf("Semua 12", "Aktif 9", "Draf 2", "Arsip 1")
+    val totalCount = mitraList.size
+    val aktifCount = mitraList.count { it.status.equals("aktif", ignoreCase = true) }
+    val drafCount = mitraList.count { it.status.equals("draf", ignoreCase = true) }
+    val arsipCount = mitraList.count { it.status.equals("arsip", ignoreCase = true) || it.status.equals("nonaktif", ignoreCase = true) }
+    val filterChips = listOf("Semua $totalCount", "Aktif $aktifCount", "Draf $drafCount", "Arsip $arsipCount")
 
     Scaffold(
         topBar = {
@@ -218,7 +224,7 @@ fun TempatMagangScreen(
                         )
                     )
                     Text(
-                        text = "12 tempat",
+                        text = "${mitraList.size} tempat",
                         style = TextStyle(
                             fontSize = 13.sp,
                             fontFamily = PlusJakartaFont,
@@ -229,22 +235,16 @@ fun TempatMagangScreen(
                 }
             }
 
-            val places = listOf(
-                Triple("PT. Cahaya Digital", "Bontang · Teknologi", "Draf") to ("2 dokumen · 16 Okt" to R.drawable.ic_building_2),
-                Triple("PT. Maju Mundur", "Bontang · Desain & Bisnis", "Aktif") to ("2 lowongan terbit" to R.drawable.ic_avatar_2),
-                Triple("PT. Bismillah Berkah", "Bontang · Teknologi", "Aktif") to ("1 lowongan terbit" to R.drawable.ic_avatar_2)
-            )
-
-            val filteredPlaces = places.filter { (data, _) ->
-                val (name, cat, status) = data
+            val filteredPlaces = mitraList.filter { item ->
                 val matchesSearch = searchQuery.isBlank() ||
-                        name.contains(searchQuery, ignoreCase = true) ||
-                        cat.contains(searchQuery, ignoreCase = true)
+                        item.namaPerusahaan.contains(searchQuery, ignoreCase = true) ||
+                        item.bidangUsaha.contains(searchQuery, ignoreCase = true) ||
+                        item.kota.contains(searchQuery, ignoreCase = true)
                 val matchesChip = when (selectedFilterIndex) {
-                    0 -> true // Semua 12
-                    1 -> status.equals("Aktif", ignoreCase = true) // Aktif 9
-                    2 -> status.equals("Draf", ignoreCase = true) // Draf 2
-                    3 -> status.equals("Arsip", ignoreCase = true) // Arsip 1
+                    0 -> true
+                    1 -> item.status.equals("aktif", ignoreCase = true)
+                    2 -> item.status.equals("draf", ignoreCase = true)
+                    3 -> item.status.equals("arsip", ignoreCase = true) || item.status.equals("nonaktif", ignoreCase = true)
                     else -> true
                 }
                 matchesSearch && matchesChip
@@ -258,7 +258,7 @@ fun TempatMagangScreen(
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Text(
-                            text = "Tidak ada tempat magang yang cocok dengan pencarian atau filter.",
+                            text = if (mitraList.isEmpty()) "Belum ada data tempat magang. Silakan tekan tombol 'Tambah Tempat Magang'." else "Tidak ada tempat magang yang cocok dengan pencarian atau filter.",
                             style = TextStyle(
                                 fontSize = 13.sp,
                                 fontFamily = PlusJakartaFont,
@@ -270,17 +270,16 @@ fun TempatMagangScreen(
                 }
             } else {
                 items(filteredPlaces.size) { index ->
-                    val (data, extra) = filteredPlaces[index]
-                    val (name, category, badgeText) = data
-                    val (infoText, iconRes) = extra
+                    val item = filteredPlaces[index]
+                    val isAktif = item.status.equals("aktif", ignoreCase = true)
                     TempatMagangItemCard(
-                        iconRes = iconRes,
-                        name = name,
-                        category = category,
-                        badgeText = badgeText,
-                        badgeBg = if (badgeText == "Aktif") MagangActiveGreenBg else MagangCreamBox,
-                        badgeColor = if (badgeText == "Aktif") MagangActiveGreenText else MagangNavyDark,
-                        infoText = infoText,
+                        iconRes = R.drawable.ic_building_2,
+                        name = item.namaPerusahaan,
+                        category = "${item.kota} · ${item.bidangUsaha}",
+                        badgeText = item.status.replaceFirstChar { it.uppercase() },
+                        badgeBg = if (isAktif) MagangActiveGreenBg else MagangCreamBox,
+                        badgeColor = if (isAktif) MagangActiveGreenText else MagangNavyDark,
+                        infoText = "${item.sistemKerja.uppercase()} · ${item.namaCabang}",
                         onClick = onNavigateToDetailTempat
                     )
                 }

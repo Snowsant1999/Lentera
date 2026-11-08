@@ -71,20 +71,18 @@ fun TambahTempatMagangScreen(
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var namaPerusahaan by remember { mutableStateOf("PT. Sinar Karya") }
-    var bidangUsaha by remember { mutableStateOf("Teknologi Informasi") }
-    var namaTempat by remember { mutableStateOf("Kantor Bontang") }
-    var deskripsiTempat by remember {
-        mutableStateOf("Perusahaan pengembangan perangkat lunak dengan program magang di bidang pengembangan web dan desain produk digital.")
-    }
-    var alamatLengkap by remember { mutableStateOf("Jl. Ahmad Yani No. 18, Bontang Utara") }
-    var kota by remember { mutableStateOf("Bontang") }
-    var provinsi by remember { mutableStateOf("Kalimantan Timur") }
+    var namaPerusahaan by remember { mutableStateOf("") }
+    var bidangUsaha by remember { mutableStateOf("") }
+    var namaTempat by remember { mutableStateOf("") }
+    var deskripsiTempat by remember { mutableStateOf("") }
+    var alamatLengkap by remember { mutableStateOf("") }
+    var kota by remember { mutableStateOf("") }
+    var provinsi by remember { mutableStateOf("") }
     var sistemKerja by remember { mutableStateOf("Di kantor (On-site)") }
-    var namaKontak by remember { mutableStateOf("Arif Rahman") }
-    var emailPerusahaan by remember { mutableStateOf("hr@sinarkarya.co.id") }
-    var nomorTelepon by remember { mutableStateOf("0812 3456 7800") }
-    var situsWeb by remember { mutableStateOf("www.sinarkarya.co.id") }
+    var namaKontak by remember { mutableStateOf("") }
+    var emailPerusahaan by remember { mutableStateOf("") }
+    var nomorTelepon by remember { mutableStateOf("") }
+    var situsWeb by remember { mutableStateOf("") }
 
     var uploadedDocName by remember { mutableStateOf<String?>(null) }
     var uploadedDocMeta by remember { mutableStateOf<String?>(null) }

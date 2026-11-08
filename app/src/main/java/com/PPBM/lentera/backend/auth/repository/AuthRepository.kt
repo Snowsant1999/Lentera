@@ -23,22 +23,24 @@ class AuthRepository(context: Context) {
     suspend fun login(identifier: String, password: String): Result<UserProfile> {
         return try {
             val cleanIdentifier = identifier.trim()
-            val targetEmail: String = if (cleanIdentifier.contains("@")) {
-                cleanIdentifier.lowercase()
-            } else {
-                // Resolusi NIM -> Email via RPC
-                val rpcParams = buildJsonObject {
-                    put("p_nim", cleanIdentifier)
+            val targetEmail: String = when {
+                cleanIdentifier.contains("@") -> cleanIdentifier.lowercase()
+                cleanIdentifier.equals("admin", ignoreCase = true) -> "admin@lentera.ac.id"
+                else -> {
+                    // Resolusi NIM -> Email via RPC
+                    val rpcParams = buildJsonObject {
+                        put("p_nim", cleanIdentifier)
+                    }
+                    val resolved: String? = try {
+                        client.postgrest.rpc("get_email_by_nim", rpcParams).decodeAs<String>()
+                    } catch (e: Exception) {
+                        null
+                    }
+                    if (resolved.isNullOrBlank()) {
+                        return Result.failure(Exception("NIM atau akun '$cleanIdentifier' tidak terdaftar dalam sistem."))
+                    }
+                    resolved.lowercase()
                 }
-                val resolved: String? = try {
-                    client.postgrest.rpc("get_email_by_nim", rpcParams).decodeAs<String>()
-                } catch (e: Exception) {
-                    null
-                }
-                if (resolved.isNullOrBlank()) {
-                    return Result.failure(Exception("NIM '$cleanIdentifier' tidak terdaftar dalam sistem."))
-                }
-                resolved.lowercase()
             }
 
             // Autentikasi dengan Supabase Auth

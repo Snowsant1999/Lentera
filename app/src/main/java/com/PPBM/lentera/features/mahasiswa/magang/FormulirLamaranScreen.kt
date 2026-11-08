@@ -56,7 +56,13 @@ data class LamaranDokumenItem(
 fun FormulirLamaranScreen(
     posisiJudul: String = "UI/UX Designer",
     perusahaan: String = "PT Teknologi Nusantara",
+    initialNama: String = "",
+    initialNim: String = "",
+    initialEmail: String = "",
+    initialProdi: String = "",
+    initialNoWa: String = "",
     onBackClick: () -> Unit = {},
+    onSubmitLamaran: ((onSuccess: () -> Unit) -> Unit)? = null,
     onCekStatusLamaran: () -> Unit = {},
     onKembaliKeBeranda: () -> Unit = {}
 ) {
@@ -64,16 +70,16 @@ fun FormulirLamaranScreen(
     var currentStep by remember { mutableIntStateOf(1) }
 
     // State Step 1: Data Diri
-    var namaLengkap by remember { mutableStateOf("Budi Santoso") }
-    var nim by remember { mutableStateOf("2023110045") }
-    var emailKampus by remember { mutableStateOf("budi.santoso@mhs.kampus.ac.id") }
-    var prodi by remember { mutableStateOf("Teknik Informatika") }
-    var semester by remember { mutableStateOf("Semester 5") }
-    var noWa by remember { mutableStateOf("0812-3456-7890") }
-    var ipk by remember { mutableStateOf("3.85") }
+    var namaLengkap by remember { mutableStateOf(initialNama) }
+    var nim by remember { mutableStateOf(initialNim) }
+    var emailKampus by remember { mutableStateOf(initialEmail) }
+    var prodi by remember { mutableStateOf(initialProdi) }
+    var semester by remember { mutableStateOf("") }
+    var noWa by remember { mutableStateOf(initialNoWa) }
+    var ipk by remember { mutableStateOf("") }
 
     // State Step 3: Pernyataan Checkbox
-    var isAgreed by remember { mutableStateOf(true) }
+    var isAgreed by remember { mutableStateOf(false) }
 
     // State Step 2: Daftar Dokumen Persyaratan
     var dokumenList by remember {
@@ -83,40 +89,40 @@ fun FormulirLamaranScreen(
                     id = "cv",
                     title = "Curriculum Vitae (CV)",
                     iconRes = R.drawable.ic_doc_cv,
-                    fileName = "cv_budi_santoso.pdf (1.2 MB)",
-                    isUploaded = true,
+                    fileName = null,
+                    isUploaded = false,
                     isRequired = true
                 ),
                 LamaranDokumenItem(
                     id = "surat_pengantar",
                     title = "Surat Pengantar Kampus",
                     iconRes = R.drawable.ic_doc_surat_pengantar,
-                    fileName = "surat_pengantar_fakultas.pdf (850 KB)",
-                    isUploaded = true,
+                    fileName = null,
+                    isUploaded = false,
                     isRequired = true
                 ),
                 LamaranDokumenItem(
                     id = "transkrip",
                     title = "Transkrip Nilai Terakhir",
                     iconRes = R.drawable.ic_doc_transkrip,
-                    fileName = "transkrip_nilai_sem4.pdf (1.8 MB)",
-                    isUploaded = true,
+                    fileName = null,
+                    isUploaded = false,
                     isRequired = true
                 ),
                 LamaranDokumenItem(
                     id = "ktm",
                     title = "Foto Kartu Tanda Mahasiswa (KTM)",
                     iconRes = R.drawable.ic_doc_ktm,
-                    fileName = "ktm_budi_santoso.jpg (450 KB)",
-                    isUploaded = true,
+                    fileName = null,
+                    isUploaded = false,
                     isRequired = true
                 ),
                 LamaranDokumenItem(
                     id = "portofolio",
                     title = "Portofolio Desain",
                     iconRes = R.drawable.ic_doc_portfolio,
-                    fileName = "portofolio_uiux_budi.pdf (4.5 MB)",
-                    isUploaded = true,
+                    fileName = null,
+                    isUploaded = false,
                     isRequired = false
                 ),
                 LamaranDokumenItem(
@@ -185,7 +191,17 @@ fun FormulirLamaranScreen(
                     isNextEnabled = if (currentStep == 3) isAgreed else true,
                     onPrevClick = { if (currentStep > 1) currentStep-- },
                     onNextClick = {
-                        if (currentStep < 4) currentStep++
+                        if (currentStep == 3) {
+                            if (onSubmitLamaran != null) {
+                                onSubmitLamaran {
+                                    currentStep = 4
+                                }
+                            } else {
+                                currentStep = 4
+                            }
+                        } else if (currentStep < 4) {
+                            currentStep++
+                        }
                     },
                     fontFamily = fontFamily
                 )

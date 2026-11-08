@@ -47,11 +47,11 @@ import com.PPBM.lentera.core.designsystem.theme.*
 // ============================================================================
 
 data class BuatLaporanFormData(
-    val kategori: String = "Pelecehan Verbal",
-    val judul: String = "Pelecehan Verbal",
-    val tanggalWaktu: String = "12 Oktober 2026, 14.30",
-    val lokasi: String = "Koridor Gedung B, lantai 2",
-    val deskripsi: String = "Saat menunggu kelas, saya menerima ucapan yang merendahkan dari seorang mahasiswa. Kejadian ini berulang dan membuat saya merasa tidak aman.",
+    val kategori: String = "",
+    val judul: String = "",
+    val tanggalWaktu: String = "",
+    val lokasi: String = "",
+    val deskripsi: String = "",
     val isAnonim: Boolean = true
 )
 

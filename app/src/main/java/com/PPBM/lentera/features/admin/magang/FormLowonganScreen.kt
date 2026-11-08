@@ -66,23 +66,14 @@ fun FormLowonganScreen(
     onBackToDaftarLowongan: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var posisi by remember { mutableStateOf("UI/UX Design") }
-    var lokasi by remember { mutableStateOf("Bontang") }
+    var posisi by remember { mutableStateOf("") }
+    var lokasi by remember { mutableStateOf("") }
     var sistemKerja by remember { mutableStateOf("Di kantor (On-site)") }
-    var deskripsiPekerjaan by remember {
-        mutableStateOf("Mendukung riset pengguna, membuat wireframe dan prototipe, serta berkolaborasi dengan tim pengembang untuk menyempurnakan pengalaman produk digital.")
-    }
-    var persyaratan by remember {
-        mutableStateOf(
-            "• Mahasiswa aktif minimal semester 5\n" +
-            "• Menguasai Figma dan dasar desain UI/UX\n" +
-            "• Melampirkan CV dan portofolio\n" +
-            "• Bersedia mengikuti magang selama 3 bulan"
-        )
-    }
-    var periodeMagang by remember { mutableStateOf("Januari–Maret 2027 · 3 bulan") }
-    var batasPendaftaran by remember { mutableStateOf("30 November 2026") }
-    var kuota by remember { mutableStateOf("2 mahasiswa") }
+    var deskripsiPekerjaan by remember { mutableStateOf("") }
+    var persyaratan by remember { mutableStateOf("") }
+    var periodeMagang by remember { mutableStateOf("") }
+    var batasPendaftaran by remember { mutableStateOf("") }
+    var kuota by remember { mutableStateOf("") }
 
     var showFeedback by remember { mutableStateOf(false) }
     var feedbackTitle by remember { mutableStateOf("") }

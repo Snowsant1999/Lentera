@@ -61,12 +61,15 @@ class AdminViewModel(
             val statsResult = adminMhsRepo.getDashboardStats()
             val laporanResult = adminSiagaRepo.getAllLaporan()
             val laporanList = laporanResult.getOrDefault(emptyList())
+            val lowonganResult = adminMagangRepo.getLowonganList()
+            val lowonganList = lowonganResult.getOrDefault(emptyList())
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stats = statsResult.getOrDefault(AdminDashboardStats()),
                 semuaLaporanList = laporanList,
-                laporanTerbaruList = laporanList.take(5)
+                laporanTerbaruList = laporanList.take(5),
+                lowonganAdminList = lowonganList
             )
         }
     }
@@ -235,6 +238,7 @@ class AdminViewModel(
         angkatan: String?,
         noTelepon: String? = null,
         passwordDefault: String = "Password123!",
+        onError: (String) -> Unit = {},
         onSuccess: (String) -> Unit
     ) {
         viewModelScope.launch {
@@ -260,10 +264,12 @@ class AdminViewModel(
                 loadDashboardData()
                 onSuccess(newUserId)
             }.onFailure { err ->
+                val msg = err.message ?: "Gagal membuat akun mahasiswa"
                 _uiState.value = _uiState.value.copy(
                     isCreatingMahasiswa = false,
-                    errorMessage = err.message ?: "Gagal membuat akun mahasiswa"
+                    errorMessage = msg
                 )
+                onError(msg)
             }
         }
     }
@@ -392,6 +398,43 @@ class AdminViewModel(
                 _uiState.value = _uiState.value.copy(
                     isSubmittingMagang = false,
                     errorMessage = err.message ?: "Gagal memvalidasi berkas lamaran"
+                )
+            }
+        }
+    }
+
+    /**
+     * Memperbarui profil akun admin (nama lengkap, email, no telepon).
+     */
+    fun updateAdminProfile(
+        context: android.content.Context,
+        namaLengkap: String,
+        email: String,
+        noTelepon: String,
+        onSuccess: (UserProfile) -> Unit = {}
+    ) {
+        val session = com.PPBM.lentera.backend.core.SessionManager.getInstance(context)
+        val profile = session.getProfile() ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val res = adminMhsRepo.updateAdminProfile(
+                userId = profile.id,
+                namaLengkap = namaLengkap,
+                email = email,
+                noTelepon = noTelepon
+            )
+            res.onSuccess { updated ->
+                session.saveSession(updated)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    actionSuccessMessage = "Profil admin berhasil diperbarui"
+                )
+                onSuccess(updated)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = err.message ?: "Gagal memperbarui profil admin"
                 )
             }
         }

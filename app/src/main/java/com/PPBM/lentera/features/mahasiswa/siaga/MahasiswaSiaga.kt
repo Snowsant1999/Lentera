@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -236,13 +237,34 @@ fun MahasiswaSiagaScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Daftar Kartu Laporan
-                laporanList.forEach { laporan ->
-                    LaporanCard(
-                        item = laporan,
-                        onClick = { onReportClick(laporan) },
-                        fontFamily = plusJakarta
-                    )
+                if (laporanList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(CardWhite)
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Belum ada laporan pengaduan aktif.",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = plusJakarta,
+                                color = SlateGray
+                            )
+                        )
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    laporanList.forEach { laporan ->
+                        LaporanCard(
+                            item = laporan,
+                            onClick = { onReportClick(laporan) },
+                            fontFamily = plusJakarta
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))

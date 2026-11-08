@@ -82,7 +82,6 @@ fun DataAkunAdminScreen(
                 nomorTelepon = if (currentTelepon.isBlank()) belumDitambahkan else currentTelepon,
                 onUbahClick = {
                     showEditDialog = true
-                    onUbahClick()
                 }
             )
             InformasiPeranCard(
