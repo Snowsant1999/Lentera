@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,12 +36,26 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun VerifikasiKelengkapanScreen(
+    laporan: AdminLaporan? = null,
     onValidasiPenugasan: () -> Unit = {},
     onMintaInformasi: () -> Unit = {},
     onTidakDapatDiproses: () -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
+    val judulLaporan = laporan?.judul ?: "Laporan"
+    val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
+    val isAnonim = laporan?.isAnonim ?: true
+    val statusStr = (laporan?.status ?: "baru").replaceFirstChar { it.uppercase() }
+    val (statusBg, statusColor) = when (laporan?.status?.lowercase()) {
+        "baru" -> Pair(Color(0xFFFEF3C7), Color(0xFFB45309))
+        "diproses", "penanganan", "investigasi" -> Pair(Color(0xFFFFE4E6), Color(0xFFE11D48))
+        "selesai" -> Pair(Color(0xFFE8F4F1), Color(0xFF2F7078))
+        "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
+        else -> Pair(Color(0xFFFFEDD5), Color(0xFFC2410C))
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -62,12 +77,12 @@ fun VerifikasiKelengkapanScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
-                statusText = "Diperiksa",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                id = nomorLaporan,
+                statusText = statusStr,
+                statusBg = statusBg,
+                statusColor = statusColor,
+                title = judulLaporan,
+                subtitle = "Tanggal: $tanggalKejadian · ${if (isAnonim) "Anonim" else "Terverifikasi"}"
             )
 
             // Card Ringkasan Verifikasi
@@ -90,15 +105,15 @@ fun VerifikasiKelengkapanScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "3 bukti tersedia · Perlu pemeriksaan",
+                        text = "Status: $statusStr · Perlu verifikasi",
                         modifier = Modifier
-                            .background(color = Color(0xFFFEF3C7), shape = RoundedCornerShape(12.dp))
+                            .background(color = statusBg, shape = RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         style = TextStyle(
                             fontSize = 11.sp,
                             fontFamily = PlusJakartaFont,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFB45309)
+                            color = statusColor
                         )
                     )
 

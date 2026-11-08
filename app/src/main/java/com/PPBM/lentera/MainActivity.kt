@@ -230,7 +230,7 @@ fun LenteraApp() {
             }
             ScreenState.LOGIN -> {
                 LoginScreen(
-                    onLoginSuccess = { role ->
+                    onLoginSuccess = { role, statusAkun ->
                         if (role.equals("admin", ignoreCase = true)) {
                             currentScreen = ScreenState.ADMIN_DASHBOARD
                         } else {
@@ -808,7 +808,7 @@ fun LenteraApp() {
             }
             ScreenState.ADMIN_MAGANG_KELOLA_STATUS -> {
                 KelolaStatusTempatScreen(
-                    onSimpanStatus = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
+                    onSimpanStatus = { _, _ -> currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
                     onBackToDetailTempat = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_TEMPAT },
                     onNavClick = handleAdminNavClick
                 )
@@ -817,7 +817,7 @@ fun LenteraApp() {
                 DaftarLowonganScreen(
                     onNavigateToTambahLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
                     onNavigateToFormLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_TAMBAH_LOWONGAN },
-                    onNavigateToDetailLowongan = { currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN },
+                    onNavigateToDetailLowongan = { _ -> currentScreen = ScreenState.ADMIN_MAGANG_DETAIL_LOWONGAN },
                     onNavigateToLamaran = { currentScreen = ScreenState.ADMIN_MAGANG_KELOLA_LAMARAN },
                     onBackToTempatMagang = { currentScreen = ScreenState.ADMIN_MAGANG_TEMPAT },
                     onNavClick = handleAdminNavClick

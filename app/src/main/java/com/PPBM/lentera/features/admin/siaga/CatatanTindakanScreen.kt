@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,14 +50,18 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun CatatanTindakanScreen(
+    laporan: AdminLaporan? = null,
     onHasilPenyelesaian: () -> Unit = {},
     onSimpanCatatan: (String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var catatanTindakan by remember {
-        mutableStateOf("Pendampingan telah dilakukan. Tim berwenang telah menyampaikan tindak lanjut sesuai prosedur.")
-    }
+    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
+    val judulLaporan = laporan?.judul ?: "Laporan"
+    val isAnonim = laporan?.isAnonim ?: true
+    val unitPenanganan = laporan?.unitPenanganan ?: "Petugas Kampus"
+
+    var catatanTindakan by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -79,12 +84,12 @@ fun CatatanTindakanScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal · Anonim",
-                subtitle = "Ditugaskan ke Tim Advokasi Kampus · 17 Okt, 10:30"
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = judulLaporan,
+                subtitle = "Ditugaskan ke: $unitPenanganan · ${if (isAnonim) "Anonim" else "Terverifikasi"}"
             )
 
             // Card Ringkasan Permintaan Informasi
@@ -227,6 +232,12 @@ fun CatatanTindakanScreen(
                     OutlinedTextField(
                         value = catatanTindakan,
                         onValueChange = { catatanTindakan = it },
+                        placeholder = {
+                            Text(
+                                text = "Tuliskan catatan tindakan penanganan baru...",
+                                style = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaTextMuted)
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(95.dp),

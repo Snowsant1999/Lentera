@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,7 +24,11 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun AdminSiagaFlowScreen(
     laporanList: List<AdminLaporanItem> = emptyList(),
+    selectedLaporan: AdminLaporan? = null,
     onSelectLaporanId: (String) -> Unit = {},
+    onUpdateStatusLaporan: (laporanId: String, status: String, unit: String?, jalur: String?, catatan: String?, onSuccess: () -> Unit) -> Unit = { _, _, _, _, _, _ -> },
+    onAddCatatanTindakan: (laporanId: String, judul: String, catatan: String, onSuccess: () -> Unit) -> Unit = { _, _, _, _ -> },
+    onSelesaikanLaporan: (laporanId: String, ringkasan: String, dipublikasi: Boolean, onSuccess: () -> Unit) -> Unit = { _, _, _, _ -> },
     onBackToDashboard: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -51,6 +56,7 @@ fun AdminSiagaFlowScreen(
         }
         AdminSiagaRoute.DETAIL_LAPORAN -> {
             AdminDetailLaporanScreen(
+                laporan = selectedLaporan,
                 onNavigateToVerifikasi = { currentScreen = AdminSiagaRoute.VERIFIKASI_KELENGKAPAN },
                 onNavigateToMintaInformasi = { currentScreen = AdminSiagaRoute.MINTA_INFORMASI },
                 onNavigateToPenugasan = { currentScreen = AdminSiagaRoute.PENUGASAN_LAPORAN },
@@ -62,38 +68,89 @@ fun AdminSiagaFlowScreen(
         }
         AdminSiagaRoute.VERIFIKASI_KELENGKAPAN -> {
             VerifikasiKelengkapanScreen(
-                onValidasiPenugasan = { currentScreen = AdminSiagaRoute.PENUGASAN_LAPORAN },
+                laporan = selectedLaporan,
+                onValidasiPenugasan = {
+                    selectedLaporan?.let { lap ->
+                        onUpdateStatusLaporan(lap.id, "diperiksa", null, null, null) {
+                            currentScreen = AdminSiagaRoute.PENUGASAN_LAPORAN
+                        }
+                    } ?: run {
+                        currentScreen = AdminSiagaRoute.PENUGASAN_LAPORAN
+                    }
+                },
                 onMintaInformasi = { currentScreen = AdminSiagaRoute.MINTA_INFORMASI },
-                onTidakDapatDiproses = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
+                onTidakDapatDiproses = {
+                    selectedLaporan?.let { lap ->
+                        onUpdateStatusLaporan(lap.id, "ditolak", null, null, "Laporan tidak dapat diproses.") {
+                            currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                        }
+                    } ?: run {
+                        currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                    }
+                },
                 onBackToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
                 onNavClick = handleNavClick
             )
         }
         AdminSiagaRoute.MINTA_INFORMASI -> {
             MintaInformasiScreen(
-                onKirimPermintaan = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
+                laporan = selectedLaporan,
+                onKirimPermintaan = { pesan ->
+                    selectedLaporan?.let { lap ->
+                        onAddCatatanTindakan(lap.id, "Permintaan Klarifikasi Informasi", pesan) {
+                            currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                        }
+                    } ?: run {
+                        currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                    }
+                },
                 onBackToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
                 onNavClick = handleNavClick
             )
         }
         AdminSiagaRoute.PENUGASAN_LAPORAN -> {
             PenugasanLaporanScreen(
-                onSimpanPenugasan = { currentScreen = AdminSiagaRoute.CATATAN_TINDAKAN },
+                laporan = selectedLaporan,
+                onSimpanPenugasan = { unit, jalur, catatan ->
+                    selectedLaporan?.let { lap ->
+                        onUpdateStatusLaporan(lap.id, "diproses", unit, jalur, catatan) {
+                            currentScreen = AdminSiagaRoute.CATATAN_TINDAKAN
+                        }
+                    } ?: run {
+                        currentScreen = AdminSiagaRoute.CATATAN_TINDAKAN
+                    }
+                },
                 onBackToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
                 onNavClick = handleNavClick
             )
         }
         AdminSiagaRoute.CATATAN_TINDAKAN -> {
             CatatanTindakanScreen(
+                laporan = selectedLaporan,
                 onHasilPenyelesaian = { currentScreen = AdminSiagaRoute.HASIL_PENYELESAIAN },
-                onSimpanCatatan = { /* Simpan catatan tindakan */ },
+                onSimpanCatatan = { catatan ->
+                    selectedLaporan?.let { lap ->
+                        onAddCatatanTindakan(lap.id, "Catatan Tindakan Penanganan", catatan) {
+                            currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
+                        }
+                    }
+                },
                 onBackToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
                 onNavClick = handleNavClick
             )
         }
         AdminSiagaRoute.HASIL_PENYELESAIAN -> {
             HasilPenyelesaianScreen(
-                onSimpanDanSelesaikan = { currentScreen = AdminSiagaRoute.LAPORAN_MASUK },
+                laporan = selectedLaporan,
+                onSimpanDanSelesaikan = { ringkasan, isBagikan ->
+                    selectedLaporan?.let { lap ->
+                        onSelesaikanLaporan(lap.id, ringkasan, isBagikan) {
+                            currentScreen = AdminSiagaRoute.LAPORAN_MASUK
+                        }
+                    } ?: run {
+                        currentScreen = AdminSiagaRoute.LAPORAN_MASUK
+                    }
+                },
                 onBackToDetail = { currentScreen = AdminSiagaRoute.DETAIL_LAPORAN },
                 onNavClick = handleNavClick
             )

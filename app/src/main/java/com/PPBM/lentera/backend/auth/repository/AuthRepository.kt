@@ -134,6 +134,21 @@ class AuthRepository(context: Context) {
             client.auth.updateUser {
                 this.password = newPassword
             }
+            val userId = client.auth.currentUserOrNull()?.id
+            if (userId != null) {
+                // Update status_akun menjadi 'aktif' jika sebelumnya belum aktivasi
+                client.from("profiles").update(
+                    mapOf("status_akun" to "aktif")
+                ) {
+                    filter {
+                        eq("id", userId)
+                    }
+                }
+                val current = sessionManager.getProfile()
+                if (current != null) {
+                    sessionManager.saveSession(current.copy(statusAkun = "aktif"))
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

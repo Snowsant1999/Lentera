@@ -23,7 +23,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun login(nimOrEmail: String, password: String, onRoleDetermined: (role: String) -> Unit) {
+    fun login(nimOrEmail: String, password: String, onRoleDetermined: (role: String, statusAkun: String) -> Unit) {
         if (nimOrEmail.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState(errorMessage = "NIM/Email dan Password wajib diisi.")
             return
@@ -35,7 +35,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             result.fold(
                 onSuccess = { profile ->
                     _uiState.value = LoginUiState(loggedInProfile = profile)
-                    onRoleDetermined(profile.role)
+                    onRoleDetermined(profile.role, profile.statusAkun)
                 },
                 onFailure = { error ->
                     _uiState.value = LoginUiState(errorMessage = error.message ?: "Login gagal.")

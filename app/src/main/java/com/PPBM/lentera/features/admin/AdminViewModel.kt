@@ -336,6 +336,54 @@ class AdminViewModel(
         }
     }
 
+    fun selectTempatMagang(tempat: TempatMagangEntity) {
+        _uiState.value = _uiState.value.copy(selectedTempatMagang = tempat)
+    }
+
+    fun selectLowongan(lowongan: LowonganEntity) {
+        _uiState.value = _uiState.value.copy(selectedLowonganAdmin = lowongan)
+    }
+
+    /**
+     * Mengubah status tempat magang (draf, aktif, arsip)
+     */
+    fun updateStatusTempatMagang(tempatId: String, status: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true)
+            val res = adminMagangRepo.updateStatusTempatMagang(tempatId, status)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+                loadTempatMagangList()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    errorMessage = err.message ?: "Gagal mengubah status tempat magang"
+                )
+            }
+        }
+    }
+
+    /**
+     * Mengubah status lowongan (draf, terbit, ditutup)
+     */
+    fun updateStatusLowongan(lowonganId: String, status: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true)
+            val res = adminMagangRepo.updateStatusLowongan(lowonganId, status)
+            res.onSuccess {
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+                loadLowonganAdminList()
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    errorMessage = err.message ?: "Gagal mengubah status lowongan"
+                )
+            }
+        }
+    }
+
     /**
      * Menambah tempat magang baru
      */

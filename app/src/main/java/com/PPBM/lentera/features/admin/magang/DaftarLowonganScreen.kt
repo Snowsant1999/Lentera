@@ -55,7 +55,7 @@ import com.PPBM.lentera.R
 @Composable
 fun DaftarLowonganScreen(
     lowonganList: List<LowonganEntity> = emptyList(),
-    onNavigateToDetailLowongan: () -> Unit = {},
+    onNavigateToDetailLowongan: (LowonganEntity) -> Unit = {},
     onNavigateToTambahLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
     onNavigateToPublikasiLowongan: () -> Unit = {},
@@ -280,7 +280,7 @@ fun DaftarLowonganScreen(
                         badgeText = item.status.replaceFirstChar { it.uppercase() },
                         badgeBg = if (isTerbit) MagangActiveGreenBg else MagangCreamBox,
                         badgeColor = if (isTerbit) MagangActiveGreenText else MagangNavyDark,
-                        onCardClick = onNavigateToDetailLowongan,
+                        onCardClick = { onNavigateToDetailLowongan(item) },
                         onUbahClick = onNavigateToFormLowongan,
                         actionPrimaryText = if (isTerbit) "Tutup" else "Terbitkan",
                         onActionPrimaryClick = onNavigateToPublikasiLowongan,

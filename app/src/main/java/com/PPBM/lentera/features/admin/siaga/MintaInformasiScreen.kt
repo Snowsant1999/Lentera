@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +42,15 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun MintaInformasiScreen(
+    laporan: AdminLaporan? = null,
     onKirimPermintaan: (String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
+    val judulLaporan = laporan?.judul ?: "Laporan"
+    val isAnonim = laporan?.isAnonim ?: true
+
     var pesanText by remember { mutableStateOf("") }
 
     Column(
@@ -68,12 +74,12 @@ fun MintaInformasiScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Diperiksa",
                 statusBg = Color(0xFFFFEDD5),
                 statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                title = judulLaporan,
+                subtitle = "Pelapor: ${if (isAnonim) "Anonim" else (laporan?.pelaporNama ?: "Mahasiswa")}"
             )
 
             // Card Konteks Anonim

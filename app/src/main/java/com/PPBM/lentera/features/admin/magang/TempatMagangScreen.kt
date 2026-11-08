@@ -53,7 +53,7 @@ import com.PPBM.lentera.R
 @Composable
 fun TempatMagangScreen(
     mitraList: List<TempatMagangEntity> = emptyList(),
-    onNavigateToDetailTempat: () -> Unit = {},
+    onNavigateToDetailTempat: (TempatMagangEntity) -> Unit = {},
     onNavigateToTambahTempat: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = {},
     onNavigateToLamaran: () -> Unit = {},
@@ -280,7 +280,7 @@ fun TempatMagangScreen(
                         badgeBg = if (isAktif) MagangActiveGreenBg else MagangCreamBox,
                         badgeColor = if (isAktif) MagangActiveGreenText else MagangNavyDark,
                         infoText = "${item.sistemKerja.uppercase()} · ${item.namaCabang}",
-                        onClick = onNavigateToDetailTempat
+                        onClick = { onNavigateToDetailTempat(item) }
                     )
                 }
             }

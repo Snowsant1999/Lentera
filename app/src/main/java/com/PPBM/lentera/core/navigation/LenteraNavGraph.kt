@@ -120,9 +120,13 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Login Screen
         composable(Routes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = { role ->
+                onLoginSuccess = { role, statusAkun ->
+                    val session = SessionManager.getInstance(navController.context)
                     val destination = if (role.equals("admin", ignoreCase = true)) {
                         Routes.ADMIN_DASHBOARD
+                    } else if (statusAkun.equals("belum_aktivasi", ignoreCase = true)) {
+                        val email = session.getProfile()?.email ?: ""
+                        Routes.resetPassword(email)
                     } else {
                         Routes.MAHASISWA_DASHBOARD
                     }
@@ -187,7 +191,18 @@ fun LenteraNavGraph(navController: NavHostController) {
                 onBackToVerifikasi = { navController.popBackStack() },
                 onPasswordSaved = { newPassword ->
                     loginViewModel.updatePassword(newPassword) {
-                        navController.navigate(Routes.LOGIN) {
+                        val session = SessionManager.getInstance(navController.context)
+                        val profile = session.getProfile()
+                        val destination = if (profile != null) {
+                            if (profile.role.equals("admin", ignoreCase = true)) {
+                                Routes.ADMIN_DASHBOARD
+                            } else {
+                                Routes.MAHASISWA_DASHBOARD
+                            }
+                        } else {
+                            Routes.LOGIN
+                        }
+                        navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                     }
@@ -316,6 +331,13 @@ fun LenteraNavGraph(navController: NavHostController) {
                 onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
                 onNavigateToProfil = { navController.navigate(Routes.ADMIN_PROFIL) },
                 onNavigateToNotifikasi = { navController.navigate(Routes.ADMIN_NOTIFIKASI) },
+                onLaporanClick = { item ->
+                    adminViewModel.selectLaporan(item.id)
+                    navController.navigate(Routes.ADMIN_DETAIL_LAPORAN)
+                },
+                onLowonganItemClick = {
+                    navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN)
+                },
                 onNavClick = { item ->
                     when (item) {
                         LenteraNavItem.BERANDA -> {}
@@ -741,14 +763,15 @@ fun LenteraNavGraph(navController: NavHostController) {
         composable(Routes.ADMIN_PENUGASAN_LAPORAN) {
             val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
             PenugasanLaporanScreen(
-                onSimpanPenugasan = {
+                laporan = selectedLaporan,
+                onSimpanPenugasan = { unit, jalur, catatan ->
                     selectedLaporan?.id?.let { lapId ->
                         adminViewModel.updateStatusLaporan(
                             laporanId = lapId,
                             status = "penanganan",
-                            unitPenanganan = "Tim Advokasi Kampus",
-                            jalurTindakLanjut = "Alihkan ke pihak berwenang",
-                            catatanPenugasan = "Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor."
+                            unitPenanganan = unit.ifBlank { "Tim Advokasi Kampus" },
+                            jalurTindakLanjut = jalur.ifBlank { "Alihkan ke pihak berwenang" },
+                            catatanPenugasan = catatan.ifBlank { "Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor." }
                         ) {
                             navController.navigate(Routes.ADMIN_CATATAN_TINDAKAN)
                         }
@@ -771,12 +794,13 @@ fun LenteraNavGraph(navController: NavHostController) {
         composable(Routes.ADMIN_HASIL_PENYELESAIAN) {
             val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
             HasilPenyelesaianScreen(
-                onSimpanDanSelesaikan = {
+                laporan = selectedLaporan,
+                onSimpanDanSelesaikan = { ringkasan, isBagikan ->
                     selectedLaporan?.id?.let { lapId ->
                         adminViewModel.selesaikanLaporan(
                             laporanId = lapId,
-                            hasilPenanganan = "Laporan telah selesai ditangani secara resmi oleh Tim Advokasi dan Administrasi Kampus.",
-                            hasilDipublikasi = true
+                            hasilPenanganan = ringkasan.ifBlank { "Laporan telah selesai ditangani secara resmi oleh Tim Advokasi dan Administrasi Kampus." },
+                            hasilDipublikasi = isBagikan
                         ) {
                             navController.navigate(Routes.ADMIN_SIAGA) {
                                 popUpTo(Routes.ADMIN_SIAGA) { inclusive = true }
@@ -809,7 +833,10 @@ fun LenteraNavGraph(navController: NavHostController) {
 
             TempatMagangScreen(
                 mitraList = adminState.tempatMagangList,
-                onNavigateToDetailTempat = { navController.navigate(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) },
+                onNavigateToDetailTempat = { tempat ->
+                    adminViewModel.selectTempatMagang(tempat)
+                    navController.navigate(Routes.ADMIN_DETAIL_TEMPAT_MAGANG)
+                },
                 onNavigateToTambahTempat = { navController.navigate(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) },
                 onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
                 onNavigateToLamaran = { navController.navigate(Routes.ADMIN_KELOLA_LAMARAN) },
@@ -866,6 +893,7 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Detail Tempat Magang
         composable(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) {
             DetailTempatMagangScreen(
+                tempat = adminState.selectedTempatMagang,
                 onNavigateToKelolaStatus = { navController.navigate(Routes.ADMIN_KELOLA_STATUS_TEMPAT) },
                 onBackToTempatMagang = { navController.popBackStack() },
                 onNavClick = { item ->
@@ -883,7 +911,15 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Kelola Status Tempat Magang
         composable(Routes.ADMIN_KELOLA_STATUS_TEMPAT) {
             KelolaStatusTempatScreen(
-                onSimpanStatus = { navController.popBackStack() },
+                tempat = adminState.selectedTempatMagang,
+                onSimpanStatus = { newStatus, catatan ->
+                    val tempatId = adminState.selectedTempatMagang?.id
+                    if (tempatId != null) {
+                        adminViewModel.updateStatusTempatMagang(tempatId, newStatus) {
+                            navController.popBackStack()
+                        }
+                    }
+                },
                 onBackToDetailTempat = { navController.popBackStack() },
                 onNavClick = { item ->
                     when (item) {
@@ -905,7 +941,10 @@ fun LenteraNavGraph(navController: NavHostController) {
 
             DaftarLowonganScreen(
                 lowonganList = adminState.lowonganAdminList,
-                onNavigateToDetailLowongan = { navController.navigate(Routes.ADMIN_DETAIL_LOWONGAN) },
+                onNavigateToDetailLowongan = { lowongan ->
+                    adminViewModel.selectLowongan(lowongan)
+                    navController.navigate(Routes.ADMIN_DETAIL_LOWONGAN)
+                },
                 onNavigateToFormLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
                 onNavigateToTambahLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
                 onNavigateToLamaran = { navController.navigate(Routes.ADMIN_KELOLA_LAMARAN) },
@@ -961,6 +1000,15 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Detail Lowongan
         composable(Routes.ADMIN_DETAIL_LOWONGAN) {
             DetailLowonganScreen(
+                lowongan = adminState.selectedLowonganAdmin,
+                onToggleStatus = { newStatus ->
+                    val lowonganId = adminState.selectedLowonganAdmin?.id
+                    if (lowonganId != null) {
+                        adminViewModel.updateStatusLowongan(lowonganId, newStatus) {
+                            navController.popBackStack()
+                        }
+                    }
+                },
                 onNavigateToPublikasiLowongan = { navController.popBackStack() },
                 onNavigateToFormLowongan = { navController.navigate(Routes.ADMIN_FORM_LOWONGAN) },
                 onBackToDaftarLowongan = { navController.popBackStack() },

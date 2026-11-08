@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,10 +43,21 @@ import com.PPBM.lentera.R
 
 @Composable
 fun DetailTempatMagangScreen(
+    tempat: TempatMagangEntity? = null,
     onNavigateToKelolaStatus: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val namaPerusahaan = tempat?.namaPerusahaan ?: "Tempat Magang"
+    val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
+    val statusText = (tempat?.status ?: "Draf").replaceFirstChar { it.uppercase() }
+    val alamat = tempat?.alamatLengkap ?: "-"
+    val situsWeb = tempat?.situsWeb ?: "-"
+    val deskripsi = tempat?.deskripsi?.ifBlank { null } ?: "Mitra kerja sama tempat magang mahasiswa."
+    val kontakNama = tempat?.namaKontak ?: "-"
+    val kontakEmail = tempat?.emailKontak ?: "-"
+    val kontakTelepon = tempat?.teleponKontak ?: "-"
+
     Scaffold(
         topBar = {
             AdminMagangHeader(
@@ -98,7 +110,7 @@ fun DetailTempatMagangScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "PT. Cahaya Digital",
+                                    text = namaPerusahaan,
                                     style = TextStyle(
                                         fontSize = 17.sp,
                                         fontFamily = PlusJakartaFont,
@@ -108,7 +120,7 @@ fun DetailTempatMagangScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Bontang · Teknologi Informasi",
+                                    text = subInfo,
                                     style = TextStyle(
                                         fontSize = 13.sp,
                                         fontFamily = PlusJakartaFont,
@@ -124,17 +136,17 @@ fun DetailTempatMagangScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(MagangCreamBox)
+                                .background(if (tempat?.status == "aktif") MagangActiveGreenBg else MagangCreamBox)
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Draf",
+                                text = statusText,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     fontFamily = PlusJakartaFont,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MagangNavyDark
+                                    color = if (tempat?.status == "aktif") MagangActiveGreenText else MagangNavyDark
                                 )
                             )
                         }
@@ -142,7 +154,7 @@ fun DetailTempatMagangScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Dicatat admin 16 Okt 2026, 14:20 WITA",
+                            text = "Cabang: ${tempat?.namaCabang ?: "-"} · Sistem Kerja: ${tempat?.sistemKerja?.uppercase() ?: "WFO"}",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,
@@ -186,7 +198,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Kantor Bontang",
+                            text = tempat?.namaCabang ?: namaPerusahaan,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -208,7 +220,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Jl. Jenderal Sudirman No. 24, Bontang, Kalimantan Timur",
+                            text = alamat,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -230,7 +242,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "www.cahayadigital.co.id",
+                            text = situsWeb,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -244,7 +256,7 @@ fun DetailTempatMagangScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
-                            text = "Perusahaan pengembangan produk digital dengan pendampingan magang web dan desain antarmuka selama 3 bulan.",
+                            text = deskripsi,
                             style = TextStyle(
                                 fontSize = 13.sp,
                                 lineHeight = 18.sp,
@@ -279,7 +291,7 @@ fun DetailTempatMagangScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
-                            text = "Nama & jabatan",
+                            text = "Nama & kontak",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,
@@ -289,7 +301,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Dian Permata · HR Officer",
+                            text = kontakNama,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -311,7 +323,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "hr@cahayadigital.co.id",
+                            text = kontakEmail,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -333,7 +345,7 @@ fun DetailTempatMagangScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "0813 4567 8900",
+                            text = kontakTelepon,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,

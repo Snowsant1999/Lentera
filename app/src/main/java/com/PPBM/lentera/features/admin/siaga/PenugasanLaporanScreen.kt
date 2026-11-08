@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,14 +50,19 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun PenugasanLaporanScreen(
-    onSimpanPenugasan: () -> Unit = {},
+    laporan: AdminLaporan? = null,
+    onSimpanPenugasan: (unitPetugas: String, jalurTindakLanjut: String, catatanPenugasan: String) -> Unit = { _, _, _ -> },
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var jalurTindakLanjut by remember { mutableStateOf("Alihkan ke pihak berwenang") }
-    var unitPetugas by remember { mutableStateOf("Tim Advokasi Kampus") }
+    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
+    val judulLaporan = laporan?.judul ?: "Laporan"
+    val isAnonim = laporan?.isAnonim ?: true
+
+    var jalurTindakLanjut by remember { mutableStateOf(laporan?.jalurTindakLanjut ?: "Pemeriksaan dan Pendampingan Tim Advokasi") }
+    var unitPetugas by remember { mutableStateOf(laporan?.unitPenanganan ?: "Tim Advokasi Kampus") }
     var catatanPenugasan by remember {
-        mutableStateOf("Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor.")
+        mutableStateOf(laporan?.catatanPenugasan ?: "Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor.")
     }
 
     Column(
@@ -80,17 +86,17 @@ fun PenugasanLaporanScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = judulLaporan,
+                subtitle = "Pelapor: ${if (isAnonim) "Anonim" else (laporan?.pelaporNama ?: "Mahasiswa")}"
             )
 
             // Banner Info Pelapor Anonim
             AdminInfoBanner(
-                text = "Pelapor anonim. Seluruh komunikasi dilakukan melalui kanal laporan LTR-2026-00123 tanpa membuka identitas."
+                text = "Pelapor ${if (isAnonim) "anonim" else "terverifikasi"}. Seluruh komunikasi dilakukan melalui kanal laporan $nomorLaporan tanpa membuka identitas."
             )
 
             // Card Penugasan & Jalur Penanganan
@@ -215,7 +221,7 @@ fun PenugasanLaporanScreen(
 
             // Button: Simpan Penugasan
             Button(
-                onClick = onSimpanPenugasan,
+                onClick = { onSimpanPenugasan(unitPetugas, jalurTindakLanjut, catatanPenugasan) },
                 colors = ButtonDefaults.buttonColors(containerColor = SiagaNavyPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier

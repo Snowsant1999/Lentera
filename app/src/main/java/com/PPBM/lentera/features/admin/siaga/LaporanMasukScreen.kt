@@ -53,18 +53,14 @@ fun LaporanMasukScreen(
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("Semua") }
+    var selectedFilterKey by remember { mutableStateOf("Semua") }
 
-    val daftarLaporan = if (laporanList.isNotEmpty()) {
-        laporanList
-    } else {
-        listOf(
-            AdminLaporanItem("LTR-2026-00126", "Lampu Koridor Padam", "17 Okt 2026 · 08:15 WITA · Identitas terbatas", "Baru", Color(0xFFFEF3C7), Color(0xFFB45309)),
-            AdminLaporanItem("LTR-2026-00123", "Pelecehan Verbal", "15 Okt 2026 · 15:00 WITA · Anonim", "Diperiksa", Color(0xFFFFEDD5), Color(0xFFC2410C)),
-            AdminLaporanItem("LTR-2026-00122", "Keracunan Makanan", "12 Okt 2026 · 13:20 WITA · Identitas terbatas", "Penanganan", Color(0xFFFFE4E6), Color(0xFFE11D48)),
-            AdminLaporanItem("LTR-2026-00120", "Pintu Mau Roboh", "10 Okt 2026 · 09:10 WITA · Identitas terbatas", "Selesai", Color(0xFFE8F4F1), Color(0xFF2F7078))
-        )
-    }
+    val daftarLaporan = laporanList
+
+    val countSemua = daftarLaporan.size
+    val countBaru = daftarLaporan.count { it.status.equals("Baru", ignoreCase = true) }
+    val countProses = daftarLaporan.count { it.status.lowercase() in listOf("diperiksa", "diproses", "penanganan", "investigasi") }
+    val countSelesai = daftarLaporan.count { it.status.equals("Selesai", ignoreCase = true) }
 
     Column(
         modifier = Modifier
@@ -142,20 +138,25 @@ fun LaporanMasukScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val filters = listOf("Semua 24", "Baru 3", "Proses 5", "Selesai 16")
-                filters.forEach { filterText ->
-                    val isSelected = selectedFilter == filterText
+                val filters = listOf(
+                    "Semua" to "Semua $countSemua",
+                    "Baru" to "Baru $countBaru",
+                    "Proses" to "Proses $countProses",
+                    "Selesai" to "Selesai $countSelesai"
+                )
+                filters.forEach { (key, label) ->
+                    val isSelected = selectedFilterKey == key
                     Box(
                         modifier = Modifier
                             .background(
                                 color = if (isSelected) SiagaTealPrimary else Color.White,
                                 shape = RoundedCornerShape(24.dp)
                             )
-                            .clickable { selectedFilter = filterText }
+                            .clickable { selectedFilterKey = key }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = filterText,
+                            text = label,
                             style = TextStyle(
                                 fontSize = 13.sp,
                                 fontFamily = PlusJakartaFont,
@@ -201,11 +202,11 @@ fun LaporanMasukScreen(
                 val matchesSearch = searchQuery.isBlank() ||
                         laporan.id.contains(searchQuery, ignoreCase = true) ||
                         laporan.judul.contains(searchQuery, ignoreCase = true)
-                val matchesFilter = when {
-                    selectedFilter.startsWith("Semua") -> true
-                    selectedFilter.startsWith("Baru") -> laporan.status.equals("Baru", ignoreCase = true)
-                    selectedFilter.startsWith("Proses") -> laporan.status in listOf("Diperiksa", "Penanganan", "Proses")
-                    selectedFilter.startsWith("Selesai") -> laporan.status.equals("Selesai", ignoreCase = true)
+                val matchesFilter = when (selectedFilterKey) {
+                    "Semua" -> true
+                    "Baru" -> laporan.status.equals("Baru", ignoreCase = true)
+                    "Proses" -> laporan.status.lowercase() in listOf("diperiksa", "diproses", "penanganan", "investigasi")
+                    "Selesai" -> laporan.status.equals("Selesai", ignoreCase = true)
                     else -> true
                 }
                 matchesSearch && matchesFilter
@@ -221,7 +222,7 @@ fun LaporanMasukScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = "Tidak ada laporan yang sesuai dengan pencarian.",
+                        text = if (daftarLaporan.isEmpty()) "Belum ada laporan pengaduan masuk." else "Tidak ada laporan yang sesuai dengan pencarian.",
                         style = TextStyle(
                             fontSize = 13.sp,
                             fontFamily = PlusJakartaFont,

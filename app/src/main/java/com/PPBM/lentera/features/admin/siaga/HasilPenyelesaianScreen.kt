@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,13 +53,21 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun HasilPenyelesaianScreen(
-    onSimpanDanSelesaikan: () -> Unit = {},
+    laporan: AdminLaporan? = null,
+    onSimpanDanSelesaikan: (ringkasanPenanganan: String, isBagikanHasil: Boolean) -> Unit = { _, _ -> },
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var isBagikanHasil by remember { mutableStateOf(true) }
+    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
+    val judulLaporan = laporan?.judul ?: "Laporan"
+    val isAnonim = laporan?.isAnonim ?: true
+
+    var isBagikanHasil by remember { mutableStateOf(laporan?.hasilDipublikasi ?: true) }
     var statusPenyelesaian by remember { mutableStateOf("Selesai") }
-    var tanggalSelesai by remember { mutableStateOf("17 Oktober 2026, 15:10 WITA") }
+    var tanggalSelesai by remember { mutableStateOf(laporan?.tanggalPenyelesaian ?: "Hari ini") }
+    var ringkasanPenanganan by remember {
+        mutableStateOf(laporan?.hasilPenanganan ?: "Laporan telah selesai ditangani secara resmi oleh Tim Advokasi dan Administrasi Kampus.")
+    }
 
     Column(
         modifier = Modifier
@@ -81,34 +90,12 @@ fun HasilPenyelesaianScreen(
         ) {
             // Ringkasan Laporan dengan Target Selesai
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal · Anonim",
-                subtitle = "",
-                extraRow = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_date),
-                            contentDescription = "Target",
-                            tint = SiagaNavyDark,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Target selesai 17 Okt 2026, 15:10 WITA",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = PlusJakartaFont,
-                                color = SiagaNavyDark
-                            )
-                        )
-                    }
-                }
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = "$judulLaporan · ${if (isAnonim) "Anonim" else "Terverifikasi"}",
+                subtitle = ""
             )
 
             // Card Hasil Penanganan
@@ -149,7 +136,7 @@ fun HasilPenyelesaianScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Ringkasan untuk mahasiswa",
+                        text = "Ringkasan penanganan untuk mahasiswa",
                         style = TextStyle(
                             fontSize = 12.sp,
                             fontFamily = PlusJakartaFont,
@@ -159,22 +146,19 @@ fun HasilPenyelesaianScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    Box(
+                    OutlinedTextField(
+                        value = ringkasanPenanganan,
+                        onValueChange = { ringkasanPenanganan = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = "Tim Advokasi telah menindaklanjuti laporan dan melakukan koordinasi dengan pihak terkait. Pendampingan tersedia melalui kanal laporan ini.",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                lineHeight = 18.sp,
-                                fontFamily = PlusJakartaFont,
-                                color = SiagaNavyDark
-                            )
-                        )
-                    }
+                            .height(110.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = SiagaBorderColor,
+                            focusedBorderColor = SiagaTealPrimary
+                        ),
+                        textStyle = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -392,7 +376,7 @@ fun HasilPenyelesaianScreen(
 
             // Button: Simpan & Selesaikan Laporan
             Button(
-                onClick = onSimpanDanSelesaikan,
+                onClick = { onSimpanDanSelesaikan(ringkasanPenanganan, isBagikanHasil) },
                 colors = ButtonDefaults.buttonColors(containerColor = SiagaTealPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier

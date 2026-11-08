@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,13 +46,26 @@ import com.PPBM.lentera.R
 
 @Composable
 fun KelolaStatusTempatScreen(
-    onSimpanStatus: () -> Unit = {},
+    tempat: TempatMagangEntity? = null,
+    onSimpanStatus: (newStatus: String, catatan: String) -> Unit = { _, _ -> },
     onBackToDetailTempat: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var selectedStatus by remember { mutableStateOf("Draf") }
+    val namaPerusahaan = tempat?.namaPerusahaan ?: "Tempat Magang"
+    val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
+    val currentStatus = (tempat?.status ?: "draf").replaceFirstChar { it.uppercase() }
+
+    var selectedStatus by remember {
+        mutableStateOf(
+            when (tempat?.status?.lowercase()) {
+                "aktif" -> "Aktif"
+                "arsip" -> "Arsip"
+                else -> "Draf"
+            }
+        )
+    }
     var catatanAdmin by remember {
-        mutableStateOf("Lengkapi NIB dan dokumen legalitas sebelum tempat diaktifkan.")
+        mutableStateOf("")
     }
 
     Scaffold(
@@ -106,7 +120,7 @@ fun KelolaStatusTempatScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "PT. Cahaya Digital",
+                                    text = namaPerusahaan,
                                     style = TextStyle(
                                         fontSize = 17.sp,
                                         fontFamily = PlusJakartaFont,
@@ -116,7 +130,7 @@ fun KelolaStatusTempatScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Bontang · Teknologi Informasi",
+                                    text = subInfo,
                                     style = TextStyle(
                                         fontSize = 13.sp,
                                         fontFamily = PlusJakartaFont,
@@ -132,17 +146,17 @@ fun KelolaStatusTempatScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(MagangCreamBox)
+                                .background(if (tempat?.status == "aktif") MagangActiveGreenBg else MagangCreamBox)
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Draf",
+                                text = currentStatus,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     fontFamily = PlusJakartaFont,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MagangNavyDark
+                                    color = if (tempat?.status == "aktif") MagangActiveGreenText else MagangNavyDark
                                 )
                             )
                         }
@@ -150,7 +164,7 @@ fun KelolaStatusTempatScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Dicatat admin 16 Okt 2026, 14:20 WITA",
+                            text = "Status terkini: ${tempat?.status ?: "draf"}",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,
@@ -338,7 +352,7 @@ fun KelolaStatusTempatScreen(
 
                         // Simpan Status Tempat Button (Navy primary button)
                         Button(
-                            onClick = onSimpanStatus,
+                            onClick = { onSimpanStatus(selectedStatus.lowercase(), catatanAdmin) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
