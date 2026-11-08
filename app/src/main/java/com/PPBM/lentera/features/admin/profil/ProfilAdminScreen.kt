@@ -1,15 +1,21 @@
 package com.PPBM.lentera.features.admin.profil
 import com.PPBM.lentera.core.designsystem.components.*
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,12 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
 
@@ -53,6 +61,13 @@ fun ProfilAdminScreen(
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+    }
+
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
@@ -91,7 +106,11 @@ fun ProfilAdminScreen(
                 nama = nama,
                 peran = peran,
                 badge = badge,
-                onAvatarClick = onAvatarClick
+                imageUri = imageUri,
+                onAvatarClick = {
+                    imagePickerLauncher.launch("image/*")
+                    onAvatarClick()
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -125,25 +144,51 @@ private fun RingkasanProfil(
     nama: String,
     peran: String,
     badge: String,
+    imageUri: Uri? = null,
     onAvatarClick: () -> Unit = {}
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(96.dp)
-                .background(Color.White, CircleShape)
-                .shadow(
-                    elevation = 6.dp,
-                    shape = CircleShape,
-                    spotColor = Color(0x15173B57)
-                )
-                .clip(CircleShape)
+                .size(100.dp)
                 .clickable(onClick = onAvatarClick)
         ) {
-            ProfileAvatar(
-                size = 88.dp
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .shadow(
+                        elevation = 6.dp,
+                        shape = CircleShape,
+                        spotColor = Color(0x15173B57)
+                    )
+                    .clip(CircleShape)
+                    .background(Color.White, CircleShape)
+            ) {
+                AsyncImage(
+                    model = imageUri ?: R.drawable.ic_avatar_2,
+                    contentDescription = "Foto Profil",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // Overlay ikon edit di pojok kanan bawah
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(32.dp)
+                    .align(Alignment.BottomEnd)
+                    .shadow(4.dp, CircleShape)
+                    .background(LenteraNavy, CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Ubah Foto Profil",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(14.dp))
         Text(

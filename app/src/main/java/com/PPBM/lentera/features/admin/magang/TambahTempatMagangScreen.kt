@@ -24,7 +24,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,12 +45,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 
 @Composable
@@ -83,6 +88,13 @@ fun TambahTempatMagangScreen(
     var emailPerusahaan by remember { mutableStateOf("") }
     var nomorTelepon by remember { mutableStateOf("") }
     var situsWeb by remember { mutableStateOf("") }
+
+    var logoUri by remember { mutableStateOf<Uri?>(null) }
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        logoUri = uri
+    }
 
     var uploadedDocName by remember { mutableStateOf<String?>(null) }
     var uploadedDocMeta by remember { mutableStateOf<String?>(null) }
@@ -174,6 +186,77 @@ fun TambahTempatMagangScreen(
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
+
+                        // Upload Logo Perusahaan (Tugas 3: Kotak 100x100 dengan RoundedCornerShape 12.dp)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clickable { logoPickerLauncher.launch("image/*") }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFEAF2F8))
+                                        .border(1.dp, MagangBorderColor, RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (logoUri != null) {
+                                        AsyncImage(
+                                            model = logoUri,
+                                            contentDescription = "Logo Perusahaan",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(12.dp))
+                                        )
+                                    } else {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_building_2),
+                                            contentDescription = "Placeholder Logo Perusahaan",
+                                            tint = MagangNavyDark,
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                    }
+                                }
+
+                                // Overlay Ikon Edit di pojok kanan bawah
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .align(Alignment.BottomEnd)
+                                        .background(MagangNavyDark, CircleShape)
+                                        .border(2.dp, Color.White, CircleShape)
+                                        .clickable { logoPickerLauncher.launch("image/*") }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Ubah Logo Perusahaan",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Logo Perusahaan (100x100)",
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MagangTextSecondary
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // Nama perusahaan / tempat *
                         FormInputField(
