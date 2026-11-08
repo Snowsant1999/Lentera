@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -52,8 +51,6 @@ import com.PPBM.lentera.core.designsystem.theme.*
 @Composable
 fun LoginScreen(
     onLoginSuccess: (role: String) -> Unit = {},
-    onLoginMahasiswa: () -> Unit = { onLoginSuccess("mahasiswa") },
-    onLoginAdmin: () -> Unit = { onLoginSuccess("admin") },
     onForgotPassword: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -460,78 +457,6 @@ fun LoginScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Demo Accounts Fast Login
-                Text(
-                    text = "— Masuk Cepat untuk Demo —",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = plusJakarta,
-                        fontWeight = FontWeight.Medium,
-                        color = SlateGray,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .border(1.dp, NavyMedium, RoundedCornerShape(12.dp))
-                            .background(Color.White, RoundedCornerShape(12.dp))
-                            .clickable(enabled = !uiState.isLoading) {
-                                nimOrEmail = "2024010001"
-                                password = "Password123!"
-                                viewModel.login("2024010001", "Password123!") { role ->
-                                    onLoginSuccess(role)
-                                }
-                            }
-                    ) {
-                        Text(
-                            text = "Demo Mahasiswa",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = plusJakarta,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyMedium
-                            )
-                        )
-                    }
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .background(Color(0xFFEEB042), RoundedCornerShape(12.dp))
-                            .clickable(enabled = !uiState.isLoading) {
-                                nimOrEmail = "admin@lentera.ac.id"
-                                password = "Password123!"
-                                viewModel.login("admin@lentera.ac.id", "Password123!") { role ->
-                                    onLoginSuccess(role)
-                                }
-                            }
-                    ) {
-                        Text(
-                            text = "Demo Admin",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = plusJakarta,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDark
-                            )
-                        )
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
