@@ -2,6 +2,8 @@ package com.PPBM.lentera.backend.mahasiswa.repository
 
 import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.core.SupabaseConfig
+import com.PPBM.lentera.backend.core.mapSupabaseError
+import com.PPBM.lentera.backend.core.normalizeDokumenMahasiswaJenis
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem
 import com.PPBM.lentera.backend.mahasiswa.model.NotifikasiItem
 import io.github.jan.supabase.auth.auth
@@ -106,8 +108,13 @@ class MahasiswaRepository {
             val currentUserId = client.auth.currentUserOrNull()?.id
                 ?: return Result.failure(Exception("Sesi login berakhir."))
 
-            val cleanFileName = fileName.replace(" ", "_")
-            val storagePath = "$currentUserId/${jenis}_${System.currentTimeMillis()}_$cleanFileName"
+            if (fileBytes.isEmpty()) {
+                return Result.failure(Exception("Berkas kosong atau gagal dibaca."))
+            }
+
+            val normalizedJenis = normalizeDokumenMahasiswaJenis(jenis)
+            val cleanFileName = fileName.trim().ifBlank { "dokumen.pdf" }.replace(" ", "_")
+            val storagePath = "$currentUserId/${normalizedJenis}_${System.currentTimeMillis()}_$cleanFileName"
 
             val bucket = storage.from("dokumen-mahasiswa")
             bucket.upload(storagePath, fileBytes) {
@@ -116,7 +123,7 @@ class MahasiswaRepository {
 
             val doc = DokumenMahasiswaItem(
                 mahasiswaId = currentUserId,
-                jenis = jenis,
+                jenis = normalizedJenis,
                 namaFile = cleanFileName,
                 filePath = storagePath,
                 ukuranBytes = fileBytes.size.toLong()
@@ -128,7 +135,19 @@ class MahasiswaRepository {
 
             Result.success(inserted)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah dokumen profil.")))
+        }
+    }
+
+    /**
+     * Mengunduh isi bytes dokumen dari bucket `dokumen-mahasiswa`.
+     */
+    suspend fun downloadDokumenBytes(filePath: String): Result<ByteArray> {
+        return try {
+            val bytes = storage.from("dokumen-mahasiswa").downloadAuthenticated(filePath)
+            Result.success(bytes)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunduh dokumen dari server.")))
         }
     }
 
@@ -181,7 +200,7 @@ class MahasiswaRepository {
     suspend fun markNotifikasiRead(notifId: String): Result<Unit> {
         return try {
             val payload = buildJsonObject {
-                put("dibaca", true)
+                put("is_dibaca", true)
             }
             client.from("notifikasi").update(payload) {
                 filter {

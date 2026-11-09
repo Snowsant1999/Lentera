@@ -4,6 +4,7 @@ import android.content.Context
 import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.backend.core.SupabaseConfig
+import com.PPBM.lentera.backend.core.mapSupabaseError
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -25,7 +26,6 @@ class AuthRepository(context: Context) {
             val cleanIdentifier = identifier.trim()
             val targetEmail: String = when {
                 cleanIdentifier.contains("@") -> cleanIdentifier.lowercase()
-                cleanIdentifier.equals("admin", ignoreCase = true) -> "admin@lentera.ac.id"
                 else -> {
                     // Resolusi NIM -> Email via RPC
                     val rpcParams = buildJsonObject {
@@ -59,6 +59,14 @@ class AuthRepository(context: Context) {
                 }
             }.decodeSingle<UserProfile>()
 
+            if (profile.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                try {
+                    client.auth.signOut()
+                } catch (_: Exception) {}
+                sessionManager.clearSession()
+                return Result.failure(Exception("Akun dinonaktifkan oleh admin kampus."))
+            }
+
             // Simpan sesi lokal
             sessionManager.saveSession(profile)
             Result.success(profile)
@@ -68,7 +76,7 @@ class AuthRepository(context: Context) {
                     "NIM/Email atau password yang kamu masukkan salah."
                 e.message?.contains("tidak terdaftar", ignoreCase = true) == true ->
                     e.message ?: "Akun tidak terdaftar."
-                else -> e.message ?: "Terjadi kesalahan saat login."
+                else -> mapSupabaseError(e, "Terjadi kesalahan saat login.")
             }
             Result.failure(Exception(errorMessage))
         }
@@ -106,7 +114,7 @@ class AuthRepository(context: Context) {
             client.auth.resetPasswordForEmail(email.trim().lowercase())
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengirim tautan pemulihan.")))
         }
     }
 
@@ -122,12 +130,12 @@ class AuthRepository(context: Context) {
             )
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Kode verifikasi salah atau kedaluwarsa.")))
         }
     }
 
     /**
-     * Memperbarui password setelah terverifikasi.
+     * Memperbarui password setelah terverifikasi sekaligus mengaktifkan akun via RPC `aktivasi_akun_saya`.
      */
     suspend fun updatePassword(newPassword: String): Result<Unit> {
         return try {
@@ -136,22 +144,23 @@ class AuthRepository(context: Context) {
             }
             val userId = client.auth.currentUserOrNull()?.id
             if (userId != null) {
-                // Update status_akun menjadi 'aktif' jika sebelumnya belum aktivasi
-                client.from("profiles").update(
-                    mapOf("status_akun" to "aktif")
-                ) {
-                    filter {
-                        eq("id", userId)
-                    }
+                client.postgrest.rpc("aktivasi_akun_saya")
+                val refreshedProfile = try {
+                    client.from("profiles").select {
+                        filter {
+                            eq("id", userId)
+                        }
+                    }.decodeSingle<UserProfile>()
+                } catch (_: Exception) {
+                    sessionManager.getProfile()?.copy(statusAkun = "aktif")
                 }
-                val current = sessionManager.getProfile()
-                if (current != null) {
-                    sessionManager.saveSession(current.copy(statusAkun = "aktif"))
+                if (refreshedProfile != null) {
+                    sessionManager.saveSession(refreshedProfile)
                 }
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui password.")))
         }
     }
 }

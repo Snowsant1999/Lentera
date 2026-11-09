@@ -32,9 +32,10 @@ data class NotifikasiItem(
     val userId: String,
     val judul: String,
     val isi: String,
-    val kategori: String, // siaga, magang, sistem
+    val kategori: String, // laporan, magang, surat
     val tautan: String? = null,
-    val dibaca: Boolean = false,
+    @SerialName("is_dibaca")
+    val isDibaca: Boolean = false,
     @SerialName("created_at")
     val createdAt: String
 )

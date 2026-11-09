@@ -43,15 +43,17 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun MintaInformasiScreen(
     laporan: AdminLaporan? = null,
+    isUpdating: Boolean = false,
     onKirimPermintaan: (String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
-    val judulLaporan = laporan?.judul ?: "Laporan"
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
     val isAnonim = laporan?.isAnonim ?: true
 
     var pesanText by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -145,7 +147,10 @@ fun MintaInformasiScreen(
 
                     OutlinedTextField(
                         value = pesanText,
-                        onValueChange = { pesanText = it },
+                        onValueChange = {
+                            pesanText = it
+                            if (validationError != null) validationError = null
+                        },
                         placeholder = {
                             Text(
                                 text = "Tulis permintaan informasi tambahan untuk pelapor...",
@@ -171,6 +176,19 @@ fun MintaInformasiScreen(
                         )
                     )
 
+                    if (!validationError.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = validationError!!,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFB91C1C)
+                            )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Pesan akan dikirim melalui notifikasi dan nomor laporan.",
@@ -184,7 +202,16 @@ fun MintaInformasiScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { onKirimPermintaan(pesanText) },
+                        onClick = {
+                            val trimmed = pesanText.trim()
+                            if (trimmed.isBlank()) {
+                                validationError = "Pesan permintaan informasi wajib diisi."
+                                return@Button
+                            }
+                            validationError = null
+                            onKirimPermintaan(trimmed)
+                        },
+                        enabled = !isUpdating && laporan != null,
                         colors = ButtonDefaults.buttonColors(containerColor = SiagaTealPrimary),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -192,7 +219,7 @@ fun MintaInformasiScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Kirim Permintaan",
+                            text = if (isUpdating) "Mengirim..." else "Kirim Permintaan",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,

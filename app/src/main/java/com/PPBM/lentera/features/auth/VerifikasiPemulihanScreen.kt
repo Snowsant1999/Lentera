@@ -44,6 +44,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun VerifikasiPemulihanScreen(
     email: String = "mahasiswa@student.ac.id",
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    onClearError: () -> Unit = {},
     onBackToLupaPassword: () -> Unit = {},
     onVerified: (String) -> Unit = {},
     onResendOtp: () -> Unit = {},
@@ -53,6 +56,8 @@ fun VerifikasiPemulihanScreen(
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
 
     var otpCode by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
+    val activeError = localError ?: errorMessage
     val focusRequester = remember { FocusRequester() }
 
     // Countdown timer 5 menit (300 detik)
@@ -231,6 +236,8 @@ fun VerifikasiPemulihanScreen(
                         onValueChange = {
                             if (it.length <= 6 && it.all { char -> char.isDigit() }) {
                                 otpCode = it
+                                localError = null
+                                onClearError()
                             }
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -291,6 +298,19 @@ fun VerifikasiPemulihanScreen(
                     )
                 )
 
+                if (!activeError.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = activeError,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontFamily = plusJakarta,
+                            fontWeight = FontWeight.Normal,
+                            color = ErrorRed
+                        )
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Tombol Verifikasi & Lanjutkan
@@ -300,20 +320,24 @@ fun VerifikasiPemulihanScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                         .background(
-                            color = if (otpCode.length == 6) NavyMedium else NavyMedium.copy(alpha = 0.85f),
+                            color = if (!isLoading && otpCode.length == 6) NavyMedium else NavyMedium.copy(alpha = 0.7f),
                             shape = RoundedCornerShape(14.dp)
                         )
                         .clickable(
+                            enabled = !isLoading,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
                             if (otpCode.length == 6) {
+                                localError = null
                                 onVerified(otpCode)
+                            } else {
+                                localError = "Masukkan 6 digit kode verifikasi."
                             }
                         }
                 ) {
                     Text(
-                        text = "Verifikasi & Lanjutkan",
+                        text = if (isLoading) "Memverifikasi..." else "Verifikasi & Lanjutkan",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontFamily = plusJakarta,

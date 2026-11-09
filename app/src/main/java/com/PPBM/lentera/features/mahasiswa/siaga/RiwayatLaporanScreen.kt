@@ -47,8 +47,9 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 enum class FilterStatusTab(val label: String) {
     SEMUA("Semua"),
-    AKTIF("Aktif"),
-    SELESAI("Selesai")
+    AKTIF("Diproses"),
+    SELESAI("Selesai"),
+    DITOLAK("Ditolak")
 }
 
 data class RiwayatLaporanItem(
@@ -60,43 +61,8 @@ data class RiwayatLaporanItem(
     val statusBadge: String,
     val badgeBgColor: Color,
     val badgeTextColor: Color,
-    val isSelesai: Boolean
-)
-
-val sampleRiwayatLaporan = listOf(
-    RiwayatLaporanItem(
-        id = "1",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Selesai",
-        badgeBgColor = Color(0xFFE3F5EB),
-        badgeTextColor = Color(0xFF287D4A),
-        isSelesai = true
-    ),
-    RiwayatLaporanItem(
-        id = "2",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Selesai",
-        badgeBgColor = Color(0xFFE3F5EB),
-        badgeTextColor = Color(0xFF287D4A),
-        isSelesai = true
-    ),
-    RiwayatLaporanItem(
-        id = "3",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Perlu Informasi Tambahan",
-        badgeBgColor = Color(0xFFE6B363),
-        badgeTextColor = Color.White,
-        isSelesai = false
-    )
+    val isSelesai: Boolean,
+    val isDitolak: Boolean = false
 )
 
 // ============================================================================
@@ -114,7 +80,7 @@ val sampleRiwayatLaporan = listOf(
  */
 @Composable
 fun RiwayatLaporanScreen(
-    reportList: List<RiwayatLaporanItem> = sampleRiwayatLaporan,
+    reportList: List<RiwayatLaporanItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onReportClick: (RiwayatLaporanItem) -> Unit = {},
     onKembaliKeDashboard: () -> Unit = {}
@@ -131,8 +97,9 @@ fun RiwayatLaporanScreen(
 
             val matchFilter = when (selectedFilter) {
                 FilterStatusTab.SEMUA -> true
-                FilterStatusTab.AKTIF -> !item.isSelesai
+                FilterStatusTab.AKTIF -> !item.isSelesai && !item.isDitolak
                 FilterStatusTab.SELESAI -> item.isSelesai
+                FilterStatusTab.DITOLAK -> item.isDitolak
             }
 
             matchQuery && matchFilter
@@ -419,13 +386,15 @@ private fun FilterTabsRow(
             ) {
                 Text(
                     text = tab.label,
+                    maxLines = 1,
                     style = TextStyle(
                         fontFamily = fontFamily,
-                        fontSize = 13.5.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
                         color = when {
                             isSelected -> Color.White
                             tab == FilterStatusTab.SELESAI -> Color(0xFF287D4A)
+                            tab == FilterStatusTab.DITOLAK -> Color(0xFFB91C1C)
                             else -> SiagaTealPrimary
                         }
                     )

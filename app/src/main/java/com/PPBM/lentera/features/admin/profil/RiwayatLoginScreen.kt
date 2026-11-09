@@ -35,27 +35,11 @@ fun RiwayatLoginScreen(
     riwayatList: List<RiwayatLoginItem> = listOf(
         RiwayatLoginItem(
             id = "1",
-            namaPerangkat = "MacBook Air M1",
+            namaPerangkat = "${android.os.Build.MANUFACTURER.orEmpty().replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL.orEmpty()} (Lentera App)".trim(),
             lokasi = "Samarinda, Kalimantan Timur",
-            waktu = "Hari ini, 08.30 WITA",
-            isPhone = false,
-            isCurrentSession = true
-        ),
-        RiwayatLoginItem(
-            id = "2",
-            namaPerangkat = "Android – Lentera App",
-            lokasi = "Samarinda, Kalimantan Timur",
-            waktu = "Terakhir Aktif : Hari ini, 09.41",
+            waktu = "Sesi Aktif Sekarang",
             isPhone = true,
-            isCurrentSession = false
-        ),
-        RiwayatLoginItem(
-            id = "3",
-            namaPerangkat = "Windows – Lentera App",
-            lokasi = "Samarinda, Kalimantan Timur",
-            waktu = "Terakhir Aktif : Hari ini, 09.41",
-            isPhone = false,
-            isCurrentSession = false
+            isCurrentSession = true
         )
     ),
     onBackClick: () -> Unit = {},
@@ -64,7 +48,7 @@ fun RiwayatLoginScreen(
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
-            LenteraBottomNavBar(
+            AdminBottomBar(
                 selected = LenteraNavItem.PROFIL,
                 onItemClick = onNavClick
             )

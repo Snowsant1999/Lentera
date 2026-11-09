@@ -47,12 +47,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.PPBM.lentera.backend.admin.model.LowonganEntity
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 import com.PPBM.lentera.R
 
 @Composable
 fun TempatMagangScreen(
     mitraList: List<TempatMagangEntity> = emptyList(),
+    lowonganList: List<LowonganEntity> = emptyList(),
+    lamaranCount: Int = 0,
     onNavigateToDetailTempat: (TempatMagangEntity) -> Unit = {},
     onNavigateToTambahTempat: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = {},
@@ -65,8 +68,12 @@ fun TempatMagangScreen(
     val totalCount = mitraList.size
     val aktifCount = mitraList.count { it.status.equals("aktif", ignoreCase = true) }
     val drafCount = mitraList.count { it.status.equals("draf", ignoreCase = true) }
-    val arsipCount = mitraList.count { it.status.equals("arsip", ignoreCase = true) || it.status.equals("nonaktif", ignoreCase = true) }
+    val arsipCount = mitraList.count { it.status.equals("arsip", ignoreCase = true) }
     val filterChips = listOf("Semua $totalCount", "Aktif $aktifCount", "Draf $drafCount", "Arsip $arsipCount")
+
+    val lowonganTerbitCount = lowonganList.count { it.status.equals("terbit", ignoreCase = true) }
+    val lowonganDrafCount = lowonganList.count { it.status.equals("draf", ignoreCase = true) }
+    val lowonganDitutupCount = lowonganList.count { it.status.equals("ditutup", ignoreCase = true) }
 
     Scaffold(
         topBar = {
@@ -244,7 +251,7 @@ fun TempatMagangScreen(
                     0 -> true
                     1 -> item.status.equals("aktif", ignoreCase = true)
                     2 -> item.status.equals("draf", ignoreCase = true)
-                    3 -> item.status.equals("arsip", ignoreCase = true) || item.status.equals("nonaktif", ignoreCase = true)
+                    3 -> item.status.equals("arsip", ignoreCase = true)
                     else -> true
                 }
                 matchesSearch && matchesChip
@@ -279,7 +286,7 @@ fun TempatMagangScreen(
                         badgeText = item.status.replaceFirstChar { it.uppercase() },
                         badgeBg = if (isAktif) MagangActiveGreenBg else MagangCreamBox,
                         badgeColor = if (isAktif) MagangActiveGreenText else MagangNavyDark,
-                        infoText = "${item.sistemKerja.uppercase()} · ${item.namaCabang}",
+                        infoText = "${item.sistemKerja} · ${item.namaCabang}",
                         onClick = { onNavigateToDetailTempat(item) }
                     )
                 }
@@ -323,7 +330,7 @@ fun TempatMagangScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "28 lamaran pada 4 lowongan terbit",
+                            text = "$lamaranCount lamaran pada $lowonganTerbitCount lowongan terbit",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -335,7 +342,7 @@ fun TempatMagangScreen(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "3 draf lowongan · 1 ditutup",
+                            text = "$lowonganDrafCount draf lowongan · $lowonganDitutupCount ditutup",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,

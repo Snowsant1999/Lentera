@@ -2,6 +2,8 @@ package com.PPBM.lentera.features.mahasiswa.siaga
 import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +32,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -41,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
+import java.util.Calendar
+import java.util.Locale
 
 // ============================================================================
 // Model & Data
@@ -52,7 +57,7 @@ data class BuatLaporanFormData(
     val tanggalWaktu: String = "",
     val lokasi: String = "",
     val deskripsi: String = "",
-    val isAnonim: Boolean = true
+    val isAnonim: Boolean = false
 )
 
 // ============================================================================
@@ -83,12 +88,52 @@ fun BuatLaporanScreen(
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     var judul by remember { mutableStateOf(initialData.judul) }
     var tanggalWaktu by remember { mutableStateOf(initialData.tanggalWaktu) }
     var lokasi by remember { mutableStateOf(initialData.lokasi) }
     var deskripsi by remember { mutableStateOf(initialData.deskripsi) }
     var isAnonim by remember { mutableStateOf(initialData.isAnonim) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(initialData.kategori) {
+        if (judul.isBlank() && initialData.kategori.isNotBlank()) {
+            judul = initialData.kategori
+        }
+    }
+
+    val openDateTimePicker = {
+        onDatePickerClick()
+        val cal = Calendar.getInstance()
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                TimePickerDialog(
+                    context,
+                    { _, hourOfDay, minute ->
+                        val formatted = String.format(
+                            Locale.US,
+                            "%04d-%02d-%02d %02d:%02d",
+                            year,
+                            month + 1,
+                            dayOfMonth,
+                            hourOfDay,
+                            minute
+                        )
+                        tanggalWaktu = formatted
+                        validationError = null
+                    },
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    true
+                ).show()
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -97,16 +142,29 @@ fun BuatLaporanScreen(
             BottomActionBar(
                 onKembali = onKembaliKeKategoriClick,
                 onLanjut = {
-                    onLanjutKeBuktiClick(
-                        BuatLaporanFormData(
-                            kategori = initialData.kategori,
-                            judul = judul,
-                            tanggalWaktu = tanggalWaktu,
-                            lokasi = lokasi,
-                            deskripsi = deskripsi,
-                            isAnonim = isAnonim
-                        )
-                    )
+                    val cleanJudul = judul.trim()
+                    val cleanTanggal = tanggalWaktu.trim()
+                    val cleanLokasi = lokasi.trim()
+                    val cleanDeskripsi = deskripsi.trim()
+                    when {
+                        cleanJudul.isEmpty() -> validationError = "Judul laporan wajib diisi."
+                        cleanTanggal.isEmpty() -> validationError = "Tanggal & waktu kejadian wajib diisi."
+                        cleanLokasi.isEmpty() -> validationError = "Lokasi kejadian wajib diisi."
+                        cleanDeskripsi.isEmpty() -> validationError = "Deskripsi kejadian wajib diisi."
+                        else -> {
+                            validationError = null
+                            onLanjutKeBuktiClick(
+                                BuatLaporanFormData(
+                                    kategori = initialData.kategori,
+                                    judul = cleanJudul,
+                                    tanggalWaktu = cleanTanggal,
+                                    lokasi = cleanLokasi,
+                                    deskripsi = cleanDeskripsi,
+                                    isAnonim = isAnonim
+                                )
+                            )
+                        }
+                    }
                 },
                 fontFamily = plusJakarta
             )
@@ -140,6 +198,28 @@ fun BuatLaporanScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
+                if (!validationError.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ErrorRedLight)
+                            .border(1.dp, ErrorRed.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = validationError!!,
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ErrorRed
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
                 // Kategori Terpilih Card
                 KategoriTerpilihCard(
                     kategori = initialData.kategori,
@@ -167,7 +247,7 @@ fun BuatLaporanScreen(
                 FormFieldLabel(label = "Judul Laporan", fontFamily = plusJakarta)
                 CustomInputField(
                     value = judul,
-                    onValueChange = { judul = it },
+                    onValueChange = { judul = it; validationError = null },
                     placeholder = "Masukkan judul laporan",
                     fontFamily = plusJakarta,
                     imeAction = ImeAction.Next
@@ -179,8 +259,8 @@ fun BuatLaporanScreen(
                 FormFieldLabel(label = "Tanggal & Waktu Kejadian", fontFamily = plusJakarta)
                 CustomInputField(
                     value = tanggalWaktu,
-                    onValueChange = { tanggalWaktu = it },
-                    placeholder = "Pilih tanggal & waktu kejadian",
+                    onValueChange = { tanggalWaktu = it; validationError = null },
+                    placeholder = "Contoh: 2026-10-12 14:30",
                     fontFamily = plusJakarta,
                     trailingIcon = {
                         CalendarIcon(
@@ -189,7 +269,7 @@ fun BuatLaporanScreen(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
-                                    onClick = onDatePickerClick
+                                    onClick = openDateTimePicker
                                 ),
                             tint = SiagaTealPrimary
                         )
@@ -203,7 +283,7 @@ fun BuatLaporanScreen(
                 FormFieldLabel(label = "Lokasi Kejadian", fontFamily = plusJakarta)
                 CustomInputField(
                     value = lokasi,
-                    onValueChange = { lokasi = it },
+                    onValueChange = { lokasi = it; validationError = null },
                     placeholder = "Masukkan lokasi kejadian",
                     fontFamily = plusJakarta,
                     trailingIcon = {
@@ -227,7 +307,7 @@ fun BuatLaporanScreen(
                 FormFieldLabel(label = "Deskripsi Kejadian", fontFamily = plusJakarta)
                 CustomTextArea(
                     value = deskripsi,
-                    onValueChange = { deskripsi = it },
+                    onValueChange = { deskripsi = it; validationError = null },
                     placeholder = "Ceritakan kejadian secara detail...",
                     fontFamily = plusJakarta
                 )

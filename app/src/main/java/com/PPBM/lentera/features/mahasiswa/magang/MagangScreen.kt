@@ -83,7 +83,7 @@ data class LowonganCardData(
  */
 @Composable
 fun MagangScreen(
-    userName: String = "Budi Santoso",
+    userName: String = "",
     userRole: String = "Mahasiswa",
     profilCompletion: Int = 70,
     totalLamaran: Int = 0,
@@ -895,7 +895,7 @@ private fun LowonganHorizontalCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Tutup ${data.batasHari} hari lagi",
+                    text = if (data.batasHari <= 0) "Berakhir hari ini" else "Tutup ${data.batasHari} hari lagi",
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 11.5.sp,

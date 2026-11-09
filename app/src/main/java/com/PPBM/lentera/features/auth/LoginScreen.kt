@@ -70,11 +70,6 @@ fun LoginScreen(
         focusManager.clearFocus()
         viewModel.login(nimOrEmail, password) { role, statusAkun ->
             onLoginSuccess(role, statusAkun)
-            if (role.equals("admin", ignoreCase = true)) {
-                onLoginAdmin()
-            } else {
-                onLoginMahasiswa()
-            }
         }
     }
 

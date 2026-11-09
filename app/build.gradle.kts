@@ -16,11 +16,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPABASE_URL", "\"https://zrzypkduulwtkumqkubu.supabase.co\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpyenlwa2R1dWx3dGt1bXFrdWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzODQ5MjEsImV4cCI6MjEwNzk2MDkyMX0.vAFC8FWnTGpNjs5zQDi6X6mkTuj5eh-roor5JTqr3bI\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -33,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -49,9 +54,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
-    implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.material.icons.core)
 
     // Supabase & Ktor
     implementation(platform(libs.supabase.bom))

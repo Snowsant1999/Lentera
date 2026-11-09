@@ -1,7 +1,9 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.DokumenTempatMagangItem
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
+import com.PPBM.lentera.backend.core.extractShortFileType
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +46,8 @@ import com.PPBM.lentera.R
 @Composable
 fun DetailTempatMagangScreen(
     tempat: TempatMagangEntity? = null,
+    dokumenList: List<DokumenTempatMagangItem> = emptyList(),
+    onOpenDokumen: (DokumenTempatMagangItem) -> Unit = {},
     onNavigateToKelolaStatus: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
@@ -52,7 +56,7 @@ fun DetailTempatMagangScreen(
     val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
     val statusText = (tempat?.status ?: "Draf").replaceFirstChar { it.uppercase() }
     val alamat = tempat?.alamatLengkap ?: "-"
-    val situsWeb = tempat?.situsWeb ?: "-"
+    val situsWeb = tempat?.situsWeb?.takeIf { it.isNotBlank() } ?: "-"
     val deskripsi = tempat?.deskripsi?.ifBlank { null } ?: "Mitra kerja sama tempat magang mahasiswa."
     val kontakNama = tempat?.namaKontak ?: "-"
     val kontakEmail = tempat?.emailKontak ?: "-"
@@ -154,7 +158,7 @@ fun DetailTempatMagangScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Cabang: ${tempat?.namaCabang ?: "-"} · Sistem Kerja: ${tempat?.sistemKerja?.uppercase() ?: "WFO"}",
+                            text = "Cabang: ${tempat?.namaCabang ?: "-"} · Sistem Kerja: ${tempat?.sistemKerja ?: "-"}",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,
@@ -162,6 +166,19 @@ fun DetailTempatMagangScreen(
                                 color = MagangTextSecondary
                             )
                         )
+                        val catatanInternal = tempat?.catatanInternal?.takeIf { it.isNotBlank() }
+                        if (catatanInternal != null) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Catatan internal: $catatanInternal",
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MagangNavyPrimary
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -378,19 +395,31 @@ fun DetailTempatMagangScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Doc 1
-                        DocumentItemBox(
-                            name = "profil_cahaya_digital.pdf",
-                            meta = "PDF · 1,8 MB · 16 Okt 2026"
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Doc 2
-                        DocumentItemBox(
-                            name = "nib_cahaya_digital.pdf",
-                            meta = "PDF · 720 KB · 16 Okt 2026"
-                        )
+                        if (dokumenList.isEmpty()) {
+                            Text(
+                                text = "Belum ada dokumen pendukung untuk mitra ini.",
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    color = MagangTextSecondary
+                                )
+                            )
+                        } else {
+                            dokumenList.forEachIndexed { index, doc ->
+                                if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+                                val sizeText = if (doc.ukuranBytes >= 1024 * 1024) {
+                                    String.format(java.util.Locale.US, "%.1f MB", doc.ukuranBytes / (1024.0 * 1024.0))
+                                } else {
+                                    "${(doc.ukuranBytes / 1024).coerceAtLeast(1)} KB"
+                                }
+                                val datePart = doc.createdAt?.take(10)?.takeIf { it.isNotBlank() } ?: "-"
+                                DocumentItemBox(
+                                    name = doc.namaFile,
+                                    meta = "${extractShortFileType(doc.namaFile)} · $sizeText · $datePart",
+                                    onClick = { onOpenDokumen(doc) }
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(14.dp))
 

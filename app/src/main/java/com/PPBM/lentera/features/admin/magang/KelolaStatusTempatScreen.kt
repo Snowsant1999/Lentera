@@ -47,6 +47,7 @@ import com.PPBM.lentera.R
 @Composable
 fun KelolaStatusTempatScreen(
     tempat: TempatMagangEntity? = null,
+    isSubmitting: Boolean = false,
     onSimpanStatus: (newStatus: String, catatan: String) -> Unit = { _, _ -> },
     onBackToDetailTempat: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
@@ -55,7 +56,7 @@ fun KelolaStatusTempatScreen(
     val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
     val currentStatus = (tempat?.status ?: "draf").replaceFirstChar { it.uppercase() }
 
-    var selectedStatus by remember {
+    var selectedStatus by remember(tempat?.id, tempat?.status) {
         mutableStateOf(
             when (tempat?.status?.lowercase()) {
                 "aktif" -> "Aktif"
@@ -64,8 +65,8 @@ fun KelolaStatusTempatScreen(
             }
         )
     }
-    var catatanAdmin by remember {
-        mutableStateOf("")
+    var catatanAdmin by remember(tempat?.id, tempat?.catatanInternal) {
+        mutableStateOf(tempat?.catatanInternal.orEmpty())
     }
 
     Scaffold(
@@ -352,7 +353,8 @@ fun KelolaStatusTempatScreen(
 
                         // Simpan Status Tempat Button (Navy primary button)
                         Button(
-                            onClick = { onSimpanStatus(selectedStatus.lowercase(), catatanAdmin) },
+                            enabled = !isSubmitting && !tempat?.id.isNullOrBlank(),
+                            onClick = { onSimpanStatus(selectedStatus.lowercase(), catatanAdmin.trim()) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
@@ -364,7 +366,7 @@ fun KelolaStatusTempatScreen(
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                         ) {
                             Text(
-                                text = "Simpan Status Tempat",
+                                text = if (isSubmitting) "Menyimpan..." else "Simpan Status Tempat",
                                 style = TextStyle(
                                     fontSize = 14.sp,
                                     fontFamily = PlusJakartaFont,

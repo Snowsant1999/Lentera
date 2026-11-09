@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -46,6 +48,7 @@ data class LowonganItem(
     val lokasi: String,
     val durasi: String,
     val kategori: String,
+    val sistemKerja: String = "",
     val status: String = "Available",
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
@@ -86,7 +89,8 @@ fun LowonganScreen(
             val matchCategory = when (selectedCategory) {
                 "Semua" -> true
                 "Tersimpan" -> item.isBookmarked
-                "Remote" -> item.lokasi.equals("Remote", ignoreCase = true)
+                "Remote" -> item.sistemKerja.equals("Remote", ignoreCase = true) ||
+                    item.lokasi.equals("Remote", ignoreCase = true)
                 else -> item.kategori.equals(selectedCategory, ignoreCase = true)
             }
             val matchQuery = searchQuery.isEmpty() ||
@@ -271,7 +275,7 @@ private fun LowonganSearchBar(
     onQueryChange: (String) -> Unit,
     fontFamily: FontFamily
 ) {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
@@ -280,28 +284,43 @@ private fun LowonganSearchBar(
             .background(Color.White)
             .border(1.dp, CardBorder, RoundedCornerShape(24.dp))
             .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+        Icon(
+            painter = painterResource(id = R.drawable.ic_search_alt),
+            contentDescription = "Search",
+            tint = SlateGray,
+            modifier = Modifier.size(18.dp)
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterStart
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_search_alt),
-                contentDescription = "Search",
-                tint = SlateGray,
-                modifier = Modifier.size(18.dp)
-            )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Text(
-                text = if (query.isEmpty()) "Cari tempat atau posisi magang" else query,
-                style = TextStyle(
+            if (query.isEmpty()) {
+                Text(
+                    text = "Cari tempat atau posisi magang",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = SlateGray
+                    )
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(
                     fontFamily = fontFamily,
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Normal,
-                    color = if (query.isEmpty()) SlateGray else NavyDark
-                )
+                    color = NavyDark
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -508,7 +527,7 @@ private fun LowonganItemCard(
                     )
 
                     Text(
-                        text = "Tutup ${item.batasHari} hari lagi",
+                        text = if (item.batasHari <= 0) "Berakhir hari ini" else "Tutup ${item.batasHari} hari lagi",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.sp,

@@ -27,12 +27,17 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
 
+import com.PPBM.lentera.backend.mahasiswa.model.LamaranSaya
+import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
+
 data class RiwayatLamaranModel(
     val id: String,
+    val lamaranUuid: String = id,
     val posisi: String,
     val perusahaan: String,
     val tanggal: String,
     val status: String,
+    val rawStatus: String = "",
     val statusBg: Color,
     val statusText: Color,
     val logoRes: Int = R.drawable.ic_avatar_2
@@ -40,67 +45,73 @@ data class RiwayatLamaranModel(
 
 /**
  * Halaman Riwayat Lamaran Saya
- * Sesuai referensi UI Lamaran Saya.png
  */
 @Composable
 fun LamaranSayaScreen(
+    lamaranList: List<LamaranSaya> = emptyList(),
+    lowonganList: List<LowonganTerbit> = emptyList(),
+    initialFilter: String = "Semua",
     onBackClick: () -> Unit = {},
     onStatusClick: (RiwayatLamaranModel) -> Unit = {}
 ) {
     val fontFamily = FontFamily(Font(R.font.plus_jakarta_sans))
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("Semua") }
+    var selectedFilter by remember(initialFilter) { mutableStateOf(initialFilter) }
 
-    val daftarLamaran = remember {
-        listOf(
+    val daftarLamaran = remember(lamaranList, lowonganList) {
+        lamaranList.map { lamaran ->
+            val lowongan = lowonganList.find { it.id == lamaran.lowonganId }
+            val posisi = lowongan?.posisi ?: "Lowongan Magang"
+            val perusahaan = lowongan?.namaPerusahaan ?: "Mitra Industri"
+            val rawStatus = lamaran.status.lowercase()
+            val (statusLabel, statusBg, statusText) = when (rawStatus) {
+                "diterima" -> Triple("Diterima", MagangPillGreenBg, MagangPillGreenText)
+                "ditolak" -> Triple("Ditolak", MagangPillRedBg, MagangPillRedText)
+                "perlu_perbaikan" -> Triple("Perlu Perbaikan", MagangAmberPillBg, MagangAmberPillText)
+                "seleksi" -> Triple("Seleksi", MagangAmberPillBg, MagangAmberPillText)
+                "pemeriksaan" -> Triple("Pemeriksaan", MagangAmberPillBg, MagangAmberPillText)
+                else -> Triple("Direview", MagangAmberPillBg, MagangAmberPillText)
+            }
+            val tanggalStr = if (lamaran.createdAt.length >= 10) {
+                "Diajukan ${lamaran.createdAt.substring(0, 10)}"
+            } else {
+                "Diajukan baru saja"
+            }
             RiwayatLamaranModel(
-                id = "LNT-MG-01",
-                posisi = "UI/UX Designer Intern",
-                perusahaan = "PT Maju Mundur",
-                tanggal = "Diajukan 24 Okt 2026",
-                status = "Direview",
-                statusBg = MagangAmberPillBg,
-                statusText = MagangAmberPillText,
-                logoRes = R.drawable.ic_avatar_2
-            ),
-            RiwayatLamaranModel(
-                id = "LNT-MG-02",
-                posisi = "Product Design Intern",
-                perusahaan = "PT Bismillah Berkah",
-                tanggal = "Diajukan 18 Okt 2026",
-                status = "Diterima",
-                statusBg = MagangPillGreenBg,
-                statusText = MagangPillGreenText,
-                logoRes = R.drawable.ic_avatar_2
-            ),
-            RiwayatLamaranModel(
-                id = "LNT-MG-03",
-                posisi = "Frontend Developer Intern",
-                perusahaan = "PT Solusi Digital",
-                tanggal = "Diajukan 10 Okt 2026",
-                status = "Ditolak",
-                statusBg = MagangPillRedBg,
-                statusText = MagangPillRedText,
+                id = lamaran.nomorLamaran,
+                lamaranUuid = lamaran.id,
+                posisi = posisi,
+                perusahaan = perusahaan,
+                tanggal = tanggalStr,
+                status = statusLabel,
+                rawStatus = rawStatus,
+                statusBg = statusBg,
+                statusText = statusText,
                 logoRes = R.drawable.ic_avatar_2
             )
-        )
+        }
     }
 
+    val inReviewStatuses = setOf("terkirim", "pemeriksaan", "perlu_perbaikan", "seleksi")
     val filterOptions = listOf(
         "Semua" to daftarLamaran.size,
-        "Diterima" to daftarLamaran.count { it.status == "Diterima" },
-        "Ditolak" to daftarLamaran.count { it.status == "Ditolak" },
-        "Direview" to daftarLamaran.count { it.status == "Direview" }
+        "Direview" to daftarLamaran.count { it.rawStatus in inReviewStatuses },
+        "Perlu Perbaikan" to daftarLamaran.count { it.rawStatus == "perlu_perbaikan" },
+        "Diterima" to daftarLamaran.count { it.rawStatus == "diterima" },
+        "Ditolak" to daftarLamaran.count { it.rawStatus == "ditolak" }
     )
 
     val filteredList = remember(daftarLamaran, selectedFilter, searchQuery) {
         daftarLamaran.filter { item ->
             val matchesFilter = when (selectedFilter) {
                 "Semua" -> true
+                "Direview" -> item.rawStatus in inReviewStatuses
+                "Perlu Perbaikan" -> item.rawStatus == "perlu_perbaikan"
                 else -> item.status.equals(selectedFilter, ignoreCase = true)
             }
             val matchesSearch = item.posisi.contains(searchQuery, ignoreCase = true) ||
-                    item.perusahaan.contains(searchQuery, ignoreCase = true)
+                item.perusahaan.contains(searchQuery, ignoreCase = true) ||
+                item.id.contains(searchQuery, ignoreCase = true)
             matchesFilter && matchesSearch
         }
     }
@@ -251,6 +262,44 @@ fun LamaranSayaScreen(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) Color.White else NavyDark
                                 )
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (filteredList.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Belum Ada Lamaran",
+                                style = TextStyle(
+                                    fontFamily = fontFamily,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = NavyDark
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Anda belum mengajukan lamaran magang atau tidak ada data yang cocok dengan pencarian/filter.",
+                                style = TextStyle(
+                                    fontFamily = fontFamily,
+                                    fontSize = 13.sp,
+                                    color = SlateGray
+                                ),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }

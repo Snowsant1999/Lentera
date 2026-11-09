@@ -57,6 +57,7 @@ enum class LaporanStatus(
     val textColor: Color,
     val backgroundColor: Color
 ) {
+    BARU("Baru", SiagaAmberTextDark, Color(0xFFFEF3C7)),
     DIPERIKSA("Diperiksa", SiagaBadgeDiperiksaText, SiagaBadgeDiperiksaBg),
     SELESAI("Selesai", SiagaBadgeSelesaiText, SiagaBadgeSelesaiBg),
     DIPROSES("Diproses", InfoBlue, InfoBlueLight),
@@ -76,22 +77,6 @@ enum class SiagaNavTab(val label: String) {
     MAGANG_HUB("Magang Hub"),
     PROFIL("Profil")
 }
-
-// Sample data default sesuai UI mockup
-val sampleLaporanList = listOf(
-    LaporanItem(
-        id = "LTR-2026-00123",
-        title = "Pelecehan Verbal",
-        date = "12 Okt 2026",
-        status = LaporanStatus.DIPERIKSA
-    ),
-    LaporanItem(
-        id = "LTR-2026-00108",
-        title = "Perundungan di kelas",
-        date = "08 Okt 2026",
-        status = LaporanStatus.SELESAI
-    )
-)
 
 // ============================================================================
 // Main Screen: MahasiswaSiagaScreen
@@ -114,13 +99,13 @@ val sampleLaporanList = listOf(
  */
 @Composable
 fun MahasiswaSiagaScreen(
-    userName: String = "Budi Santoso",
+    userName: String = "Mahasiswa",
     userRole: String = "Mahasiswa",
-    laporanList: List<LaporanItem> = sampleLaporanList,
+    laporanList: List<LaporanItem> = emptyList(),
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onEmergencyHelpClick: () -> Unit = {},
-    onCreateReportClick: () -> Unit = {},
+    onCreateReportClick: (KategoriLaporanType) -> Unit = {},
     onViewAllReportsClick: () -> Unit = {},
     onReportClick: (LaporanItem) -> Unit = {},
     onNavTabClick: (SiagaNavTab) -> Unit = {}
@@ -278,7 +263,7 @@ fun MahasiswaSiagaScreen(
         onDismiss = { showPilihKategoriSheet = false },
         onLanjutKeDetail = { kategori ->
             showPilihKategoriSheet = false
-            onCreateReportClick()
+            onCreateReportClick(kategori)
         }
     )
 }
@@ -287,7 +272,7 @@ fun MahasiswaSiagaScreen(
 @Composable
 fun SiagaScreen(
     onEmergencyHelpClick: () -> Unit = {},
-    onCreateReportClick: () -> Unit = {}
+    onCreateReportClick: (KategoriLaporanType) -> Unit = {}
 ) {
     MahasiswaSiagaScreen(
         onEmergencyHelpClick = onEmergencyHelpClick,

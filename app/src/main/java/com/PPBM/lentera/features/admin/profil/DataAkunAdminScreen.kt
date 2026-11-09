@@ -33,24 +33,28 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun DataAkunAdminScreen(
-    nama: String = "Rina Wulandari",
+    nama: String = "",
     peran: String = "Admin Kampus",
     email: String? = null,
     nomorTelepon: String? = null,
     unitKerja: String = "LENTERA",
     aksesPengelolaan: String = "Mahasiswa, laporan, dan magang",
+    isSaving: Boolean = false,
     onBackClick: () -> Unit = {},
     onUbahClick: () -> Unit = {},
-    onDataUpdated: (nama: String, email: String, telepon: String) -> Unit = { _, _, _ -> },
+    onDataUpdated: (nama: String, email: String, telepon: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, _, onSuccess, _ -> onSuccess() },
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     val belumDitambahkan = "Belum ditambahkan"
-    var currentNama by remember(nama) { mutableStateOf(nama) }
-    var currentEmail by remember(email) { mutableStateOf(email ?: "rina.wulandari@lentera.ac.id") }
-    var currentTelepon by remember(nomorTelepon) { mutableStateOf(nomorTelepon ?: "081234567890") }
+    var currentNama by remember(nama) { mutableStateOf(nama.ifBlank { belumDitambahkan }) }
+    var currentEmail by remember(email) { mutableStateOf(email.orEmpty().ifBlank { belumDitambahkan }) }
+    var currentTelepon by remember(nomorTelepon) { mutableStateOf(nomorTelepon.orEmpty().ifBlank { belumDitambahkan }) }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackIsSuccess by remember { mutableStateOf(true) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = LenteraColors.Background,
@@ -98,26 +102,42 @@ fun DataAkunAdminScreen(
 
     if (showEditDialog) {
         UbahDataAkunDialog(
-            currentNama = currentNama,
+            currentNama = if (currentNama == belumDitambahkan) "" else currentNama,
             currentEmail = currentEmail,
             currentTelepon = currentTelepon,
             onDismiss = { showEditDialog = false },
             onSave = { newNama, newEmail, newTelepon ->
-                currentNama = newNama
-                currentEmail = newEmail
-                currentTelepon = newTelepon
-                onDataUpdated(newNama, newEmail, newTelepon)
-                showEditDialog = false
-                showFeedbackDialog = true
+                onDataUpdated(
+                    newNama,
+                    newEmail,
+                    newTelepon,
+                    {
+                        currentNama = newNama
+                        currentEmail = newEmail.ifBlank { belumDitambahkan }
+                        currentTelepon = newTelepon.ifBlank { belumDitambahkan }
+                        showEditDialog = false
+                        feedbackIsSuccess = true
+                        feedbackTitle = "Data Berhasil Disimpan"
+                        feedbackMessage = "Informasi pribadi akun admin berhasil diperbarui."
+                        showFeedbackDialog = true
+                    },
+                    { err ->
+                        showEditDialog = false
+                        feedbackIsSuccess = false
+                        feedbackTitle = "Gagal Menyimpan Data"
+                        feedbackMessage = err
+                        showFeedbackDialog = true
+                    }
+                )
             }
         )
     }
 
     LenteraFeedbackDialog(
         show = showFeedbackDialog,
-        isSuccess = true,
-        title = "Data Berhasil Disimpan",
-        message = "Informasi pribadi akun admin berhasil diperbarui.",
+        isSuccess = feedbackIsSuccess,
+        title = feedbackTitle,
+        message = feedbackMessage,
         onDismiss = { showFeedbackDialog = false }
     )
 }
@@ -395,6 +415,10 @@ private fun DataBaris(label: String, nilai: String) {
 @Composable
 fun DataAkunAdminScreenPreview() {
     LenteraTheme {
-        DataAkunAdminScreen()
+        DataAkunAdminScreen(
+            nama = "Admin Lentera",
+            email = "admin@lentera.ac.id",
+            nomorTelepon = "081234567890"
+        )
     }
 }

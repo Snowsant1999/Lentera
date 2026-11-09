@@ -34,29 +34,14 @@ data class PerangkatItem(
 @Composable
 fun PerangkatTerhubungScreen(
     currentDevice: PerangkatItem = PerangkatItem(
-        id = "1",
-        nama = "MacBook Air M1",
+        id = "current",
+        nama = "${android.os.Build.MANUFACTURER.orEmpty().replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL.orEmpty()} (Lentera App)".trim(),
         lokasi = "Samarinda, Kalimantan Timur",
-        isPhone = false,
-        statusText = "Sedang Aktif",
+        isPhone = true,
+        statusText = "Sedang Aktif (Perangkat Ini)",
         isCurrentDevice = true
     ),
-    otherDevices: List<PerangkatItem> = listOf(
-        PerangkatItem(
-            id = "2",
-            nama = "Android – Lentera App",
-            lokasi = "Samarinda, Kalimantan Timur",
-            isPhone = true,
-            statusText = "Terakhir Aktif : Hari ini, 09.41"
-        ),
-        PerangkatItem(
-            id = "3",
-            nama = "Windows – Lentera App",
-            lokasi = "Samarinda, Kalimantan Timur",
-            isPhone = false,
-            statusText = "Terakhir Aktif : Hari ini, 09.41"
-        )
-    ),
+    otherDevices: List<PerangkatItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onCabutAksesClick: (PerangkatItem) -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
@@ -68,7 +53,7 @@ fun PerangkatTerhubungScreen(
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
-            LenteraBottomNavBar(
+            AdminBottomBar(
                 selected = LenteraNavItem.PROFIL,
                 onItemClick = onNavClick
             )

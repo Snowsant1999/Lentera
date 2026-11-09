@@ -36,40 +36,29 @@ import com.PPBM.lentera.core.designsystem.theme.*
 // ============================================================================
 
 data class DetailMagangData(
-    val id: String = "1",
-    val posisi: String = "UI/UX DESIGN",
-    val perusahaan: String = "PT. Maju Mundur",
-    val lokasi: String = "Bontang",
-    val tipeWaktu: String = "Penuh Waktu",
-    val durasi: String = "3 Bulan",
+    val id: String = "",
+    val posisi: String = "",
+    val perusahaan: String = "",
+    val lokasi: String = "",
+    val tipeWaktu: String = "",
+    val durasi: String = "",
     val status: String = "Available",
     val persentaseCocok: Int = 92,
-    val batasHari: Int = 5,
+    val batasHari: Int = 0,
     val logoDrawable: Int = R.drawable.ic_avatar_2,
     val isBookmarked: Boolean = false,
-    val deskripsiPekerjaan: String = "Bertanggung jawab dalam merancang antarmuka pengguna (UI) dan alur pengalaman pengguna (UX) untuk produk digital, berkolaborasi dengan tim pengembang dan product manager.",
-    val persyaratan: List<String> = listOf(
-        "Mahasiswa aktif semester 5 ke atas",
-        "IPK minimal 3.00",
-        "Memiliki portofolio",
-        "CV dan transkrip nilai"
-    ),
-    val periodePendaftaran: String = "10–31 Oktober 2026",
-    val mulaiMagang: String = "November 2026"
+    val deskripsiPekerjaan: String = "",
+    val persyaratan: List<String> = emptyList(),
+    val periodePendaftaran: String = "",
+    val mulaiMagang: String = ""
 )
 
-// ============================================================================
-// Main Screen: DetailMagangScreen
-// ============================================================================
-
-/**
- * Halaman Detail Magang (Scrollable)
- * Sesuai desain UI Detail Magang.png
- */
 @Composable
 fun DetailMagangScreen(
     data: DetailMagangData = DetailMagangData(),
     isBookmarked: Boolean = false,
+    hasApplied: Boolean = false,
+    canApply: Boolean = true,
     onBackClick: () -> Unit = {},
     onBookmarkToggle: () -> Unit = {},
     onLamarSekarangClick: () -> Unit = {}
@@ -80,7 +69,7 @@ fun DetailMagangScreen(
     Scaffold(
         containerColor = ScreenBackground,
         bottomBar = {
-            // Tombol "Lamar Sekarang" di bagian bawah layar
+            val isButtonEnabled = canApply && !hasApplied
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -94,12 +83,16 @@ fun DetailMagangScreen(
                         .height(52.dp)
                         .shadow(2.dp, RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
-                        .background(MagangAmberPrimary)
-                        .clickable(onClick = onLamarSekarangClick),
+                        .background(if (isButtonEnabled) MagangAmberPrimary else Color(0xFFCBD5E1))
+                        .clickable(enabled = isButtonEnabled, onClick = onLamarSekarangClick),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Lamar Sekarang",
+                        text = when {
+                            hasApplied -> "Lamaran Sudah Diajukan"
+                            !canApply -> "Pendaftaran Ditutup"
+                            else -> "Lamar Sekarang"
+                        },
                         style = TextStyle(
                             fontFamily = plusJakarta,
                             fontSize = 15.sp,
@@ -408,7 +401,7 @@ private fun HeaderLowonganCard(
                     )
 
                     Text(
-                        text = "Tutup ${data.batasHari} hari lagi",
+                        text = if (data.batasHari <= 0) "Berakhir hari ini" else "Tutup ${data.batasHari} hari lagi",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.5.sp,

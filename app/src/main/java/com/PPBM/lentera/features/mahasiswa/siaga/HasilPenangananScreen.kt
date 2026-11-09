@@ -49,22 +49,21 @@ import com.PPBM.lentera.core.designsystem.theme.*
 data class DokumentasiTindakLanjutItem(
     val tanggal: String,
     val judul: String,
-    val placeholderColor: Color
+    val placeholderColor: Color = Color(0xFF334257),
+    val filePath: String = "",
+    val fileType: String = "",
+    val fileSizeFormatted: String = ""
 )
 
 data class HasilPenangananData(
-    val nomorLaporan: String = "LTR-2026-00123",
-    val judul: String = "Pelecehan Verbal",
-    val status: String = "Selesai",
-    val tanggalLaporan: String = "14 Oktober 2026",
-    val kategori: String = "Pelecehan Verbal",
-    val ringkasanPenanganan: String = "Tim Advokasi telah menindaklanjuti laporan dan melakukan koordinasi dengan pihak terkait. Terima kasih telah membantu menciptakan lingkungan kampus yang aman.",
-    val tanggalPenyelesaian: String = "15 Oktober 2026, 10:30 WITA",
-    val listDokumentasi: List<DokumentasiTindakLanjutItem> = listOf(
-        DokumentasiTindakLanjutItem("13 Okt 2026", "Rapat Koordinasi", Color(0xFF334257)),
-        DokumentasiTindakLanjutItem("13 Okt 2026", "Surat Teguran", Color(0xFF476072)),
-        DokumentasiTindakLanjutItem("16 Okt 2026", "Pendampingan", Color(0xFF548CA8))
-    )
+    val nomorLaporan: String = "",
+    val judul: String = "",
+    val status: String = "",
+    val tanggalLaporan: String = "",
+    val kategori: String = "",
+    val ringkasanPenanganan: String = "",
+    val tanggalPenyelesaian: String = "",
+    val listDokumentasi: List<DokumentasiTindakLanjutItem> = emptyList()
 )
 
 // ============================================================================
@@ -85,6 +84,7 @@ fun HasilPenangananScreen(
     data: HasilPenangananData = HasilPenangananData(),
     onBackClick: () -> Unit = {},
     onTinjauDokumentasiClick: () -> Unit = {},
+    onItemClick: (DokumentasiTindakLanjutItem) -> Unit = {},
     onKembaliKeRiwayatClick: () -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
@@ -155,6 +155,7 @@ fun HasilPenangananScreen(
                 DetailHasilPenangananCard(
                     data = data,
                     onTinjauClick = onTinjauDokumentasiClick,
+                    onItemClick = onItemClick,
                     fontFamily = plusJakarta
                 )
 
@@ -384,6 +385,7 @@ private fun HeaderHasilLaporanCard(
 private fun DetailHasilPenangananCard(
     data: HasilPenangananData,
     onTinjauClick: () -> Unit,
+    onItemClick: (DokumentasiTindakLanjutItem) -> Unit,
     fontFamily: FontFamily
 ) {
     Card(
@@ -481,96 +483,103 @@ private fun DetailHasilPenangananCard(
                     )
                 )
 
-                Text(
-                    text = "Tinjau",
-                    style = TextStyle(
-                        fontFamily = fontFamily,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = SlateGray
-                    ),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable(onClick = onTinjauClick)
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                )
+                if (data.listDokumentasi.isNotEmpty()) {
+                    Text(
+                        text = "Tinjau",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = SiagaTealPrimary
+                        ),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .clickable(onClick = onTinjauClick)
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Thumbnail List
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                data.listDokumentasi.forEach { item ->
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable(onClick = onTinjauClick)
-                    ) {
-                        Box(
+            if (data.listDokumentasi.isEmpty()) {
+                Text(
+                    text = "Belum ada berkas dokumentasi tindak lanjut yang dibagikan.",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        color = SlateGrayLight
+                    )
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    data.listDokumentasi.forEach { item ->
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(76.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(item.placeholderColor),
-                            contentAlignment = Alignment.Center
+                                .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+                                .clickable {
+                                    onItemClick(item)
+                                    if (item.filePath.isBlank()) onTinjauClick()
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ImagePlaceholderIcon(
-                                modifier = Modifier.size(24.dp),
-                                tint = Color.White.copy(alpha = 0.8f)
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(item.placeholderColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    FileDocIcon(
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.White
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.judul,
+                                        style = TextStyle(
+                                            fontFamily = fontFamily,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = NavyDark
+                                        ),
+                                        maxLines = 1
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    val meta = listOfNotNull(
+                                        item.tanggal.takeIf { it.isNotBlank() },
+                                        item.fileType.takeIf { it.isNotBlank() },
+                                        item.fileSizeFormatted.takeIf { it.isNotBlank() }
+                                    ).joinToString(" · ")
+                                    Text(
+                                        text = meta,
+                                        style = TextStyle(
+                                            fontFamily = fontFamily,
+                                            fontSize = 11.5.sp,
+                                            color = SlateGrayLight
+                                        ),
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+
+                            ChevronRightIcon(
+                                modifier = Modifier.size(16.dp),
+                                tint = SlateGrayLight
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = item.tanggal,
-                            style = TextStyle(
-                                fontFamily = fontFamily,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDark
-                            )
-                        )
-                        Text(
-                            text = item.judul,
-                            style = TextStyle(
-                                fontFamily = fontFamily,
-                                fontSize = 10.5.sp,
-                                color = SlateGrayLight
-                            ),
-                            maxLines = 1
-                        )
-                    }
-                }
-
-                // Kotak "+2"
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = onTinjauClick)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(76.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(CardWhite)
-                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "+2",
-                            style = TextStyle(
-                                fontFamily = fontFamily,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = NavyDark
-                            )
-                        )
                     }
                 }
             }
@@ -631,6 +640,19 @@ private fun DetailHasilPenangananCard(
 @Composable
 fun HasilPenangananScreenPreview() {
     LenteraTheme {
-        HasilPenangananScreen()
+        HasilPenangananScreen(
+            data = HasilPenangananData(
+                nomorLaporan = "LTR-2026-00123",
+                judul = "Pelecehan Verbal",
+                status = "Selesai",
+                tanggalLaporan = "14 Oktober 2026",
+                kategori = "Pelecehan Verbal",
+                ringkasanPenanganan = "Tim Advokasi telah menindaklanjuti laporan dan melakukan koordinasi dengan pihak terkait.",
+                tanggalPenyelesaian = "15 Oktober 2026, 10:30 WITA",
+                listDokumentasi = listOf(
+                    DokumentasiTindakLanjutItem("13 Okt 2026", "Berita Acara Penanganan.pdf", Color(0xFF334257), fileType = "PDF", fileSizeFormatted = "420 KB")
+                )
+            )
+        )
     }
 }

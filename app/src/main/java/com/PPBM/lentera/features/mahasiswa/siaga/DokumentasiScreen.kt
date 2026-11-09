@@ -38,16 +38,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.mahasiswa.model.DokumenHasilItem
 import com.PPBM.lentera.core.designsystem.theme.*
+import java.util.Locale
 
 // ============================================================================
 // Model & Data
 // ============================================================================
 
 data class DokumentasiData(
-    val judul: String = "Rapat Koordinasi",
-    val tanggal: String = "14 Oktober 2026",
-    val totalFoto: Int = 4,
+    val judul: String = "",
+    val tanggal: String = "",
+    val totalFoto: Int = 0,
     val deskripsiPeringatan: String = "Dokumentasi ini hanya dapat dilihat oleh mahasiswa pelapor dan tim penanganan yang berwenang."
 )
 
@@ -59,21 +61,21 @@ data class DokumentasiData(
  * Halaman Dokumentasi Penanganan Laporan
  * Sesuai desain UI Dokumentasi.png
  *
- * Catatan: Area gambar utama dan thumbnail menggunakan placeholder visual
- * yang siap Anda ganti dengan Image / AsyncImage (Coil/Glide) secara manual.
- *
- * @param data Data dokumentasi
+ * @param data Ringkasan metadata dokumentasi
+ * @param dokumenList Daftar dokumen hasil tindak lanjut yang boleh dibagikan ke pelapor
  * @param onBackClick Aksi kembali ke halaman sebelumnya
- * @param onThumbnailClick Aksi saat thumbnail foto ditekan
+ * @param onThumbnailClick Aksi saat indeks item ditekan (opsional/legacy)
+ * @param onOpenDokumenClick Aksi membuka berkas dokumentasi (via signed URL)
  */
 @Composable
 fun DokumentasiScreen(
     data: DokumentasiData = DokumentasiData(),
+    dokumenList: List<DokumenHasilItem> = emptyList(),
     onBackClick: () -> Unit = {},
-    onThumbnailClick: (Int) -> Unit = {}
+    onThumbnailClick: (Int) -> Unit = {},
+    onOpenDokumenClick: (DokumenHasilItem) -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
-    var currentPhotoIndex by remember { mutableIntStateOf(0) }
 
     Scaffold(
         containerColor = ScreenBackground
@@ -99,80 +101,40 @@ fun DokumentasiScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                // 2. Foto Utama / Gambar Placeholder dengan Navigasi Carousel
-                MainImageCarouselPlaceholder(
-                    currentIndex = currentPhotoIndex,
-                    totalPhotos = data.totalFoto,
-                    onPrevClick = {
-                        if (currentPhotoIndex > 0) currentPhotoIndex--
-                    },
-                    onNextClick = {
-                        if (currentPhotoIndex < data.totalFoto - 1) currentPhotoIndex++
-                    },
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Indikator Titik Pager
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(3) { index ->
-                        val isActive = index == currentPhotoIndex.coerceAtMost(2)
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 3.dp)
-                                .size(if (isActive) 7.dp else 6.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isActive) NavyDark else SlateGrayLight
-                                )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 3. Judul & Tanggal Kegiatan
-                Text(
-                    text = data.judul,
-                    style = TextStyle(
-                        fontFamily = plusJakarta,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = NavyDark
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CalendarIcon(
-                        modifier = Modifier.size(20.dp),
-                        tint = SiagaTealPrimary
-                    )
-
-                    Spacer(modifier = Modifier.width(10.dp))
-
+                if (data.judul.isNotBlank()) {
                     Text(
-                        text = data.tanggal,
+                        text = data.judul,
                         style = TextStyle(
                             fontFamily = plusJakarta,
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = NavyDark
                         )
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                if (data.tanggal.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CalendarIcon(
+                            modifier = Modifier.size(18.dp),
+                            tint = SiagaTealPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = data.tanggal,
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NavyDark
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                // 4. Banner Privasi Dokumentasi
+                // Banner Privasi Dokumentasi
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
@@ -205,16 +167,118 @@ fun DokumentasiScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // 5. Galeri Thumbnail di Bagian Bawah
-                ThumbnailGalleryRow(
-                    onThumbnailClick = { idx ->
-                        currentPhotoIndex = idx
-                        onThumbnailClick(idx)
-                    },
-                    fontFamily = plusJakarta
-                )
+                if (dokumenList.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(28.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            FileDocIcon(
+                                modifier = Modifier.size(40.dp),
+                                tint = SlateGrayLight
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Belum ada dokumentasi tindak lanjut yang dibagikan untuk laporan ini.",
+                                style = TextStyle(
+                                    fontFamily = plusJakarta,
+                                    fontSize = 13.5.sp,
+                                    color = SlateGray,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 19.sp
+                                )
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Berkas Dokumentasi (${dokumenList.size})",
+                        style = TextStyle(
+                            fontFamily = plusJakarta,
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyDark
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    dokumenList.forEachIndexed { index, doc ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        onThumbnailClick(index)
+                                        onOpenDokumenClick(doc)
+                                    },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardWhite),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(NavyDark),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        FileDocIcon(
+                                            modifier = Modifier.size(20.dp),
+                                            tint = Color.White
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = doc.namaFile,
+                                            style = TextStyle(
+                                                fontFamily = plusJakarta,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = NavyDark
+                                            ),
+                                            maxLines = 2
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = "${doc.tipeFile} · ${formatDokumenSize(doc.ukuranBytes)} · Ketuk untuk membuka",
+                                            style = TextStyle(
+                                                fontFamily = plusJakarta,
+                                                fontSize = 12.sp,
+                                                color = SlateGrayLight
+                                            )
+                                        )
+                                    }
+                                }
+                                ChevronRightIcon(
+                                    modifier = Modifier.size(18.dp),
+                                    tint = SiagaTealPrimary
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(28.dp))
             }
@@ -278,219 +342,38 @@ private fun TopBarDokumentasi(
 }
 
 // ============================================================================
-// Placeholder Gambar Utama dengan Navigasi Carousel
-// ============================================================================
-
-@Composable
-private fun MainImageCarouselPlaceholder(
-    currentIndex: Int,
-    totalPhotos: Int,
-    onPrevClick: () -> Unit,
-    onNextClick: () -> Unit,
-    fontFamily: FontFamily
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(340.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF2C394B))
-    ) {
-        // Konten placeholder: siap diganti dengan AsyncImage atau Image
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            ImagePlaceholderIcon(
-                modifier = Modifier.size(54.dp),
-                tint = Color.White.copy(alpha = 0.85f)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Foto Dokumentasi ${currentIndex + 1}",
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Ruang Rapat Koordinasi Tim Penanganan",
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 12.5.sp,
-                    color = Color.White.copy(alpha = 0.70f),
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
-
-        // Badge Nomor Foto (1/4) di pojok kanan atas
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Color.Black.copy(alpha = 0.45f))
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = "${currentIndex + 1}/$totalPhotos",
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            )
-        }
-
-        // Tombol Panah Kiri (<)
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 12.dp)
-                .size(38.dp)
-                .shadow(4.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color.White)
-                .clickable(onClick = onPrevClick),
-            contentAlignment = Alignment.Center
-        ) {
-            ChevronLeftIcon(
-                modifier = Modifier.size(18.dp),
-                tint = SlateGray
-            )
-        }
-
-        // Tombol Panah Kanan (>)
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 12.dp)
-                .size(38.dp)
-                .shadow(4.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color.White)
-                .clickable(onClick = onNextClick),
-            contentAlignment = Alignment.Center
-        ) {
-            ChevronRightIcon(
-                modifier = Modifier.size(18.dp),
-                tint = SlateGray
-            )
-        }
-    }
-}
-
-// ============================================================================
-// Galeri Thumbnail Bawah
-// ============================================================================
-
-@Composable
-private fun ThumbnailGalleryRow(
-    onThumbnailClick: (Int) -> Unit,
-    fontFamily: FontFamily
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Thumbnail 1
-        ThumbnailItemBox(
-            modifier = Modifier.weight(1f),
-            label = "Foto 1",
-            bgColor = Color(0xFF334257),
-            onClick = { onThumbnailClick(0) }
-        )
-
-        // Thumbnail 2
-        ThumbnailItemBox(
-            modifier = Modifier.weight(1f),
-            label = "Foto 2",
-            bgColor = Color(0xFF476072),
-            onClick = { onThumbnailClick(1) }
-        )
-
-        // Thumbnail 3
-        ThumbnailItemBox(
-            modifier = Modifier.weight(1f),
-            label = "Foto 3",
-            bgColor = Color(0xFF548CA8),
-            onClick = { onThumbnailClick(2) }
-        )
-
-        // Thumbnail 4: "+2" Card
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(84.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(CardWhite)
-                .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
-                .clickable { onThumbnailClick(3) },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "+2",
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = NavyDark
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThumbnailItemBox(
-    modifier: Modifier = Modifier,
-    label: String,
-    bgColor: Color,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .height(84.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(bgColor)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        ImagePlaceholderIcon(
-            modifier = Modifier.size(26.dp),
-            tint = Color.White.copy(alpha = 0.8f)
-        )
-    }
-}
-
-// ============================================================================
-// Ikon & Aset Visual (Compose Canvas Murni)
-// ============================================================================
-
-
-
-
-// ============================================================================
 // Preview
 // ============================================================================
+
+private fun formatDokumenSize(bytes: Long): String {
+    return when {
+        bytes >= 1024L * 1024L -> String.format(Locale.US, "%.1f MB", bytes.toDouble() / (1024.0 * 1024.0))
+        bytes >= 1024L -> "${bytes / 1024L} KB"
+        else -> "$bytes B"
+    }
+}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun DokumentasiScreenPreview() {
     LenteraTheme {
-        DokumentasiScreen()
+        DokumentasiScreen(
+            data = DokumentasiData(
+                judul = "Berita Acara & Dokumentasi Penanganan",
+                tanggal = "14 Oktober 2026"
+            ),
+            dokumenList = listOf(
+                DokumenHasilItem(
+                    id = "1",
+                    laporanId = "1",
+                    namaFile = "berita_acara_penanganan.pdf",
+                    tipeFile = "PDF",
+                    ukuranBytes = 420_000,
+                    filePath = "1/berita_acara_penanganan.pdf",
+                    bolehDibagikan = true,
+                    createdAt = "2026-10-14T10:00:00Z"
+                )
+            )
+        )
     }
 }

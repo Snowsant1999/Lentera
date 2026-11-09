@@ -1,12 +1,16 @@
 package com.PPBM.lentera.features.mahasiswa.magang
 
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -15,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -24,22 +30,83 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.theme.*
+import java.util.Locale
 
-/**
- * Halaman Unggah Perbaikan Dokumen
- * Sesuai referensi Perbaikan Dokumen.png
- */
+private const val MAX_PERBAIKAN_DOC_BYTES = 20L * 1024L * 1024L
+
 @Composable
 fun PerbaikanDokumenScreen(
-    dokumenNama: String = "Transkrip Nilai Terakhir",
-    perusahaan: String = "PT Maju Mundur",
+    perusahaan: String = "",
+    catatanRevisi: String = "",
+    initialJenis: String = "Transkrip",
+    isSubmitting: Boolean = false,
     onBackClick: () -> Unit = {},
-    onSubmitSuccess: () -> Unit = {}
+    onSubmitPerbaikan: (
+        jenis: String,
+        fileName: String,
+        fileBytes: ByteArray,
+        onError: (String) -> Unit,
+        onSuccess: () -> Unit
+    ) -> Unit = { _, _, _, _, _ -> },
+    onNavigateAfterSuccess: (jenis: String, fileName: String) -> Unit = { _, _ -> }
 ) {
+    val context = LocalContext.current
     val fontFamily = FontFamily(Font(R.font.plus_jakarta_sans))
-    var isFileSelected by remember { mutableStateOf(true) }
-    var selectedFileName by remember { mutableStateOf("transkrip_nilai_revisi_clear.pdf") }
+    val jenisOptions = listOf("CV", "Surat Pengantar", "Transkrip", "KTM", "Portofolio", "Sertifikat")
+
+    var selectedJenis by remember(catatanRevisi, initialJenis) {
+        mutableStateOf(
+            normalizeDokumenLamaranJenis(
+                catatanRevisi.ifBlank { initialJenis }
+            )
+        )
+    }
+    var selectedFileName by remember { mutableStateOf<String?>(null) }
+    var selectedFileBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var selectedFileSizeLabel by remember { mutableStateOf<String?>(null) }
+
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        var name = "dokumen_perbaikan.pdf"
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (cursor.moveToFirst() && idx != -1) {
+                name = cursor.getString(idx) ?: name
+            }
+        }
+        val bytes = try {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: ByteArray(0)
+        } catch (_: Exception) {
+            ByteArray(0)
+        }
+        when {
+            bytes.isEmpty() -> {
+                errorMessage = "Berkas kosong atau gagal dibaca dari perangkat."
+                showErrorDialog = true
+            }
+            bytes.size > MAX_PERBAIKAN_DOC_BYTES -> {
+                errorMessage = "Ukuran maksimal berkas perbaikan adalah 20 MB."
+                showErrorDialog = true
+            }
+            else -> {
+                selectedFileName = name
+                selectedFileBytes = bytes
+                selectedFileSizeLabel = if (bytes.size >= 1024 * 1024) {
+                    String.format(Locale.US, "%.1f MB", bytes.size / (1024.0 * 1024.0))
+                } else {
+                    "${(bytes.size / 1024).coerceAtLeast(1)} KB"
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -58,7 +125,7 @@ fun PerbaikanDokumenScreen(
                     contentDescription = "Kembali",
                     modifier = Modifier
                         .size(44.dp)
-                        .clickable(onClick = onBackClick)
+                        .clickable { if (!isSubmitting) onBackClick() }
                 )
                 Spacer(modifier = Modifier.width(14.dp))
                 Text(
@@ -85,8 +152,23 @@ fun PerbaikanDokumenScreen(
                         .padding(horizontal = 20.dp, vertical = 14.dp)
                 ) {
                     Button(
-                        onClick = onSubmitSuccess,
-                        enabled = isFileSelected,
+                        enabled = selectedFileBytes != null && !isSubmitting,
+                        onClick = {
+                            val name = selectedFileName ?: return@Button
+                            val bytes = selectedFileBytes ?: return@Button
+                            onSubmitPerbaikan(
+                                selectedJenis,
+                                name,
+                                bytes,
+                                { err ->
+                                    errorMessage = err
+                                    showErrorDialog = true
+                                },
+                                {
+                                    onNavigateAfterSuccess(selectedJenis, name)
+                                }
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -94,7 +176,7 @@ fun PerbaikanDokumenScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MagangAmberPrimary)
                     ) {
                         Text(
-                            text = "Kirim Perbaikan Dokumen",
+                            text = if (isSubmitting) "Mengunggah..." else "Kirim Perbaikan Dokumen",
                             style = TextStyle(
                                 fontFamily = fontFamily,
                                 fontSize = 14.sp,
@@ -114,12 +196,11 @@ fun PerbaikanDokumenScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Card Catatan Revisi dari HRD
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFED7AA)))
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(Color(0xFFFED7AA)))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -131,7 +212,7 @@ fun PerbaikanDokumenScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Catatan Perusahaan ($perusahaan)",
+                            text = if (perusahaan.isNotBlank()) "Catatan Revisi ($perusahaan)" else "Catatan Revisi Admin",
                             style = TextStyle(
                                 fontFamily = fontFamily,
                                 fontSize = 13.5.sp,
@@ -142,7 +223,9 @@ fun PerbaikanDokumenScreen(
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Transkrip nilai semester 1-4 yang diunggah sebelumnya buram dan stempel fakultas terpotong. Harap unggah scan dokumen asli beresolusi tinggi dengan stempel resmi yang jelas.",
+                        text = catatanRevisi.ifBlank {
+                            "Silakan unggah kembali dokumen perbaikan dengan kualitas jelas dan dapat terbaca."
+                        },
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.sp,
@@ -150,16 +233,48 @@ fun PerbaikanDokumenScreen(
                             color = NavyDark
                         )
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Batas pengiriman: 15 November 2026, 23:59 WIB",
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFC2410C)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "Jenis Dokumen yang Diperbaiki",
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                jenisOptions.forEach { jenis ->
+                    val isSelected = selectedJenis == jenis
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (isSelected) NavyDark else Color.White)
+                            .border(1.dp, if (isSelected) NavyDark else CardBorder, RoundedCornerShape(20.dp))
+                            .clickable { selectedJenis = jenis }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = jenis,
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else NavyDark
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -176,7 +291,7 @@ fun PerbaikanDokumenScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pastikan format dokumen berupa PDF dan ukuran tidak melebihi 5MB.",
+                text = "Format PDF, JPG, atau PNG dengan ukuran maksimal 20 MB.",
                 style = TextStyle(
                     fontFamily = fontFamily,
                     fontSize = 12.sp,
@@ -186,7 +301,6 @@ fun PerbaikanDokumenScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Area Upload Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,7 +308,7 @@ fun PerbaikanDokumenScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .background(InputBackground)
                     .border(1.5.dp, MagangAmberPrimary, RoundedCornerShape(16.dp))
-                    .clickable { isFileSelected = true },
+                    .clickable(enabled = !isSubmitting) { filePickerLauncher.launch("*/*") },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -206,7 +320,7 @@ fun PerbaikanDokumenScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Pilih file dokumen pengganti",
+                        text = if (selectedFileName == null) "Pilih file dokumen pengganti" else "Ganti file dokumen",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 13.5.sp,
@@ -216,7 +330,7 @@ fun PerbaikanDokumenScreen(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Format PDF, maksimal 5MB",
+                        text = "Ketuk untuk membuka file manager",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 11.5.sp,
@@ -226,15 +340,14 @@ fun PerbaikanDokumenScreen(
                 }
             }
 
-            if (isFileSelected) {
+            if (selectedFileName != null && selectedFileBytes != null) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Preview Card File Terpilih
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+                    border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
                 ) {
                     Row(
                         modifier = Modifier
@@ -259,7 +372,7 @@ fun PerbaikanDokumenScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = selectedFileName,
+                                text = selectedFileName!!,
                                 style = TextStyle(
                                     fontFamily = fontFamily,
                                     fontSize = 13.sp,
@@ -270,7 +383,7 @@ fun PerbaikanDokumenScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "1.9 MB · Siap diunggah",
+                                text = "${selectedFileSizeLabel ?: ""} · Siap diunggah ($selectedJenis)",
                                 style = TextStyle(
                                     fontFamily = fontFamily,
                                     fontSize = 11.5.sp,
@@ -291,6 +404,14 @@ fun PerbaikanDokumenScreen(
             Spacer(modifier = Modifier.height(30.dp))
         }
     }
+
+    LenteraFeedbackDialog(
+        show = showErrorDialog,
+        isSuccess = false,
+        title = "Unggah Perbaikan Gagal",
+        message = errorMessage,
+        onDismiss = { showErrorDialog = false }
+    )
 }
 
 @Preview(showBackground = true)
@@ -300,4 +421,3 @@ fun PerbaikanDokumenScreenPreview() {
         PerbaikanDokumenScreen()
     }
 }
-

@@ -21,7 +21,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.SessionManager
+import com.PPBM.lentera.backend.core.SupabaseConfig
 import com.PPBM.lentera.core.designsystem.theme.*
+import com.PPBM.lentera.core.navigation.Routes
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.delay
 
 /**
@@ -52,11 +56,30 @@ fun SplashScreen(
     // Timer untuk navigasi & pengecekan sesi auto-login
     LaunchedEffect(Unit) {
         delay(2000)
-        val session = com.PPBM.lentera.backend.core.SessionManager.getInstance(context)
+        try {
+            SupabaseConfig.client.auth.awaitInitialization()
+        } catch (_: Exception) {}
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile()
+        val hasSupabaseSession = SupabaseConfig.client.auth.currentSessionOrNull() != null
         val destination = when {
-            session.isLoggedIn() && session.getRole() == "admin" -> com.PPBM.lentera.core.navigation.Routes.ADMIN_DASHBOARD
-            session.isLoggedIn() -> com.PPBM.lentera.core.navigation.Routes.MAHASISWA_DASHBOARD
-            else -> com.PPBM.lentera.core.navigation.Routes.LOGIN
+            !session.isLoggedIn() || profile == null || !hasSupabaseSession -> {
+                if (profile?.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                    session.clearSession()
+                }
+                Routes.LOGIN
+            }
+            profile.statusAkun.equals("nonaktif", ignoreCase = true) -> {
+                try {
+                    SupabaseConfig.client.auth.signOut()
+                } catch (_: Exception) {}
+                session.clearSession()
+                Routes.LOGIN
+            }
+            profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
+            profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
+                Routes.resetPassword(profile.email)
+            else -> Routes.MAHASISWA_DASHBOARD
         }
         onSplashFinished(destination)
     }

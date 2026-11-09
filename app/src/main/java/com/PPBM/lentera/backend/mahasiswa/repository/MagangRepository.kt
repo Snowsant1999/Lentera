@@ -1,11 +1,16 @@
 package com.PPBM.lentera.backend.mahasiswa.repository
 
 import com.PPBM.lentera.backend.core.SupabaseConfig
+import com.PPBM.lentera.backend.core.mapSupabaseError
+import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
 import com.PPBM.lentera.backend.mahasiswa.model.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import kotlin.time.Duration.Companion.minutes
+
+private const val MAX_LAMARAN_DOC_BYTES = 20L * 1024L * 1024L
 
 class MagangRepository {
     private val client = SupabaseConfig.client
@@ -23,7 +28,7 @@ class MagangRepository {
                 .decodeList<LowonganTerbit>()
             Result.success(list)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat daftar lowongan.")))
         }
     }
 
@@ -41,7 +46,7 @@ class MagangRepository {
                 .decodeSingle<LowonganTerbit>()
             Result.success(item)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat detail lowongan.")))
         }
     }
 
@@ -57,7 +62,7 @@ class MagangRepository {
                 .decodeList<LamaranSaya>()
             Result.success(list)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat riwayat lamaran.")))
         }
     }
 
@@ -75,7 +80,7 @@ class MagangRepository {
                 .decodeSingle<LamaranSaya>()
             Result.success(item)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat detail lamaran.")))
         }
     }
 
@@ -94,7 +99,7 @@ class MagangRepository {
                 .decodeList<LamaranRiwayatItem>()
             Result.success(list)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat riwayat status lamaran.")))
         }
     }
 
@@ -112,7 +117,7 @@ class MagangRepository {
                 .decodeList<DokumenLamaranItem>()
             Result.success(list)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat dokumen lamaran.")))
         }
     }
 
@@ -121,19 +126,36 @@ class MagangRepository {
      */
     suspend fun submitLamaran(payload: SubmitLamaranPayload): Result<LamaranSaya> {
         return try {
-            val inserted = client.from("lamaran").insert(payload) {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            val sanitized = payload.copy(
+                mahasiswaId = currentUserId,
+                namaLengkap = payload.namaLengkap.trim(),
+                nim = payload.nim.trim(),
+                tempatTanggalLahir = payload.tempatTanggalLahir.trim(),
+                alamatKtp = payload.alamatKtp.trim(),
+                alamatDomisili = payload.alamatDomisili.trim(),
+                agama = payload.agama.trim(),
+                noTelepon = payload.noTelepon.trim(),
+                email = payload.email.trim(),
+                golonganDarah = payload.golonganDarah.trim(),
+                status = "terkirim"
+            )
+
+            val inserted = client.from("lamaran").insert(sanitized) {
                 select()
             }.decodeSingle<LamaranSaya>()
 
             Result.success(inserted)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengajukan lamaran magang.")))
         }
     }
 
     /**
-     * Mengunggah berkas dokumen lamaran (CV, Portofolio, Transkrip, dll) ke Supabase Storage
-     * bucket `dokumen-magang` dan mencatatnya ke tabel `dokumen_lamaran`.
+     * Mengunggah berkas dokumen lamaran (CV, Surat Pengantar, Transkrip, KTM, Portofolio, Sertifikat)
+     * ke Supabase Storage bucket `dokumen-lamaran` dan mencatatnya ke tabel `dokumen_lamaran`.
      */
     suspend fun uploadDokumenLamaran(
         lamaranId: String,
@@ -142,17 +164,31 @@ class MagangRepository {
         fileBytes: ByteArray
     ): Result<DokumenLamaranItem> {
         return try {
-            val cleanFileName = fileName.replace(" ", "_")
-            val storagePath = "$lamaranId/${jenis}_${System.currentTimeMillis()}_$cleanFileName"
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
 
-            val bucket = storage.from("dokumen-magang")
+            if (fileBytes.isEmpty()) {
+                return Result.failure(Exception("Berkas kosong atau tidak dapat dibaca."))
+            }
+            if (fileBytes.size > MAX_LAMARAN_DOC_BYTES) {
+                return Result.failure(Exception("Ukuran berkas melebihi batas 20 MB."))
+            }
+
+            val normalizedJenis = normalizeDokumenLamaranJenis(jenis)
+            val jenisSlug = normalizedJenis.lowercase().replace(" ", "_")
+            val cleanFileName = fileName.trim()
+                .ifBlank { "dokumen.pdf" }
+                .replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val storagePath = "$currentUserId/$lamaranId/${jenisSlug}_${System.currentTimeMillis()}_$cleanFileName"
+
+            val bucket = storage.from("dokumen-lamaran")
             bucket.upload(storagePath, fileBytes) {
                 upsert = true
             }
 
             val docRecord = DokumenLamaranItem(
                 lamaranId = lamaranId,
-                jenis = jenis,
+                jenis = normalizedJenis,
                 namaFile = cleanFileName,
                 filePath = storagePath,
                 ukuranBytes = fileBytes.size.toLong()
@@ -164,7 +200,22 @@ class MagangRepository {
 
             Result.success(inserted)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah berkas lamaran.")))
+        }
+    }
+
+    /**
+     * Membuat signed URL sementara (10 menit) untuk membuka berkas dari private storage bucket.
+     */
+    suspend fun createSignedUrl(bucketName: String, filePath: String): Result<String> {
+        return try {
+            val signedUrl = storage.from(bucketName).createSignedUrl(
+                path = filePath,
+                expiresIn = 10.minutes
+            )
+            Result.success(signedUrl)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal membuat tautan berkas.")))
         }
     }
 
@@ -190,15 +241,15 @@ class MagangRepository {
                         eq("lowongan_id", lowonganId)
                     }
                 }
-                Result.success(false) // Unbookmarked
+                Result.success(false)
             } else {
                 client.from("bookmark_lowongan").insert(
                     BookmarkLowongan(mahasiswaId = currentUserId, lowonganId = lowonganId)
                 )
-                Result.success(true) // Bookmarked
+                Result.success(true)
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui bookmark.")))
         }
     }
 
@@ -218,7 +269,7 @@ class MagangRepository {
 
             Result.success(list.map { it.lowonganId }.toSet())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memuat bookmark lowongan.")))
         }
     }
 }

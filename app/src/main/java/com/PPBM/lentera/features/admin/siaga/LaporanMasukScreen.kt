@@ -4,6 +4,7 @@ import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -136,7 +137,9 @@ fun LaporanMasukScreen(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
             ) {
                 val filters = listOf(
                     "Semua" to "Semua $countSemua",
@@ -201,7 +204,8 @@ fun LaporanMasukScreen(
             val filteredLaporan = daftarLaporan.filter { laporan ->
                 val matchesSearch = searchQuery.isBlank() ||
                         laporan.id.contains(searchQuery, ignoreCase = true) ||
-                        laporan.judul.contains(searchQuery, ignoreCase = true)
+                        laporan.judul.contains(searchQuery, ignoreCase = true) ||
+                        laporan.uuid.contains(searchQuery, ignoreCase = true)
                 val matchesFilter = when (selectedFilterKey) {
                     "Semua" -> true
                     "Baru" -> laporan.status.equals("Baru", ignoreCase = true)
@@ -238,7 +242,7 @@ fun LaporanMasukScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
-                        .clickable { onNavigateToDetail(laporan.id) },
+                        .clickable { onNavigateToDetail(laporan.uuid.ifBlank { laporan.id }) },
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
@@ -319,7 +323,7 @@ fun LaporanMasukScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Menampilkan 4 dari 24 laporan · Diperbarui 09:41",
+                text = "Menampilkan ${filteredLaporan.size} dari ${daftarLaporan.size} laporan",
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontFamily = PlusJakartaFont,

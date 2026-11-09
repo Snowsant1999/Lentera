@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.core.SessionManager
+import com.PPBM.lentera.backend.core.normalizeDokumenMahasiswaJenis
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem
 import com.PPBM.lentera.backend.mahasiswa.model.NotifikasiItem
 import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
@@ -67,6 +68,7 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
     fun updateProfil(
         namaLengkap: String,
         noTelepon: String?,
+        onError: (String) -> Unit = {},
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -90,10 +92,12 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
                 )
                 onSuccess()
             }.onFailure { err ->
+                val msg = err.message ?: "Gagal memperbarui profil"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = err.message ?: "Gagal memperbarui profil"
+                    errorMessage = msg
                 )
+                onError(msg)
             }
         }
     }
@@ -102,12 +106,20 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
         jenis: String,
         fileName: String,
         fileBytes: ByteArray,
+        onError: (String) -> Unit = {},
         onSuccess: () -> Unit = {}
     ) {
+        if (fileBytes.isEmpty()) {
+            val msg = "Berkas kosong atau gagal dibaca."
+            _uiState.value = _uiState.value.copy(errorMessage = msg)
+            onError(msg)
+            return
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val normalizedJenis = normalizeDokumenMahasiswaJenis(jenis)
             val result = mahasiswaRepo.uploadDokumenMahasiswa(
-                jenis = jenis,
+                jenis = normalizedJenis,
                 fileName = fileName,
                 fileBytes = fileBytes
             )
@@ -120,15 +132,22 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
                 )
                 onSuccess()
             }.onFailure { err ->
+                val msg = err.message ?: "Gagal mengunggah dokumen"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = err.message ?: "Gagal mengunggah dokumen"
+                    errorMessage = msg
                 )
+                onError(msg)
             }
         }
     }
 
-    fun deleteDokumen(docId: String, filePath: String) {
+    fun deleteDokumen(
+        docId: String,
+        filePath: String,
+        onError: (String) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = mahasiswaRepo.deleteDokumenMahasiswa(docId, filePath)
@@ -138,12 +157,35 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
                     isLoading = false,
                     dokumenList = updated
                 )
+                onSuccess()
             }.onFailure { err ->
+                val msg = err.message ?: "Gagal menghapus dokumen"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = err.message ?: "Gagal menghapus dokumen"
+                    errorMessage = msg
                 )
+                onError(msg)
             }
+        }
+    }
+
+    fun markNotifikasiRead(notifId: String) {
+        viewModelScope.launch {
+            mahasiswaRepo.markNotifikasiRead(notifId)
+            val updated = _uiState.value.notifikasiList.map {
+                if (it.id == notifId) it.copy(isDibaca = true) else it
+            }
+            _uiState.value = _uiState.value.copy(notifikasiList = updated)
+        }
+    }
+
+    fun markAllNotifikasiRead() {
+        viewModelScope.launch {
+            _uiState.value.notifikasiList.filter { !it.isDibaca }.forEach { notif ->
+                notif.id?.let { mahasiswaRepo.markNotifikasiRead(it) }
+            }
+            val updated = _uiState.value.notifikasiList.map { it.copy(isDibaca = true) }
+            _uiState.value = _uiState.value.copy(notifikasiList = updated)
         }
     }
 

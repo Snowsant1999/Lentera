@@ -46,7 +46,9 @@ fun AdminMahasiswaScreen(
 
     val totalAll = actualList.size
     val totalAktif = actualList.count { it.third.equals("Aktif", ignoreCase = true) }
-    val totalBelum = actualList.count { it.third.contains("Belum", ignoreCase = true) || it.third.contains("Nonaktif", ignoreCase = true) }
+    val totalBelum = actualList.count { it.third.contains("Belum", ignoreCase = true) }
+    val totalNonaktif = actualList.count { it.third.equals("Nonaktif", ignoreCase = true) }
+    val totalLulus = actualList.count { it.third.equals("Lulus", ignoreCase = true) }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -72,6 +74,8 @@ fun AdminMahasiswaScreen(
                 totalAll = totalAll,
                 totalAktif = totalAktif,
                 totalBelum = totalBelum,
+                totalNonaktif = totalNonaktif,
+                totalLulus = totalLulus,
                 selectedFilter = selectedFilter,
                 onFilterSelected = { selectedFilter = it }
             )
@@ -91,10 +95,18 @@ fun TabsMahasiswaDynamic(
     totalAll: Int,
     totalAktif: Int,
     totalBelum: Int,
+    totalNonaktif: Int,
+    totalLulus: Int,
     selectedFilter: String,
     onFilterSelected: (String) -> Unit
 ) {
-    val filters = listOf("Semua $totalAll", "Aktif $totalAktif", "Belum Aktivasi $totalBelum")
+    val filters = listOf(
+        "Semua $totalAll",
+        "Aktif $totalAktif",
+        "Belum Aktivasi $totalBelum",
+        "Nonaktif $totalNonaktif",
+        "Lulus $totalLulus"
+    )
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,7 +161,9 @@ fun ListMahasiswaDynamic(
         val matchesTab = when {
             selectedFilter.startsWith("Semua") -> true
             selectedFilter.startsWith("Aktif") -> status.equals("Aktif", ignoreCase = true)
-            selectedFilter.startsWith("Belum") -> status.contains("Belum", ignoreCase = true) || status.contains("Nonaktif", ignoreCase = true)
+            selectedFilter.startsWith("Belum") -> status.contains("Belum", ignoreCase = true)
+            selectedFilter.startsWith("Nonaktif") -> status.equals("Nonaktif", ignoreCase = true)
+            selectedFilter.startsWith("Lulus") -> status.equals("Lulus", ignoreCase = true)
             else -> true
         }
         matchesSearch && matchesTab
@@ -181,13 +195,18 @@ fun ListMahasiswaDynamic(
             items(filtered.size) { index ->
                 val (name, rawNim, status) = filtered[index]
                 val formattedNim = if (rawNim.startsWith("NIM:")) rawNim else "NIM: $rawNim"
-                val isAktif = status.equals("Aktif", ignoreCase = true)
+                val (statusColor, bgColor) = when {
+                    status.equals("Aktif", ignoreCase = true) -> LenteraGreen to LenteraGreenBg
+                    status.contains("Belum", ignoreCase = true) -> Color(0xFFD97706) to Color(0xFFFEF3EB)
+                    status.equals("Lulus", ignoreCase = true) -> SlateGray to ScreenBackground
+                    else -> ErrorRed to ErrorRedLight
+                }
                 StudentCard(
                     name = name,
                     nim = formattedNim,
                     status = status,
-                    statusColor = if (isAktif) LenteraGreen else ErrorRed,
-                    bgColor = if (isAktif) LenteraGreenBg else ErrorRedLight,
+                    statusColor = statusColor,
+                    bgColor = bgColor,
                     onClick = { onItemClick(rawNim) }
                 )
             }

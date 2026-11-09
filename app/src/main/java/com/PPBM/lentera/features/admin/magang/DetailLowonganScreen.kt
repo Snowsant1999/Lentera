@@ -47,21 +47,23 @@ import com.PPBM.lentera.R
 @Composable
 fun DetailLowonganScreen(
     lowongan: LowonganEntity? = null,
+    companyName: String? = null,
+    isSubmitting: Boolean = false,
     onToggleStatus: (newStatus: String) -> Unit = {},
-    onNavigateToPublikasiLowongan: () -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
     onBackToDaftarLowongan: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     val posisi = lowongan?.posisi ?: "Lowongan Magang"
     val lokasi = lowongan?.lokasi ?: "-"
-    val sistemKerja = lowongan?.sistemKerja?.uppercase() ?: "WFO"
+    val subtitleLokasi = companyName?.takeIf { it.isNotBlank() }?.let { "$it · $lokasi" } ?: lokasi
+    val sistemKerja = lowongan?.sistemKerja ?: "-"
     val periode = lowongan?.periodeMagang ?: "-"
     val kuota = lowongan?.kuota ?: 1
     val batas = lowongan?.batasPendaftaran ?: "-"
     val deskripsi = lowongan?.deskripsiPekerjaan ?: "-"
     val persyaratan = lowongan?.persyaratan ?: "-"
-    val isTerbit = lowongan?.status.equals("terbit", ignoreCase = true) || lowongan?.status.equals("aktif", ignoreCase = true)
+    val isTerbit = lowongan?.status.equals("terbit", ignoreCase = true)
     val statusText = (lowongan?.status ?: "draf").replaceFirstChar { it.uppercase() }
 
     Scaffold(
@@ -129,7 +131,7 @@ fun DetailLowonganScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = lokasi,
+                                    text = subtitleLokasi,
                                     style = TextStyle(
                                         fontSize = 14.sp,
                                         fontFamily = PlusJakartaFont,
@@ -297,6 +299,7 @@ fun DetailLowonganScreen(
             // 2. Button: Terbitkan / Tutup Lowongan
             item {
                 Button(
+                    enabled = !isSubmitting && !lowongan?.id.isNullOrBlank(),
                     onClick = {
                         val newTargetStatus = if (isTerbit) "ditutup" else "terbit"
                         onToggleStatus(newTargetStatus)
@@ -312,7 +315,11 @@ fun DetailLowonganScreen(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
-                        text = if (isTerbit) "Tutup Lowongan Ini" else "Terbitkan Lowongan Sekarang",
+                        text = when {
+                            isSubmitting -> "Memperbarui..."
+                            isTerbit -> "Tutup Lowongan Ini"
+                            else -> "Terbitkan Lowongan Sekarang"
+                        },
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontFamily = PlusJakartaFont,

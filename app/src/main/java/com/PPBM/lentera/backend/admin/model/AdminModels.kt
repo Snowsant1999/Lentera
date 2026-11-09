@@ -20,7 +20,7 @@ data class AdminLaporan(
     val tanggalKejadian: String,
     @SerialName("is_anonim")
     val isAnonim: Boolean,
-    val status: String, // baru, verifikasi, investigasi, penanganan, selesai, ditolak
+    val status: String, // baru, diperiksa, diproses, selesai, ditolak
     @SerialName("jalur_tindak_lanjut")
     val jalurTindakLanjut: String? = null,
     @SerialName("unit_penanganan")
@@ -82,7 +82,7 @@ data class TempatMagangEntity(
     val kota: String,
     val provinsi: String,
     @SerialName("sistem_kerja")
-    val sistemKerja: String = "hybrid",
+    val sistemKerja: String = "Hybrid", // On-site, Remote, Hybrid
     @SerialName("nama_kontak")
     val namaKontak: String,
     @SerialName("email_kontak")
@@ -93,7 +93,27 @@ data class TempatMagangEntity(
     val situsWeb: String? = null,
     @SerialName("logo_path")
     val logoPath: String? = null,
-    val status: String = "aktif" // draf, aktif, nonaktif
+    val status: String = "draf", // draf, aktif, arsip
+    @SerialName("catatan_internal")
+    val catatanInternal: String? = null
+)
+
+/**
+ * Dokumen MOU / lampiran mitra dari tabel `dokumen_tempat_magang`
+ */
+@Serializable
+data class DokumenTempatMagangItem(
+    val id: String? = null,
+    @SerialName("tempat_magang_id")
+    val tempatMagangId: String,
+    @SerialName("nama_file")
+    val namaFile: String,
+    @SerialName("ukuran_bytes")
+    val ukuranBytes: Long,
+    @SerialName("file_path")
+    val filePath: String,
+    @SerialName("created_at")
+    val createdAt: String? = null
 )
 
 /**
@@ -108,7 +128,7 @@ data class LowonganEntity(
     val kategori: String? = null,
     val lokasi: String,
     @SerialName("sistem_kerja")
-    val sistemKerja: String, // wfo, wfh, hybrid
+    val sistemKerja: String, // On-site, Remote, Hybrid
     @SerialName("deskripsi_pekerjaan")
     val deskripsiPekerjaan: String,
     val persyaratan: String,
@@ -117,7 +137,7 @@ data class LowonganEntity(
     @SerialName("batas_pendaftaran")
     val batasPendaftaran: String,
     val kuota: Int,
-    val status: String = "terbit", // draf, terbit, ditutup, arsip
+    val status: String = "draf", // draf, terbit, ditutup
     @SerialName("catatan_internal")
     val catatanInternal: String? = null
 )
@@ -125,12 +145,19 @@ data class LowonganEntity(
 /**
  * Ringkasan statistik dashboard admin
  */
+@Serializable
 data class AdminDashboardStats(
+    @SerialName("total_laporan")
     val totalLaporan: Int = 0,
+    @SerialName("laporan_perlu_tindakan")
     val laporanPerluTindakan: Int = 0,
+    @SerialName("total_tempat_magang")
     val totalTempatMagang: Int = 0,
+    @SerialName("total_lowongan_aktif")
     val totalLowonganAktif: Int = 0,
+    @SerialName("total_lamaran_masuk")
     val totalLamaranMasuk: Int = 0,
+    @SerialName("total_mahasiswa_aktif")
     val totalMahasiswaAktif: Int = 0
 )
 

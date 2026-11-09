@@ -234,8 +234,9 @@ fun ProfileAvatar(
 fun StatusBadge(status: StatusAkun) {
     val (bgColor, textColor) = when (status) {
         StatusAkun.AKTIF -> Pair(LenteraColors.GreenActiveBg, LenteraColors.GreenActive)
-        StatusAkun.BELUM_AKTIVASI -> Pair(LenteraColors.RedInactiveBg, LenteraColors.RedInactive)
+        StatusAkun.BELUM_AKTIVASI -> Pair(Color(0xFFFEF3EB), Color(0xFFD97706))
         StatusAkun.LULUS -> Pair(LenteraColors.Background, LenteraColors.SlateText)
+        StatusAkun.NONAKTIF -> Pair(LenteraColors.RedInactiveBg, LenteraColors.RedInactive)
     }
     Box(
         modifier = Modifier

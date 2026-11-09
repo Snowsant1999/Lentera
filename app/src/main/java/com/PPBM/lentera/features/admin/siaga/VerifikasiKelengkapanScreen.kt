@@ -37,14 +37,16 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun VerifikasiKelengkapanScreen(
     laporan: AdminLaporan? = null,
+    isUpdating: Boolean = false,
     onValidasiPenugasan: () -> Unit = {},
     onMintaInformasi: () -> Unit = {},
     onTidakDapatDiproses: () -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
-    val judulLaporan = laporan?.judul ?: "Laporan"
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
+    val canAct = !isUpdating && laporan != null
     val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
     val isAnonim = laporan?.isAnonim ?: true
     val statusStr = (laporan?.status ?: "baru").replaceFirstChar { it.uppercase() }
@@ -134,6 +136,7 @@ fun VerifikasiKelengkapanScreen(
                     // Button 1: Validasi & Atur Penugasan
                     Button(
                         onClick = onValidasiPenugasan,
+                        enabled = canAct,
                         colors = ButtonDefaults.buttonColors(containerColor = SiagaTealPrimary),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -141,7 +144,7 @@ fun VerifikasiKelengkapanScreen(
                             .height(50.dp)
                     ) {
                         Text(
-                            text = "Validasi & Atur Penugasan",
+                            text = if (isUpdating) "Memproses..." else "Validasi & Atur Penugasan",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,
@@ -156,6 +159,7 @@ fun VerifikasiKelengkapanScreen(
                     // Button 2: Minta Informasi
                     OutlinedButton(
                         onClick = onMintaInformasi,
+                        enabled = canAct,
                         shape = RoundedCornerShape(12.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
                             width = 1.dp,
@@ -182,6 +186,7 @@ fun VerifikasiKelengkapanScreen(
                     // Button 3: Tidak Dapat Diproses
                     OutlinedButton(
                         onClick = onTidakDapatDiproses,
+                        enabled = canAct,
                         shape = RoundedCornerShape(12.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
                             width = 1.dp,

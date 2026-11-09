@@ -2,6 +2,10 @@ package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.backend.admin.model.AdminLaporan
+import com.PPBM.lentera.backend.admin.model.LogTindakanItem
+import com.PPBM.lentera.backend.mahasiswa.model.BuktiLaporanItem
+import com.PPBM.lentera.backend.mahasiswa.model.PermintaanInformasiItem
+import java.util.Locale
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +51,10 @@ import com.PPBM.lentera.R
 @Composable
 fun AdminDetailLaporanScreen(
     laporan: AdminLaporan? = null,
+    buktiList: List<BuktiLaporanItem> = emptyList(),
+    logList: List<LogTindakanItem> = emptyList(),
+    permintaanList: List<PermintaanInformasiItem> = emptyList(),
+    onOpenBukti: (BuktiLaporanItem) -> Unit = {},
     onNavigateToVerifikasi: () -> Unit = {},
     onNavigateToMintaInformasi: () -> Unit = {},
     onNavigateToPenugasan: () -> Unit = {},
@@ -55,8 +63,8 @@ fun AdminDetailLaporanScreen(
     onBackToList: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    val nomorLaporan = laporan?.nomorLaporan ?: "LTR-..."
-    val judulLaporan = laporan?.judul ?: "Laporan"
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat detail laporan..."
     val kategori = laporan?.kategori ?: "Pengaduan"
     val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
     val lokasiKejadian = laporan?.lokasiKejadian ?: "-"
@@ -308,7 +316,7 @@ fun AdminDetailLaporanScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Bukti yang dilampirkan",
+                        text = "Bukti yang dilampirkan (${buktiList.size})",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontFamily = PlusJakartaFont,
@@ -318,14 +326,67 @@ fun AdminDetailLaporanScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Text(
-                        text = "Tidak ada lampiran berkas dokumen tambahan.",
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            fontFamily = PlusJakartaFont,
-                            color = SiagaTextSecondary
+                    if (buktiList.isEmpty()) {
+                        Text(
+                            text = "Tidak ada lampiran berkas dokumen tambahan.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = SiagaTextSecondary
+                            )
                         )
-                    )
+                    } else {
+                        buktiList.forEach { bukti ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
+                                    .clickable { onOpenBukti(bukti) }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_file_text),
+                                        contentDescription = bukti.tipeFile,
+                                        tint = SiagaNavyDark,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = bukti.namaFile,
+                                            style = TextStyle(
+                                                fontSize = 13.sp,
+                                                fontFamily = PlusJakartaFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SiagaNavyDark
+                                            )
+                                        )
+                                        Text(
+                                            text = "${bukti.tipeFile} · ${formatBuktiBytes(bukti.ukuranBytes)} · Ketuk untuk membuka",
+                                            style = TextStyle(
+                                                fontSize = 11.sp,
+                                                fontFamily = PlusJakartaFont,
+                                                color = SiagaTextSecondary
+                                            )
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_chevron_right),
+                                    contentDescription = "Buka",
+                                    tint = SiagaNavyDark,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -379,6 +440,65 @@ fun AdminDetailLaporanScreen(
                                 text = laporan?.createdAt?.take(16)?.replace("T", " ") ?: "Terkirim",
                                 style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                             )
+                        }
+                    }
+
+                    logList.forEach { log ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_timeline_marker),
+                                contentDescription = log.judulTindakan,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(16.dp, 48.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                                Text(
+                                    text = log.judulTindakan,
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SiagaNavyDark
+                                    )
+                                )
+                                Text(
+                                    text = "${log.createdAt?.take(16)?.replace("T", " ") ?: ""} · ${log.deskripsi}",
+                                    style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
+                                )
+                            }
+                        }
+                    }
+
+                    permintaanList.forEach { req ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_timeline_marker),
+                                contentDescription = "Permintaan informasi",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(16.dp, 48.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                                Text(
+                                    text = "Permintaan informasi",
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SiagaNavyDark
+                                    )
+                                )
+                                Text(
+                                    text = buildString {
+                                        append("Admin: ${req.pesanKePelapor}")
+                                        if (!req.balasanPelapor.isNullOrBlank()) {
+                                            append("\nBalasan pelapor: ${req.balasanPelapor}")
+                                        }
+                                    },
+                                    style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
+                                )
+                            }
                         }
                     }
 
@@ -497,6 +617,14 @@ fun AdminDetailLaporanScreen(
 
         // 3. Bottom Bar
         AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
+    }
+}
+
+private fun formatBuktiBytes(bytes: Long): String {
+    return when {
+        bytes >= 1024L * 1024L -> String.format(Locale.US, "%.1f MB", bytes.toDouble() / (1024.0 * 1024.0))
+        bytes >= 1024L -> "${bytes / 1024L} KB"
+        else -> "$bytes B"
     }
 }
 

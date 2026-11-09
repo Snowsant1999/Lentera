@@ -13,7 +13,7 @@ data class LowonganTerbit(
     val kategori: String? = null,
     val lokasi: String,
     @SerialName("sistem_kerja")
-    val sistemKerja: String, // wfo, wfh, hybrid
+    val sistemKerja: String, // On-site, Remote, Hybrid
     @SerialName("deskripsi_pekerjaan")
     val deskripsiPekerjaan: String,
     val persyaratan: String,
@@ -63,7 +63,7 @@ data class LamaranSaya(
     val email: String,
     @SerialName("golongan_darah")
     val golonganDarah: String,
-    val status: String, // terkirim, verifikasi_berkas, wawancara, diterima, ditolak, perlu_perbaikan
+    val status: String, // terkirim, pemeriksaan, perlu_perbaikan, seleksi, diterima, ditolak
     @SerialName("catatan_admin")
     val catatanAdmin: String? = null,
     @SerialName("created_at")

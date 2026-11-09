@@ -24,6 +24,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     fun login(nimOrEmail: String, password: String, onRoleDetermined: (role: String, statusAkun: String) -> Unit) {
+        if (_uiState.value.isLoading) return
         if (nimOrEmail.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState(errorMessage = "NIM/Email dan Password wajib diisi.")
             return
@@ -48,17 +49,19 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      * Mengirim instruksi reset password / kode OTP ke email
      */
     fun requestPasswordReset(email: String, onSuccess: () -> Unit = {}) {
-        if (email.isBlank()) {
+        if (_uiState.value.isLoading) return
+        val cleanEmail = email.trim()
+        if (cleanEmail.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Email wajib diisi.")
             return
         }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val result = authRepository.requestPasswordReset(email)
+            val result = authRepository.requestPasswordReset(cleanEmail)
             result.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    successMessage = "Tautan pemulihan telah dikirim ke email $email"
+                    successMessage = "Tautan pemulihan telah dikirim ke email $cleanEmail"
                 )
                 onSuccess()
             }.onFailure { err ->
@@ -74,6 +77,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      * Memverifikasi kode OTP pemulihan
      */
     fun verifyRecoveryOtp(email: String, token: String, onSuccess: () -> Unit = {}) {
+        if (_uiState.value.isLoading) return
         if (token.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Kode verifikasi wajib diisi.")
             return
@@ -97,6 +101,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      * Memperbarui password baru pengguna
      */
     fun updatePassword(newPassword: String, onSuccess: () -> Unit = {}) {
+        if (_uiState.value.isLoading) return
         if (newPassword.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Password baru tidak boleh kosong.")
             return
@@ -107,7 +112,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             result.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    successMessage = "Password berhasil diperbarui. Silakan login kembali."
+                    successMessage = "Password berhasil diperbarui."
                 )
                 onSuccess()
             }.onFailure { err ->

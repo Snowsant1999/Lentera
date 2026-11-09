@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class KategoriLaporan(
-    val id: Long,
+    val id: String,
     val nama: String
 )
 
@@ -26,7 +26,7 @@ data class LaporanSaya(
     val tanggalKejadian: String,
     @SerialName("is_anonim")
     val isAnonim: Boolean = false,
-    val status: String, // baru, verifikasi, investigasi, penanganan, selesai, ditolak
+    val status: String, // baru, diperiksa, diproses, selesai, ditolak
     @SerialName("tanggal_penyelesaian")
     val tanggalPenyelesaian: String? = null,
     @SerialName("hasil_penanganan")
@@ -79,7 +79,7 @@ data class CreateLaporanPayload(
     @SerialName("pelapor_id")
     val pelaporId: String,
     @SerialName("kategori_id")
-    val kategoriId: Long,
+    val kategoriId: String,
     val judul: String,
     val kronologi: String,
     @SerialName("lokasi_kejadian")

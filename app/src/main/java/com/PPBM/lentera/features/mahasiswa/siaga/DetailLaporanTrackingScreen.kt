@@ -55,34 +55,15 @@ data class TimelineStepItem(
 )
 
 data class DetailLaporanTrackingData(
-    val nomorReferensi: String = "LTR-2026-00123",
-    val judul: String = "Pelecehan Verbal",
-    val status: String = "Diperiksa",
-    val tanggalPengiriman: String = "Dikirim 12 Oktober 2026 · Laporan anonim",
-    val adminMessage: String = "Mohon jelaskan ciri pelaku dan apakah ada saksi saat kejadian.",
-    val hasAdminRequest: Boolean = true,
-    val timeline: List<TimelineStepItem> = listOf(
-        TimelineStepItem(
-            title = "Dikirim",
-            description = "12 Okt 2026, 15.10 · Laporan diterima",
-            state = TimelineStepState.COMPLETED
-        ),
-        TimelineStepItem(
-            title = "Diperiksa",
-            description = "13 Okt 2026 · Tim meninjau laporanmu",
-            state = TimelineStepState.ACTIVE
-        ),
-        TimelineStepItem(
-            title = "Ditindaklanjuti",
-            description = "Menunggu hasil pemeriksaan",
-            state = TimelineStepState.PENDING
-        ),
-        TimelineStepItem(
-            title = "Selesai",
-            description = "Ringkasan penanganan akan tersedia",
-            state = TimelineStepState.PENDING
-        )
-    )
+    val nomorReferensi: String = "",
+    val judul: String = "",
+    val status: String = "",
+    val tanggalPengiriman: String = "",
+    val adminMessage: String = "",
+    val hasAdminRequest: Boolean = false,
+    val hasilPenanganan: String? = null,
+    val isSelesai: Boolean = false,
+    val timeline: List<TimelineStepItem> = emptyList()
 )
 
 // ============================================================================
@@ -101,7 +82,8 @@ data class DetailLaporanTrackingData(
 fun DetailLaporanTrackingScreen(
     reportData: DetailLaporanTrackingData = DetailLaporanTrackingData(),
     onBackClick: () -> Unit = {},
-    onLengkapiInformasiClick: () -> Unit = {}
+    onLengkapiInformasiClick: () -> Unit = {},
+    onLihatHasilClick: (() -> Unit)? = null
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     var isHasilExpanded by remember { mutableStateOf(false) }
@@ -158,8 +140,11 @@ fun DetailLaporanTrackingScreen(
 
                 // 5. Kartu "Hasil Penanganan" (Expandable)
                 HasilPenangananCard(
+                    hasilPenanganan = reportData.hasilPenanganan,
+                    isSelesai = reportData.isSelesai,
                     isExpanded = isHasilExpanded,
                     onToggleExpand = { isHasilExpanded = !isHasilExpanded },
+                    onLihatHasilClick = onLihatHasilClick,
                     fontFamily = plusJakarta
                 )
 
@@ -333,7 +318,17 @@ private fun TimelineProsesCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            timeline.forEachIndexed { index, item ->
+            if (timeline.isEmpty()) {
+                Text(
+                    text = "Belum ada pembaruan proses penanganan.",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        color = SlateGrayLight
+                    )
+                )
+            } else {
+                timeline.forEachIndexed { index, item ->
                 val isLast = index == timeline.lastIndex
 
                 Row(
@@ -435,6 +430,7 @@ private fun TimelineProsesCard(
                     }
                 }
             }
+            }
         }
     }
 }
@@ -526,8 +522,11 @@ private fun AdminRequestNoticeCard(
 
 @Composable
 private fun HasilPenangananCard(
+    hasilPenanganan: String?,
+    isSelesai: Boolean,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
+    onLihatHasilClick: (() -> Unit)?,
     fontFamily: FontFamily
 ) {
     Card(
@@ -579,7 +578,11 @@ private fun HasilPenangananCard(
             AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.padding(top = 12.dp, start = 38.dp)) {
                     Text(
-                        text = "Hasil investigasi dan penanganan resmi akan dipublikasikan di sini setelah proses verifikasi oleh tim kampus selesai.",
+                        text = if (!hasilPenanganan.isNullOrBlank()) {
+                            hasilPenanganan
+                        } else {
+                            "Hasil investigasi dan penanganan resmi akan dipublikasikan di sini setelah proses verifikasi oleh tim kampus selesai."
+                        },
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 13.sp,
@@ -587,6 +590,28 @@ private fun HasilPenangananCard(
                             lineHeight = 18.sp
                         )
                     )
+                    if ((isSelesai || !hasilPenanganan.isNullOrBlank()) && onLihatHasilClick != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(SiagaTealPrimary)
+                                .clickable(onClick = onLihatHasilClick),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Lihat Hasil & Dokumentasi",
+                                style = TextStyle(
+                                    fontFamily = fontFamily,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -605,12 +630,14 @@ private fun HasilPenangananCard(
 fun DetailLaporanTracking(
     reportData: DetailLaporanTrackingData = DetailLaporanTrackingData(),
     onBackClick: () -> Unit = {},
-    onLengkapiInformasiClick: () -> Unit = {}
+    onLengkapiInformasiClick: () -> Unit = {},
+    onLihatHasilClick: (() -> Unit)? = null
 ) {
     DetailLaporanTrackingScreen(
         reportData = reportData,
         onBackClick = onBackClick,
-        onLengkapiInformasiClick = onLengkapiInformasiClick
+        onLengkapiInformasiClick = onLengkapiInformasiClick,
+        onLihatHasilClick = onLihatHasilClick
     )
 }
 
@@ -622,7 +649,22 @@ fun DetailLaporanTracking(
 @Composable
 fun DetailLaporanTrackingScreenPreview() {
     LenteraTheme {
-        DetailLaporanTrackingScreen()
+        DetailLaporanTrackingScreen(
+            reportData = DetailLaporanTrackingData(
+                nomorReferensi = "LTR-2026-00123",
+                judul = "Pelecehan Verbal",
+                status = "Diperiksa",
+                tanggalPengiriman = "Dikirim 12 Oktober 2026 · Laporan anonim",
+                adminMessage = "Mohon jelaskan ciri pelaku dan apakah ada saksi saat kejadian.",
+                hasAdminRequest = true,
+                timeline = listOf(
+                    TimelineStepItem("Dikirim", "12 Okt 2026, 15.10 · Laporan diterima", TimelineStepState.COMPLETED),
+                    TimelineStepItem("Diperiksa", "13 Okt 2026 · Tim meninjau laporanmu", TimelineStepState.ACTIVE),
+                    TimelineStepItem("Ditindaklanjuti", "Menunggu hasil pemeriksaan", TimelineStepState.PENDING),
+                    TimelineStepItem("Selesai", "Ringkasan penanganan akan tersedia", TimelineStepState.PENDING)
+                )
+            )
+        )
     }
 }
 

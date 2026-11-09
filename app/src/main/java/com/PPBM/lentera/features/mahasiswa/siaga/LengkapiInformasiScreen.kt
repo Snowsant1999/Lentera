@@ -2,6 +2,10 @@ package com.PPBM.lentera.features.mahasiswa.siaga
 import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -51,31 +56,87 @@ import com.PPBM.lentera.core.designsystem.theme.*
  *
  * @param kodeLaporan Nomor kode tiket laporan
  * @param pesanAdmin Pesan dari admin penanganan
+ * @param isSubmitting Flag loading saat mengirim
+ * @param errorMessage Pesan error dari backend/state
  * @param onBackClick Aksi kembali ke halaman sebelumnya
- * @param onUploadLampiranClick Aksi saat kotak upload lampiran ditekan
+ * @param onUploadLampiranClick Aksi tambahan saat kotak upload lampiran ditekan
  * @param onKembaliClick Aksi tombol "Kembali"
  * @param onKirimInformasiClick Aksi tombol "Kirim Informasi" dengan isi data teks
+ * @param onKirimLengkapClick Aksi tombol "Kirim Informasi" dengan teks dan file lampiran opsional
  */
 @Composable
 fun LengkapiInformasiScreen(
-    kodeLaporan: String = "LTR-2026-00123",
-    pesanAdmin: String = "Mohon jelaskan kronologi lebih rinci dan apakah ada saksi saat kejadian.",
+    kodeLaporan: String = "",
+    pesanAdmin: String = "",
+    isSubmitting: Boolean = false,
+    errorMessage: String? = null,
     onBackClick: () -> Unit = {},
     onUploadLampiranClick: () -> Unit = {},
     onKembaliClick: () -> Unit = {},
-    onKirimInformasiClick: (String) -> Unit = {}
+    onKirimInformasiClick: (String) -> Unit = {},
+    onKirimLengkapClick: ((balasan: String, fileName: String?, fileBytes: ByteArray?) -> Unit)? = null
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
+    val context = LocalContext.current
     var informasiTambahan by remember { mutableStateOf("") }
+    var selectedFileName by remember { mutableStateOf<String?>(null) }
+    var selectedFileBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var localError by remember { mutableStateOf<String?>(null) }
     val maxChar = 1000
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        localError = null
+        try {
+            var fileName = "lampiran_${System.currentTimeMillis()}"
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst() && nameIndex >= 0) {
+                    fileName = cursor.getString(nameIndex) ?: fileName
+                }
+            }
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            when {
+                bytes == null || bytes.isEmpty() -> {
+                    localError = "Berkas '$fileName' kosong atau gagal dibaca."
+                }
+                bytes.size.toLong() > 20L * 1024L * 1024L -> {
+                    localError = "Ukuran berkas '$fileName' melebihi batas maksimal 20 MB."
+                }
+                else -> {
+                    selectedFileName = fileName
+                    selectedFileBytes = bytes
+                }
+            }
+        } catch (e: Exception) {
+            localError = "Gagal membaca berkas: ${e.message ?: "kesalahan tidak diketahui"}"
+        }
+    }
+
+    val activeError = localError ?: errorMessage
 
     Scaffold(
         containerColor = ScreenBackground,
         bottomBar = {
             // Tombol Aksi di Bawah (Kembali & Kirim Informasi)
             BottomActionBarLengkapi(
+                isSubmitting = isSubmitting,
                 onKembali = onKembaliClick,
-                onKirim = { onKirimInformasiClick(informasiTambahan) },
+                onKirim = {
+                    val trimmed = informasiTambahan.trim()
+                    if (trimmed.isBlank()) {
+                        localError = "Informasi tambahan wajib diisi."
+                        return@BottomActionBarLengkapi
+                    }
+                    localError = null
+                    if (onKirimLengkapClick != null) {
+                        onKirimLengkapClick(trimmed, selectedFileName, selectedFileBytes)
+                    } else {
+                        onKirimInformasiClick(trimmed)
+                    }
+                },
                 fontFamily = plusJakarta
             )
         }
@@ -301,7 +362,10 @@ fun LengkapiInformasiScreen(
                             BasicTextField(
                                 value = informasiTambahan,
                                 onValueChange = {
-                                    if (it.length <= maxChar) informasiTambahan = it
+                                    if (it.length <= maxChar) {
+                                        informasiTambahan = it
+                                        if (localError != null) localError = null
+                                    }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = TextStyle(
@@ -349,7 +413,10 @@ fun LengkapiInformasiScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(Color(0xFFF3F7FA))
-                                .clickable(onClick = onUploadLampiranClick)
+                                .clickable(enabled = !isSubmitting) {
+                                    onUploadLampiranClick()
+                                    filePickerLauncher.launch("*/*")
+                                }
                                 .padding(horizontal = 20.dp, vertical = 24.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -366,7 +433,7 @@ fun LengkapiInformasiScreen(
                                 Spacer(modifier = Modifier.height(10.dp))
 
                                 Text(
-                                    text = "Tap untuk mengunggah foto, video atau dokumen\n(JPG, PNG, PDF, DOC)",
+                                    text = "Tap untuk mengunggah foto, video atau dokumen\n(Maks. 20 MB)",
                                     style = TextStyle(
                                         fontFamily = plusJakarta,
                                         fontSize = 12.sp,
@@ -374,6 +441,69 @@ fun LengkapiInformasiScreen(
                                         color = SlateGray,
                                         textAlign = TextAlign.Center,
                                         lineHeight = 17.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        if (!selectedFileName.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFEFF6FF))
+                                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedFileName!!,
+                                    modifier = Modifier.weight(1f),
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = NavyDark
+                                    )
+                                )
+                                Text(
+                                    text = "Hapus",
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFB91C1C)
+                                    ),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable(enabled = !isSubmitting) {
+                                            selectedFileName = null
+                                            selectedFileBytes = null
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        if (!activeError.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFFEF2F2))
+                                    .border(1.dp, Color(0xFFFECACA), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = activeError,
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFFB91C1C)
                                     )
                                 )
                             }
@@ -452,6 +582,7 @@ private fun TopBarLengkapiInformasi(
 
 @Composable
 private fun BottomActionBarLengkapi(
+    isSubmitting: Boolean = false,
     onKembali: () -> Unit,
     onKirim: () -> Unit,
     fontFamily: FontFamily
@@ -476,7 +607,7 @@ private fun BottomActionBarLengkapi(
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.Transparent)
                     .border(1.5.dp, SiagaTealPrimary, RoundedCornerShape(16.dp))
-                    .clickable(onClick = onKembali),
+                    .clickable(enabled = !isSubmitting, onClick = onKembali),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -497,12 +628,12 @@ private fun BottomActionBarLengkapi(
                     .height(52.dp)
                     .shadow(2.dp, RoundedCornerShape(16.dp))
                     .clip(RoundedCornerShape(16.dp))
-                    .background(SiagaTealPrimary)
-                    .clickable(onClick = onKirim),
+                    .background(if (isSubmitting) SiagaTealPrimary.copy(alpha = 0.6f) else SiagaTealPrimary)
+                    .clickable(enabled = !isSubmitting, onClick = onKirim),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Kirim Informasi",
+                    text = if (isSubmitting) "Mengirim..." else "Kirim Informasi",
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 14.sp,
@@ -531,6 +662,9 @@ private fun BottomActionBarLengkapi(
 @Composable
 fun LengkapiInformasiScreenPreview() {
     LenteraTheme {
-        LengkapiInformasiScreen()
+        LengkapiInformasiScreen(
+            kodeLaporan = "LTR-2026-00123",
+            pesanAdmin = "Mohon jelaskan kronologi lebih rinci dan apakah ada saksi saat kejadian."
+        )
     }
 }

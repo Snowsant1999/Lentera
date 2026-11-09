@@ -2,6 +2,8 @@ package com.PPBM.lentera.features.mahasiswa.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.PPBM.lentera.backend.core.normalizeLamaranStatus
+import com.PPBM.lentera.backend.core.normalizeLaporanStatus
 import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
 import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.backend.mahasiswa.repository.MagangRepository
@@ -44,18 +46,23 @@ class MahasiswaDashboardViewModel(
             val laporanList = laporanResult.getOrDefault(emptyList())
 
             val totalLap = laporanList.size
-            val lapDiperiksa = laporanList.count { it.status == "baru" || it.status == "verifikasi" || it.status == "investigasi" || it.status == "penanganan" }
-            val lapSelesai = laporanList.count { it.status == "selesai" }
+            val lapDiperiksa = laporanList.count {
+                val st = normalizeLaporanStatus(it.status)
+                st == "baru" || st == "diperiksa" || st == "diproses"
+            }
+            val lapSelesai = laporanList.count { normalizeLaporanStatus(it.status) == "selesai" }
 
             // 2. Ambil Lamaran Saya
             val lamaranResult = magangRepo.getLamaranSaya()
             val lamaranList = lamaranResult.getOrDefault(emptyList())
             val totalLam = lamaranList.size
+            val normalizedLamaranStatuses = lamaranList.map { normalizeLamaranStatus(it.status) }
             val lamaranSummary = when {
                 totalLam == 0 -> "Belum ada lamaran"
-                lamaranList.any { it.status == "diterima" } -> "Lamaran Diterima!"
-                lamaranList.any { it.status == "perlu_perbaikan" } -> "Perlu perbaikan berkas"
-                lamaranList.any { it.status == "wawancara" } -> "Tahap wawancara"
+                normalizedLamaranStatuses.any { it == "diterima" } -> "Lamaran Diterima!"
+                normalizedLamaranStatuses.any { it == "perlu_perbaikan" } -> "Perlu perbaikan berkas"
+                normalizedLamaranStatuses.any { it == "seleksi" } -> "Tahap seleksi"
+                normalizedLamaranStatuses.any { it == "pemeriksaan" } -> "Dalam pemeriksaan"
                 else -> "$totalLam lamaran aktif"
             }
 
