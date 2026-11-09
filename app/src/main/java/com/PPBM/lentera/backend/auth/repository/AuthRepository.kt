@@ -7,9 +7,13 @@ import com.PPBM.lentera.backend.core.SupabaseConfig
 import com.PPBM.lentera.backend.core.mapSupabaseError
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.parseSessionFromFragment
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.OTP
+import io.github.jan.supabase.auth.status.SessionSource
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -107,14 +111,20 @@ class AuthRepository(context: Context) {
     }
 
     /**
-     * Meminta pengiriman token reset password ke email.
+     * Meminta pengiriman kode OTP pemulihan 6 digit ke email mahasiswa.
      */
     suspend fun requestPasswordReset(email: String): Result<Unit> {
         return try {
-            client.auth.resetPasswordForEmail(email.trim().lowercase())
+            val cleanEmail = email.trim().lowercase()
+            client.auth.signInWith(OTP) {
+                this.email = cleanEmail
+                this.createUser = false
+            }
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Result.failure(Exception(mapSupabaseError(e, "Gagal mengirim tautan pemulihan.")))
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengirim kode OTP pemulihan.")))
         }
     }
 
@@ -123,14 +133,80 @@ class AuthRepository(context: Context) {
      */
     suspend fun verifyRecoveryOtp(email: String, token: String): Result<Unit> {
         return try {
+            sessionManager.clearSession()
             client.auth.verifyEmailOtp(
-                type = OtpType.Email.RECOVERY,
+                type = OtpType.Email.EMAIL,
                 email = email.trim().lowercase(),
                 token = token.trim()
             )
+            val userId = client.auth.currentUserOrNull()?.id
+            if (userId != null) {
+                val profile = runCatching {
+                    client.from("profiles").select {
+                        filter {
+                            eq("id", userId)
+                        }
+                    }.decodeSingle<UserProfile>()
+                }.getOrNull()
+                if (profile != null && profile.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                    try {
+                        client.auth.signOut()
+                    } catch (_: Exception) {}
+                    sessionManager.clearSession()
+                    return Result.failure(Exception("Akun dinonaktifkan oleh admin kampus."))
+                }
+            }
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(Exception(mapSupabaseError(e, "Kode verifikasi salah atau kedaluwarsa.")))
+        }
+    }
+
+    /**
+     * Mengimpor sesi pemulihan dari fragment deep link Supabase ke Auth client.
+     */
+    suspend fun importRecoverySessionFromFragment(fragment: String): Result<String> {
+        return try {
+            runCatching { client.auth.awaitInitialization() }
+            val parsedSession = client.auth.parseSessionFromFragment(fragment)
+            val user = client.auth.retrieveUser(parsedSession.accessToken)
+            sessionManager.clearSession()
+            client.auth.importSession(
+                session = parsedSession.copy(user = user),
+                autoRefresh = true,
+                source = SessionSource.External
+            )
+            val profile = runCatching {
+                client.from("profiles").select {
+                    filter {
+                        eq("id", user.id)
+                    }
+                }.decodeSingle<UserProfile>()
+            }.getOrNull()
+            if (profile != null && profile.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                try {
+                    client.auth.signOut()
+                } catch (_: Exception) {}
+                sessionManager.clearSession()
+                return Result.failure(Exception("Akun dinonaktifkan oleh admin kampus."))
+            }
+            Result.success(user.email ?: profile?.email ?: "")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val raw = e.message.orEmpty()
+            val message = if (
+                raw.contains("JWT", ignoreCase = true) ||
+                raw.contains("expired", ignoreCase = true) ||
+                raw.contains("invalid", ignoreCase = true)
+            ) {
+                "Tautan aktivasi atau reset password tidak valid atau sudah kedaluwarsa. Minta admin mengirim ulang tautan baru."
+            } else {
+                mapSupabaseError(e, "Gagal memverifikasi tautan pemulihan.")
+            }
+            Result.failure(Exception(message))
         }
     }
 

@@ -36,6 +36,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SplashScreen(
+    holdNavigation: Boolean = false,
     onSplashFinished: (destinationRoute: String) -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -54,7 +55,8 @@ fun SplashScreen(
     )
 
     // Timer untuk navigasi & pengecekan sesi auto-login
-    LaunchedEffect(Unit) {
+    LaunchedEffect(holdNavigation) {
+        if (holdNavigation) return@LaunchedEffect
         delay(2000)
         try {
             SupabaseConfig.client.auth.awaitInitialization()

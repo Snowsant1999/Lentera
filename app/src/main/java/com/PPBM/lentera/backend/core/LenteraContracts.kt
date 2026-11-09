@@ -279,6 +279,18 @@ fun mapSupabaseError(error: Throwable, fallback: String): String {
             "Email sudah terdaftar dalam sistem."
         msg.contains("23505") || msg.contains("duplicate key", ignoreCase = true) ->
             "Data yang sama sudah terdaftar di sistem."
+        msg.contains("Signups not allowed for otp", ignoreCase = true) ||
+            msg.contains("otp_disabled", ignoreCase = true) ->
+            "Email tidak terdaftar dalam sistem."
+        msg.contains("over_email_send_rate_limit", ignoreCase = true) ||
+            msg.contains("rate limit", ignoreCase = true) ||
+            msg.contains("you can only request this after", ignoreCase = true) ->
+            "Terlalu banyak permintaan email. Coba beberapa saat lagi."
+        msg.contains("email_address_not_authorized", ignoreCase = true) ->
+            "Alamat email belum diizinkan oleh layanan SMTP server."
+        msg.contains("otp_expired", ignoreCase = true) ||
+            msg.contains("Token has expired or is invalid", ignoreCase = true) ->
+            "Kode atau tautan verifikasi tidak valid atau sudah kedaluwarsa."
         msg.contains("nonaktif", ignoreCase = true) ->
             "Akun dinonaktifkan oleh admin kampus."
         msg.contains("Sesi login berakhir", ignoreCase = true) ||

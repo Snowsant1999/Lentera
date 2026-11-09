@@ -96,7 +96,10 @@ class AdminMahasiswaRepository {
             if (cleanEmail.isBlank()) {
                 return Result.failure(Exception("Email mahasiswa belum terdaftar."))
             }
-            client.auth.resetPasswordForEmail(cleanEmail)
+            client.auth.resetPasswordForEmail(
+                email = cleanEmail,
+                redirectUrl = SupabaseConfig.RESET_PASSWORD_REDIRECT_URL
+            )
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(Exception(mapSupabaseError(e, "Gagal mengirim ulang tautan aktivasi.")))

@@ -29,12 +29,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.admin.model.LowonganEntity
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 import com.PPBM.lentera.backend.core.*
 import com.PPBM.lentera.backend.mahasiswa.model.SubmitLamaranPayload
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.theme.*
@@ -71,7 +73,11 @@ import java.util.Locale
  * Navigation graph utama aplikasi LENTERA untuk alur autentikasi, mahasiswa, dan admin.
  */
 @Composable
-fun LenteraNavGraph(navController: NavHostController) {
+fun LenteraNavGraph(
+    navController: NavHostController,
+    pendingRecoveryUri: Uri? = null,
+    onRecoveryUriConsumed: () -> Unit = {}
+) {
     val siagaViewModel: SiagaViewModel = viewModel()
     val siagaState by siagaViewModel.uiState.collectAsState()
     val profilViewModel: ProfilViewModel = viewModel()
@@ -86,6 +92,27 @@ fun LenteraNavGraph(navController: NavHostController) {
     val navContext = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var lastPerbaikanMeta by remember { mutableStateOf(Triple("", "", "")) }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(pendingRecoveryUri) {
+        val uri = pendingRecoveryUri ?: return@LaunchedEffect
+        loginViewModel.handleRecoveryDeepLink(uri) { email ->
+            navController.navigate(Routes.resetPassword(email)) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+        onRecoveryUriConsumed()
+    }
+
+    LaunchedEffect(currentRoute, loginState.deepLinkErrorMessage) {
+        if (currentRoute == Routes.SPLASH && loginState.deepLinkErrorMessage != null) {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(Routes.SPLASH) { inclusive = true }
+            }
+        }
+    }
 
     fun showToast(msg: String, isLong: Boolean = true) {
         Toast.makeText(
@@ -351,6 +378,9 @@ fun LenteraNavGraph(navController: NavHostController) {
             exitTransition = { fadeOut(animationSpec = tween(500)) }
         ) {
             SplashScreen(
+                holdNavigation = pendingRecoveryUri != null ||
+                    loginState.isProcessingDeepLink ||
+                    loginState.deepLinkErrorMessage != null,
                 onSplashFinished = { targetRoute ->
                     navController.navigate(targetRoute) {
                         popUpTo(Routes.SPLASH) { inclusive = true }
@@ -434,13 +464,24 @@ fun LenteraNavGraph(navController: NavHostController) {
         // Reset Password Screen
         composable(
             route = Routes.RESET_PASSWORD,
-            arguments = listOf(navArgument("email") { type = NavType.StringType })
+            arguments = listOf(navArgument("email") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
         ) {
+            val navigateBackToLogin: () -> Unit = {
+                loginViewModel.logout {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
             ResetPasswordScreen(
                 isLoading = loginState.isLoading,
                 serverErrorMessage = loginState.errorMessage,
+                backLabel = "Login",
                 onClearError = { loginViewModel.clearError() },
-                onBackToVerifikasi = { navController.popBackStack() },
+                onBackToVerifikasi = navigateBackToLogin,
                 onPasswordSaved = { newPassword ->
                     loginViewModel.updatePassword(newPassword) {
                         val session = SessionManager.getInstance(navController.context)
@@ -455,15 +496,11 @@ fun LenteraNavGraph(navController: NavHostController) {
                             Routes.LOGIN
                         }
                         navController.navigate(destination) {
-                            popUpTo(Routes.LOGIN) { inclusive = true }
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 },
-                onBackToLogin = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                }
+                onBackToLogin = navigateBackToLogin
             )
         }
 
@@ -634,7 +671,9 @@ fun LenteraNavGraph(navController: NavHostController) {
                         programStudi = prodi,
                         angkatan = angkatan,
                         onError = onError,
-                        onSuccess = { _, tempPass -> onSuccess(tempPass) }
+                        onSuccess = { _, tempPass, emailSent, emailError ->
+                            onSuccess(tempPass, emailSent, emailError)
+                        }
                     )
                 },
                 onNavClick = { item -> navigateAdminTab(item) }
@@ -2514,6 +2553,16 @@ fun LenteraNavGraph(navController: NavHostController) {
             )
         }
     }
+
+    val deepLinkError = loginState.deepLinkErrorMessage
+    LenteraFeedbackDialog(
+        show = currentRoute != Routes.SPLASH && deepLinkError != null,
+        isSuccess = false,
+        title = "Tautan Pemulihan Gagal",
+        message = deepLinkError.orEmpty(),
+        onDismiss = { loginViewModel.clearDeepLinkError() },
+        buttonText = "Mengerti"
+    )
 }
 
 @Composable

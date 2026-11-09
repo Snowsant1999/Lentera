@@ -49,6 +49,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
 fun ResetPasswordScreen(
     isLoading: Boolean = false,
     serverErrorMessage: String? = null,
+    backLabel: String = "Verifikasi Pemulihan",
     onClearError: () -> Unit = {},
     onBackToVerifikasi: () -> Unit = {},
     onPasswordSaved: (String) -> Unit = {},
@@ -108,7 +109,7 @@ fun ResetPasswordScreen(
                 )
             }
             Text(
-                text = "Verifikasi Pemulihan",
+                text = backLabel,
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontFamily = plusJakarta,

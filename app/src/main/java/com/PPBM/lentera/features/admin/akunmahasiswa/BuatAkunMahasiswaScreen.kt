@@ -27,7 +27,7 @@ fun BuatAkunMahasiswaScreen(
     isSubmitting: Boolean = false,
     onBackClick: () -> Unit = {},
     onSimpanSuccess: () -> Unit = onBackClick,
-    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: (tempPassword: String) -> Unit, onError: (String) -> Unit) -> Unit)? = null,
+    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: (tempPassword: String, emailSent: Boolean, emailError: String?) -> Unit, onError: (String) -> Unit) -> Unit)? = null,
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var namaLengkap by remember { mutableStateOf("") }
@@ -128,9 +128,15 @@ fun BuatAkunMahasiswaScreen(
                                     cleanJurusan,
                                     cleanProdi,
                                     cleanAngkatan,
-                                    { tempPass ->
+                                    { tempPass, emailSent, emailError ->
                                         feedbackTitle = "Akun Mahasiswa Berhasil Dibuat"
-                                        feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dengan status Belum Aktivasi.\n\nPassword Sementara:\n$tempPass\n\nSalin dan serahkan password ini ke mahasiswa. Mahasiswa wajib mengganti password saat login pertama kali."
+                                        val emailNotice = if (emailSent) {
+                                            "Tautan aktivasi akun telah dikirim ke email $cleanEmail."
+                                        } else {
+                                            val reason = emailError?.takeIf { it.isNotBlank() } ?: "layanan email sedang bermasalah"
+                                            "Tautan aktivasi belum berhasil dikirim ke email ($reason). Kirim ulang dari menu Detail Akun."
+                                        }
+                                        feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dengan status Belum Aktivasi.\n\n$emailNotice\n\nPassword Sementara (cadangan):\n$tempPass"
                                         feedbackIsSuccess = true
                                         showFeedback = true
                                     },

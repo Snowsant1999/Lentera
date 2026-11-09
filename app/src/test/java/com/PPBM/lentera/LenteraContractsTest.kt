@@ -1,5 +1,7 @@
 package com.PPBM.lentera
 
+import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkParser
+import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkResult
 import com.PPBM.lentera.backend.core.WITA_ZONE
 import com.PPBM.lentera.backend.core.daysUntilDeadline
 import com.PPBM.lentera.backend.core.extractShortFileType
@@ -159,9 +161,84 @@ class LenteraContractsTest {
             mapSupabaseError(RuntimeException("permission denied for relation"), "fallback")
         )
         assertEquals(
+            "Email tidak terdaftar dalam sistem.",
+            mapSupabaseError(RuntimeException("Signups not allowed for otp"), "fallback")
+        )
+        assertEquals(
+            "Terlalu banyak permintaan email. Coba beberapa saat lagi.",
+            mapSupabaseError(RuntimeException("over_email_send_rate_limit"), "fallback")
+        )
+        assertEquals(
+            "Alamat email belum diizinkan oleh layanan SMTP server.",
+            mapSupabaseError(RuntimeException("email_address_not_authorized"), "fallback")
+        )
+        assertEquals(
+            "Kode atau tautan verifikasi tidak valid atau sudah kedaluwarsa.",
+            mapSupabaseError(RuntimeException("otp_expired"), "fallback")
+        )
+        assertEquals(
             "Terjadi kesalahan",
             mapSupabaseError(RuntimeException(""), "Terjadi kesalahan")
         )
+    }
+
+    @Test
+    fun recoveryDeepLinkParser_parsesValidAndInvalidUrisSafely() {
+        val valid = RecoveryDeepLinkParser.parse(
+            scheme = "lentera",
+            host = "reset-password",
+            encodedQuery = null,
+            encodedFragment = "access_token=jwt123&expires_at=1700000000&expires_in=3600&refresh_token=ref456&token_type=bearer&type=recovery"
+        )
+        assertTrue(valid is RecoveryDeepLinkResult.TokenSession)
+        val sessionResult = valid as RecoveryDeepLinkResult.TokenSession
+        assertEquals("recovery", sessionResult.type)
+        assertTrue(sessionResult.fragment.contains("access_token=jwt123"))
+
+        val expired = RecoveryDeepLinkParser.parse(
+            scheme = "lentera",
+            host = "reset-password",
+            encodedQuery = null,
+            encodedFragment = "error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired"
+        )
+        assertTrue(expired is RecoveryDeepLinkResult.Error)
+        assertEquals("otp_expired", (expired as RecoveryDeepLinkResult.Error).code)
+        assertTrue(expired.message.contains("kedaluwarsa", ignoreCase = true))
+
+        val queryError = RecoveryDeepLinkParser.parse(
+            scheme = "lentera",
+            host = "reset-password",
+            encodedQuery = "error=access_denied&error_description=Denied",
+            encodedFragment = null
+        )
+        assertTrue(queryError is RecoveryDeepLinkResult.Error)
+        assertEquals("access_denied", (queryError as RecoveryDeepLinkResult.Error).code)
+
+        val incomplete = RecoveryDeepLinkParser.parse(
+            scheme = "lentera",
+            host = "reset-password",
+            encodedQuery = null,
+            encodedFragment = "type=recovery"
+        )
+        assertTrue(incomplete is RecoveryDeepLinkResult.Error)
+        assertEquals("invalid_or_incomplete_link", (incomplete as RecoveryDeepLinkResult.Error).code)
+
+        val unsupportedType = RecoveryDeepLinkParser.parse(
+            scheme = "lentera",
+            host = "reset-password",
+            encodedQuery = null,
+            encodedFragment = "access_token=jwt123&expires_in=3600&refresh_token=ref456&token_type=bearer&type=email_change"
+        )
+        assertTrue(unsupportedType is RecoveryDeepLinkResult.Error)
+        assertEquals("unsupported_link_type", (unsupportedType as RecoveryDeepLinkResult.Error).code)
+
+        val foreignUri = RecoveryDeepLinkParser.parse(
+            scheme = "https",
+            host = "example.com",
+            encodedQuery = null,
+            encodedFragment = "access_token=jwt123"
+        )
+        assertNull(foreignUri)
     }
 
     @Test

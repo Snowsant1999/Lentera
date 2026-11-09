@@ -8,7 +8,7 @@ object Routes {
     const val LOGIN = "login"
     const val LUPA_PASSWORD = "lupa_password"
     const val VERIFIKASI_PEMULIHAN = "verifikasi_pemulihan/{email}"
-    const val RESET_PASSWORD = "reset_password/{email}"
+    const val RESET_PASSWORD = "reset_password?email={email}"
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val MAHASISWA_DASHBOARD = "mahasiswa_dashboard"
     const val SIAGA = "siaga"
@@ -82,7 +82,7 @@ object Routes {
 
     // Helper untuk route dengan argumen
     fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"
-    fun resetPassword(email: String) = "reset_password/$email"
+    fun resetPassword(email: String = "") = "reset_password?email=${android.net.Uri.encode(email)}"
     fun laporanTerkirim(nomorReferensi: String) = "laporan_terkirim?ref=$nomorReferensi"
     fun detailLaporanTracking(id: String) = "detail_laporan_tracking?id=$id"
     fun detailMagang(id: String) = "detail_magang?id=$id"

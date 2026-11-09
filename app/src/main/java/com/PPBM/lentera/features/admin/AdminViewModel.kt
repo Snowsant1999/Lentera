@@ -417,7 +417,7 @@ class AdminViewModel(
         noTelepon: String? = null,
         passwordCustom: String? = null,
         onError: (String) -> Unit = {},
-        onSuccess: (newUserId: String, tempPassword: String) -> Unit
+        onSuccess: (newUserId: String, tempPassword: String, emailSent: Boolean, emailError: String?) -> Unit
     ) {
         val tempPassword = if (!passwordCustom.isNullOrBlank() && passwordCustom != "Password123!") {
             passwordCustom
@@ -440,13 +440,20 @@ class AdminViewModel(
             )
 
             result.onSuccess { newUserId ->
+                val emailRes = adminMhsRepo.resendActivationLink(email)
+                val emailSent = emailRes.isSuccess
+                val emailError = emailRes.exceptionOrNull()?.message
                 _uiState.value = _uiState.value.copy(
                     isCreatingMahasiswa = false,
-                    actionSuccessMessage = "Akun mahasiswa $namaLengkap berhasil dibuat"
+                    actionSuccessMessage = if (emailSent) {
+                        "Akun mahasiswa $namaLengkap berhasil dibuat dan tautan aktivasi telah dikirim ke $email"
+                    } else {
+                        "Akun mahasiswa $namaLengkap berhasil dibuat, namun tautan aktivasi belum terkirim"
+                    }
                 )
                 loadMahasiswaList()
                 loadDashboardData()
-                onSuccess(newUserId, tempPassword)
+                onSuccess(newUserId, tempPassword, emailSent, emailError)
             }.onFailure { err ->
                 val msg = err.message ?: "Gagal membuat akun mahasiswa"
                 _uiState.value = _uiState.value.copy(
