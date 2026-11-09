@@ -134,11 +134,21 @@ class AuthRepository(context: Context) {
     suspend fun verifyRecoveryOtp(email: String, token: String): Result<Unit> {
         return try {
             sessionManager.clearSession()
-            client.auth.verifyEmailOtp(
-                type = OtpType.Email.EMAIL,
-                email = email.trim().lowercase(),
-                token = token.trim()
-            )
+            val cleanEmail = email.trim().lowercase()
+            val cleanToken = token.trim()
+            try {
+                client.auth.verifyEmailOtp(
+                    type = OtpType.Email.EMAIL,
+                    email = cleanEmail,
+                    token = cleanToken
+                )
+            } catch (_: Exception) {
+                client.auth.verifyEmailOtp(
+                    type = OtpType.Email.RECOVERY,
+                    email = cleanEmail,
+                    token = cleanToken
+                )
+            }
             val userId = client.auth.currentUserOrNull()?.id
             if (userId != null) {
                 val profile = runCatching {
