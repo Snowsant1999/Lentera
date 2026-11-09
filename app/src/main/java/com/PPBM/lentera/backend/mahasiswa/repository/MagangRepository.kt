@@ -6,8 +6,11 @@ import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
 import com.PPBM.lentera.backend.mahasiswa.model.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.time.Duration.Companion.minutes
 
 private const val MAX_LAMARAN_DOC_BYTES = 20L * 1024L * 1024L
@@ -201,6 +204,24 @@ class MagangRepository {
             Result.success(inserted)
         } catch (e: Exception) {
             Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah berkas lamaran.")))
+        }
+    }
+
+    /**
+     * Mengajukan kembali berkas perbaikan lamaran yang diminta admin.
+     * Mengubah status lamaran dari 'perlu_perbaikan' kembali ke 'pemeriksaan'.
+     */
+    suspend fun ajukanPerbaikanLamaran(lamaranId: String): Result<Unit> {
+        return try {
+            val rpcParams = kotlinx.serialization.json.buildJsonObject {
+                put("p_lamaran_id", lamaranId)
+            }
+            client.postgrest.rpc("mahasiswa_ajukan_perbaikan_lamaran", rpcParams)
+            Result.success(Unit)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui status perbaikan lamaran.")))
         }
     }
 

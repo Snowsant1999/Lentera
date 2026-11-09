@@ -232,6 +232,7 @@ class MagangViewModel(
             _uiState.value = _uiState.value.copy(isSubmitting = true, errorMessage = null)
             val result = magangRepo.uploadDokumenLamaran(lamaranId, jenis, fileName, fileBytes)
             result.onSuccess {
+                magangRepo.ajukanPerbaikanLamaran(lamaranId)
                 _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = null)
                 loadDetailLamaran(lamaranId)
                 loadMagangData()

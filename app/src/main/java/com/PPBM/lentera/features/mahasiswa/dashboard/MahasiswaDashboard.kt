@@ -68,7 +68,7 @@ class MahasiswaDashboard {
     fun mhsDashboard(
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
-        userName: String = "Budi Santoso",
+        userName: String = "Mahasiswa Lentera",
         totalLaporan: Int = 0,
         laporanDiperiksa: Int = 0,
         laporanSelesai: Int = 0,

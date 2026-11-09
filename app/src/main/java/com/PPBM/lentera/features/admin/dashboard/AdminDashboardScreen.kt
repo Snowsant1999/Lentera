@@ -139,7 +139,7 @@ fun AdminDashboardScreen(
 
 @Composable
 fun HeaderAdmin(
-    userName: String = "Rina Wulandari",
+    userName: String = "Admin Lentera",
     userRole: String = "Admin Kampus · LENTERA",
     onProfileClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}

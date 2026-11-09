@@ -99,9 +99,9 @@ fun AdminSiagaFlowScreen(
                         currentScreen = AdminSiagaRoute.MINTA_INFORMASI
                     }
                 },
-                onTidakDapatDiproses = {
+                onTidakDapatDiproses = { alasan ->
                     val lap = selectedLaporan ?: return@VerifikasiKelengkapanScreen
-                    onUpdateStatusLaporan(lap.id, "ditolak", null, null, "Laporan tidak dapat diproses.") {
+                    onUpdateStatusLaporan(lap.id, "ditolak", null, null, alasan) {
                         currentScreen = AdminSiagaRoute.DETAIL_LAPORAN
                     }
                 },

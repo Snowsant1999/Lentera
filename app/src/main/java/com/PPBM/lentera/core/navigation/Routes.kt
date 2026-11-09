@@ -73,10 +73,6 @@ object Routes {
     const val ADMIN_DETAIL_VALIDASI_LAMARAN = "admin_detail_validasi_lamaran"
     const val ADMIN_PROFIL = "admin_profil"
     const val ADMIN_DATA_AKUN = "admin_data_akun"
-    const val ADMIN_KEAMANAN_AKUN = "admin_keamanan_akun"
-    const val ADMIN_EMAIL_PEMULIHAN = "admin_email_pemulihan"
-    const val ADMIN_PERANGKAT_TERHUBUNG = "admin_perangkat_terhubung"
-    const val ADMIN_RIWAYAT_LOGIN = "admin_riwayat_login"
     const val ADMIN_BANTUAN = "admin_bantuan"
     const val ADMIN_NOTIFIKASI = "admin_notifikasi"
 

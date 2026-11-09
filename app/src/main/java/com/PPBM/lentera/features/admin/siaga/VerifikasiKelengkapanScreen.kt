@@ -14,13 +14,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -40,10 +47,13 @@ fun VerifikasiKelengkapanScreen(
     isUpdating: Boolean = false,
     onValidasiPenugasan: () -> Unit = {},
     onMintaInformasi: () -> Unit = {},
-    onTidakDapatDiproses: () -> Unit = {},
+    onTidakDapatDiproses: (alasan: String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var showDialogTolak by remember { mutableStateOf(false) }
+    var alasanTolak by remember { mutableStateOf("") }
+
     val nomorLaporan = laporan?.nomorLaporan ?: "-"
     val judulLaporan = laporan?.judul ?: "Memuat laporan..."
     val canAct = !isUpdating && laporan != null
@@ -185,7 +195,7 @@ fun VerifikasiKelengkapanScreen(
 
                     // Button 3: Tidak Dapat Diproses
                     OutlinedButton(
-                        onClick = onTidakDapatDiproses,
+                        onClick = { showDialogTolak = true },
                         enabled = canAct,
                         shape = RoundedCornerShape(12.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
@@ -208,6 +218,65 @@ fun VerifikasiKelengkapanScreen(
                         )
                     }
                 }
+            }
+
+            if (showDialogTolak) {
+                AlertDialog(
+                    onDismissRequest = { showDialogTolak = false },
+                    title = {
+                        Text(
+                            text = "Konfirmasi Penolakan Laporan",
+                            style = TextStyle(
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = SiagaNavyDark
+                            )
+                        )
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Masukkan alasan mengapa laporan ini tidak dapat diproses lebih lanjut:",
+                                style = TextStyle(
+                                    fontFamily = PlusJakartaFont,
+                                    fontSize = 13.sp,
+                                    color = SiagaTextSecondary
+                                )
+                            )
+                            OutlinedTextField(
+                                value = alasanTolak,
+                                onValueChange = { alasanTolak = it },
+                                placeholder = {
+                                    Text(
+                                        "Contoh: Bukti tidak mencukupi atau di luar yurisdiksi kampus.",
+                                        style = TextStyle(fontFamily = PlusJakartaFont, fontSize = 12.sp, color = Color.Gray)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 3,
+                                maxLines = 5
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val alasanFinal = alasanTolak.trim().ifBlank { "Laporan tidak dapat diproses." }
+                                showDialogTolak = false
+                                onTidakDapatDiproses(alasanFinal)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
+                        ) {
+                            Text("Tolak Laporan", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialogTolak = false }) {
+                            Text("Batal", color = SiagaNavyDark)
+                        }
+                    }
+                )
             }
 
             // Tombol Kembali

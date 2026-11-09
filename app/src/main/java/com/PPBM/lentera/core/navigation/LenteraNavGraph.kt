@@ -323,7 +323,15 @@ fun LenteraNavGraph(
         val lamaran = idArg.takeIf { it.isNotBlank() }?.let { id ->
             magangState.selectedLamaran?.takeIf { it.id == id }
                 ?: magangState.lamaranSayaList.find { it.id == id }
-        } ?: magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
+        } ?: magangState.selectedLamaran
+
+        if (lamaran == null && !magangState.isLoading && idArg.isNotBlank()) {
+            LaunchedEffect(idArg) {
+                showToast("Data lamaran tidak ditemukan.", isLong = false)
+                navController.popBackStack()
+            }
+            return
+        }
 
         val lowongan = lamaran?.let { lam ->
             magangState.lowonganList.find { it.id == lam.lowonganId }
@@ -858,44 +866,6 @@ fun LenteraNavGraph(
             )
         }
 
-        // Keamanan Akun Admin
-        composable(Routes.ADMIN_KEAMANAN_AKUN) {
-            KeamananAkunScreen(
-                onBackClick = { navController.popBackStack() },
-                onPerangkatTerhubungClick = { navController.navigate(Routes.ADMIN_PERANGKAT_TERHUBUNG) },
-                onRiwayatLoginClick = { navController.navigate(Routes.ADMIN_RIWAYAT_LOGIN) },
-                onEmailPemulihanClick = { navController.navigate(Routes.ADMIN_EMAIL_PEMULIHAN) },
-                onNavClick = { item -> navigateAdminTab(item) }
-            )
-        }
-
-        // Perangkat Terhubung
-        composable(Routes.ADMIN_PERANGKAT_TERHUBUNG) {
-            PerangkatTerhubungScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-        // Riwayat Login
-        composable(Routes.ADMIN_RIWAYAT_LOGIN) {
-            RiwayatLoginScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-        // Email Pemulihan
-        composable(Routes.ADMIN_EMAIL_PEMULIHAN) {
-            val context = LocalContext.current
-            val session = SessionManager.getInstance(context)
-            val profile = session.getProfile()
-
-            EmailPemulihanScreen(
-                currentEmail = profile?.email.orEmpty(),
-                onBackClick = { navController.popBackStack() },
-                onNavClick = { item -> navigateAdminTab(item) }
-            )
-        }
-
         // Bantuan Admin
         composable(Routes.ADMIN_BANTUAN) {
             BantuanAdminScreen(
@@ -1146,13 +1116,20 @@ fun LenteraNavGraph(
 
         // Minta Informasi Tambahan ke Pelapor
         composable(Routes.ADMIN_MINTA_INFORMASI) {
-            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            val selectedLaporan = adminState.selectedLaporan
+            if (selectedLaporan == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih laporan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             MintaInformasiScreen(
                 laporan = selectedLaporan,
                 isUpdating = adminState.isUpdatingLaporan,
                 onKirimPermintaan = { pesan ->
-                    val lapId = selectedLaporan?.id
-                    if (!lapId.isNullOrBlank()) {
+                    val lapId = selectedLaporan.id
+                    if (lapId.isNotBlank()) {
                         adminViewModel.mintaInformasi(
                             laporanId = lapId,
                             pesanKePelapor = pesan,
@@ -1170,7 +1147,14 @@ fun LenteraNavGraph(
 
         // Catatan Tindakan Laporan
         composable(Routes.ADMIN_CATATAN_TINDAKAN) {
-            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            val selectedLaporan = adminState.selectedLaporan
+            if (selectedLaporan == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih laporan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             CatatanTindakanScreen(
                 laporan = selectedLaporan,
                 logTindakanList = adminState.selectedLaporanLogs,
@@ -1178,8 +1162,8 @@ fun LenteraNavGraph(
                 isUpdating = adminState.isUpdatingLaporan,
                 onHasilPenyelesaian = { navController.navigate(Routes.ADMIN_HASIL_PENYELESAIAN) },
                 onSimpanCatatan = { catatan ->
-                    val lapId = selectedLaporan?.id
-                    if (!lapId.isNullOrBlank()) {
+                    val lapId = selectedLaporan.id
+                    if (lapId.isNotBlank()) {
                         adminViewModel.addCatatanTindakan(
                             laporanId = lapId,
                             judul = "Catatan Penanganan Admin",
@@ -1198,13 +1182,20 @@ fun LenteraNavGraph(
 
         // Penugasan Laporan
         composable(Routes.ADMIN_PENUGASAN_LAPORAN) {
-            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            val selectedLaporan = adminState.selectedLaporan
+            if (selectedLaporan == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih laporan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             PenugasanLaporanScreen(
                 laporan = selectedLaporan,
                 isUpdating = adminState.isUpdatingLaporan,
                 onSimpanPenugasan = { unit, jalur, catatan ->
-                    val lapId = selectedLaporan?.id
-                    if (!lapId.isNullOrBlank()) {
+                    val lapId = selectedLaporan.id
+                    if (lapId.isNotBlank()) {
                         adminViewModel.updateStatusLaporan(
                             laporanId = lapId,
                             status = "diproses",
@@ -1225,7 +1216,14 @@ fun LenteraNavGraph(
 
         // Hasil & Penyelesaian Laporan
         composable(Routes.ADMIN_HASIL_PENYELESAIAN) {
-            val selectedLaporan = adminState.selectedLaporan ?: adminState.semuaLaporanList.firstOrNull()
+            val selectedLaporan = adminState.selectedLaporan
+            if (selectedLaporan == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih laporan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             HasilPenyelesaianScreen(
                 laporan = selectedLaporan,
                 dokumenHasilList = adminState.selectedLaporanDokumenHasil,
@@ -1234,8 +1232,8 @@ fun LenteraNavGraph(
                     openSignedUrl { adminViewModel.getSignedUrl("dokumen-hasil", doc.filePath) }
                 },
                 onSimpanDanSelesaikan = { ringkasan, isBagikan ->
-                    val lapId = selectedLaporan?.id
-                    if (!lapId.isNullOrBlank()) {
+                    val lapId = selectedLaporan.id
+                    if (lapId.isNotBlank()) {
                         adminViewModel.selesaikanLaporan(
                             laporanId = lapId,
                             hasilPenanganan = ringkasan.ifBlank {
@@ -1814,10 +1812,15 @@ fun LenteraNavGraph(
             LaporanTerkirimScreen(
                 nomorReferensi = finalRef,
                 onLihatStatusClick = {
-                    val targetId = siagaState.submitSuccessLaporanId
-                        ?: siagaState.laporanList.firstOrNull()?.id.orEmpty()
-                    navController.navigate(Routes.detailLaporanTracking(targetId)) {
-                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    val targetId = siagaState.submitSuccessLaporanId.orEmpty()
+                    if (targetId.isNotBlank()) {
+                        navController.navigate(Routes.detailLaporanTracking(targetId)) {
+                            popUpTo(Routes.SIAGA) { inclusive = false }
+                        }
+                    } else {
+                        navController.navigate(Routes.SIAGA) {
+                            popUpTo(Routes.SIAGA) { inclusive = true }
+                        }
                     }
                 },
                 onKembaliKeBerandaClick = {
@@ -1833,10 +1836,15 @@ fun LenteraNavGraph(
             LaporanTerkirimScreen(
                 nomorReferensi = siagaState.submitSuccessNomorLaporan ?: "-",
                 onLihatStatusClick = {
-                    val targetId = siagaState.submitSuccessLaporanId
-                        ?: siagaState.laporanList.firstOrNull()?.id.orEmpty()
-                    navController.navigate(Routes.detailLaporanTracking(targetId)) {
-                        popUpTo(Routes.SIAGA) { inclusive = false }
+                    val targetId = siagaState.submitSuccessLaporanId.orEmpty()
+                    if (targetId.isNotBlank()) {
+                        navController.navigate(Routes.detailLaporanTracking(targetId)) {
+                            popUpTo(Routes.SIAGA) { inclusive = false }
+                        }
+                    } else {
+                        navController.navigate(Routes.SIAGA) {
+                            popUpTo(Routes.SIAGA) { inclusive = true }
+                        }
                     }
                 },
                 onKembaliKeBerandaClick = {
@@ -1856,14 +1864,26 @@ fun LenteraNavGraph(
             })
         ) { backStackEntry ->
             val idArg = backStackEntry.arguments?.getString("id").orEmpty()
-            val targetId = idArg.ifBlank { siagaState.laporanList.firstOrNull()?.id.orEmpty() }
-            RenderDetailLaporanTracking(targetId = targetId)
+            if (idArg.isBlank()) {
+                LaunchedEffect(Unit) {
+                    showToast("ID laporan tidak ditemukan.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            RenderDetailLaporanTracking(targetId = idArg)
         }
 
         // Fallback route lama tanpa query
         composable(Routes.DETAIL_LAPORAN_TRACKING) {
-            val targetId = siagaState.detailLaporan?.id
-                ?: siagaState.laporanList.firstOrNull()?.id.orEmpty()
+            val targetId = siagaState.detailLaporan?.id.orEmpty()
+            if (targetId.isBlank()) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih laporan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             RenderDetailLaporanTracking(targetId = targetId)
         }
 
@@ -2231,14 +2251,26 @@ fun LenteraNavGraph(
             })
         ) { backStackEntry ->
             val idArg = backStackEntry.arguments?.getString("id").orEmpty()
-            val targetId = idArg.ifBlank { magangState.lowonganList.firstOrNull()?.id.orEmpty() }
-            RenderDetailMagang(targetId = targetId)
+            if (idArg.isBlank()) {
+                LaunchedEffect(Unit) {
+                    showToast("ID lowongan tidak ditemukan.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            RenderDetailMagang(targetId = idArg)
         }
 
         // Fallback route lama tanpa query
         composable(Routes.DETAIL_MAGANG) {
-            val targetId = magangState.selectedLowongan?.id
-                ?: magangState.lowonganList.firstOrNull()?.id.orEmpty()
+            val targetId = magangState.selectedLowongan?.id.orEmpty()
+            if (targetId.isBlank()) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lowongan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
             RenderDetailMagang(targetId = targetId)
         }
 
@@ -2249,9 +2281,16 @@ fun LenteraNavGraph(
             }
 
             val lowongan = magangState.selectedLowongan
-            val posisi = lowongan?.posisi ?: "Lowongan Magang"
-            val perusahaan = lowongan?.namaPerusahaan ?: "Mitra Perusahaan"
-            val targetLowonganId = lowongan?.id ?: magangState.lowonganList.firstOrNull()?.id.orEmpty()
+            if (lowongan == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lowongan terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            val posisi = lowongan.posisi
+            val perusahaan = lowongan.namaPerusahaan
+            val targetLowonganId = lowongan.id.orEmpty()
 
             val session = SessionManager.getInstance(navController.context)
             val mhsProfile = profilState.profile ?: session.getProfile()
@@ -2296,8 +2335,7 @@ fun LenteraNavGraph(
                 },
                 onCekStatusLamaran = {
                     val latestId = magangState.lamaranSayaList
-                        .firstOrNull { it.lowonganId == targetLowonganId }?.id
-                        ?: magangState.lamaranSayaList.firstOrNull()?.id.orEmpty()
+                        .firstOrNull { it.lowonganId == targetLowonganId }?.id.orEmpty()
                     val dest = if (latestId.isNotBlank()) Routes.statusLamaran(latestId) else Routes.LAMARAN_SAYA
                     navController.navigate(dest) {
                         popUpTo(Routes.MAGANG) { inclusive = false }
@@ -2359,8 +2397,15 @@ fun LenteraNavGraph(
 
         // Informasi Penerimaan Sementara
         composable(Routes.INFORMASI_PENERIMAAN) {
-            val lamaran = magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
-            val lowongan = lamaran?.let { lam -> magangState.lowonganList.find { it.id == lam.lowonganId } }
+            val lamaran = magangState.selectedLamaran
+            if (lamaran == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lamaran terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            val lowongan = magangState.lowonganList.find { it.id == lamaran.lowonganId }
             InformasiPenerimaanScreen(
                 lamaran = lamaran,
                 lowongan = lowongan,
@@ -2370,8 +2415,15 @@ fun LenteraNavGraph(
 
         // Informasi Penerimaan Final
         composable(Routes.INFORMASI_PENERIMAAN_FINAL) {
-            val lamaran = magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
-            val lowongan = lamaran?.let { lam -> magangState.lowonganList.find { it.id == lam.lowonganId } }
+            val lamaran = magangState.selectedLamaran
+            if (lamaran == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lamaran terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            val lowongan = magangState.lowonganList.find { it.id == lamaran.lowonganId }
             InformasiPenerimaanScreen(
                 lamaran = lamaran,
                 lowongan = lowongan,
@@ -2381,16 +2433,23 @@ fun LenteraNavGraph(
 
         // Perbaikan Dokumen (Perbaikan Dokumen.png)
         composable(Routes.PERBAIKAN_DOKUMEN) {
-            val lamaran = magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
-            val lowongan = lamaran?.let { lam -> magangState.lowonganList.find { it.id == lam.lowonganId } }
+            val lamaran = magangState.selectedLamaran
+            if (lamaran == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lamaran terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            val lowongan = magangState.lowonganList.find { it.id == lamaran.lowonganId }
 
             PerbaikanDokumenScreen(
                 perusahaan = lowongan?.namaPerusahaan.orEmpty(),
-                catatanRevisi = lamaran?.catatanAdmin.orEmpty(),
+                catatanRevisi = lamaran.catatanAdmin.orEmpty(),
                 isSubmitting = magangState.isSubmitting,
                 onBackClick = { navController.popBackStack() },
                 onSubmitPerbaikan = { jenis, fileName, fileBytes, onError, onSuccess ->
-                    val lamId = lamaran?.id.orEmpty()
+                    val lamId = lamaran.id
                     magangViewModel.uploadPerbaikanDokumen(
                         lamaranId = lamId,
                         jenis = jenis,
@@ -2411,8 +2470,15 @@ fun LenteraNavGraph(
 
         // Perbaikan Dokumen Terkirim (Perbaikan Terkirim.png)
         composable(Routes.PERBAIKAN_TERKIRIM) {
-            val lamaran = magangState.selectedLamaran ?: magangState.lamaranSayaList.firstOrNull()
-            val lowongan = lamaran?.let { lam -> magangState.lowonganList.find { it.id == lam.lowonganId } }
+            val lamaran = magangState.selectedLamaran
+            if (lamaran == null) {
+                LaunchedEffect(Unit) {
+                    showToast("Pilih lamaran terlebih dahulu.", isLong = false)
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            val lowongan = magangState.lowonganList.find { it.id == lamaran.lowonganId }
 
             PerbaikanTerkirimScreen(
                 perusahaan = lowongan?.namaPerusahaan.orEmpty(),

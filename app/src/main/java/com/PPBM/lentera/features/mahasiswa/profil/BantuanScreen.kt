@@ -412,7 +412,7 @@ fun BantuanScreen(
                 }
 
                 Text(
-                    text = "Senin-Jumat · 08.00–16.00 WIB",
+                    text = "Senin-Jumat · 08.00–16.00 WITA",
                     fontFamily = PlusJakartaSans,
                     fontWeight = FontWeight.Normal,
                     fontSize = 12.sp,
@@ -572,7 +572,7 @@ private fun DukunganDialog(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 DukunganItem(label = "WhatsApp Helpdesk", value = "+62 812-3456-7890")
                 DukunganItem(label = "Email Layanan", value = "bantuan@lentera.ac.id")
-                DukunganItem(label = "Jam Layanan", value = "Senin - Jumat (08.00 - 16.00 WIB)")
+                DukunganItem(label = "Jam Layanan", value = "Senin - Jumat (08.00 - 16.00 WITA)")
             }
 
             Button(

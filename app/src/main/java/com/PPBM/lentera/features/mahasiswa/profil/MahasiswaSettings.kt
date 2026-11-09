@@ -62,7 +62,7 @@ class MahasiswaSettings {
     fun mhsProfilScreen(
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
-        namaLengkap: String = "Budi Santoso",
+        namaLengkap: String = "Mahasiswa Lentera",
         nim: String = "2024010001",
         kampusProdi: String = "Universitas Lentera - Teknik Informatika",
         statusAkun: String = "Mahasiswa aktif",

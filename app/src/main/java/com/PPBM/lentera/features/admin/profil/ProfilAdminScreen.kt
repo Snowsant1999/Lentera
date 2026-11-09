@@ -51,7 +51,7 @@ private val SampleMenuProfil = listOf(
 
 @Composable
 fun ProfilAdminScreen(
-    nama: String = "Rina Wulandari",
+    nama: String = "Admin Lentera",
     peran: String = "NIP. 198803152015042001 · Admin Kampus",
     badge: String = "Admin aktif",
     versi: String = "1.0.0",
