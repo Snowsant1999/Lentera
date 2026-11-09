@@ -139,22 +139,36 @@ fun LenteraNavGraph(
 
     fun navigateAdminTab(item: LenteraNavItem, current: LenteraNavItem? = null) {
         if (item == current) return
-        when (item) {
-            LenteraNavItem.BERANDA -> navController.navigate(Routes.ADMIN_DASHBOARD)
-            LenteraNavItem.MAHASISWA -> navController.navigate(Routes.ADMIN_MAHASISWA)
-            LenteraNavItem.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
-            LenteraNavItem.MAGANG -> navController.navigate(Routes.ADMIN_MAGANG)
-            LenteraNavItem.PROFIL -> navController.navigate(Routes.ADMIN_PROFIL)
+        val destination = when (item) {
+            LenteraNavItem.BERANDA -> Routes.ADMIN_DASHBOARD
+            LenteraNavItem.MAHASISWA -> Routes.ADMIN_MAHASISWA
+            LenteraNavItem.LAPORAN -> Routes.ADMIN_SIAGA
+            LenteraNavItem.MAGANG -> Routes.ADMIN_MAGANG
+            LenteraNavItem.PROFIL -> Routes.ADMIN_PROFIL
+        }
+        navController.navigate(destination) {
+            popUpTo(Routes.ADMIN_DASHBOARD) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
     fun navigateMahasiswaTab(tab: LenteraTab, current: LenteraTab? = null) {
         if (tab == current) return
-        when (tab) {
-            LenteraTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
-            LenteraTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
-            LenteraTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
-            LenteraTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+        val destination = when (tab) {
+            LenteraTab.BERANDA -> Routes.MAHASISWA_DASHBOARD
+            LenteraTab.PENGADUAN -> Routes.SIAGA
+            LenteraTab.MAGANG_HUB -> Routes.MAGANG
+            LenteraTab.PROFIL -> Routes.MAHASISWA_PROFIL
+        }
+        navController.navigate(destination) {
+            popUpTo(Routes.MAHASISWA_DASHBOARD) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -351,32 +365,80 @@ fun LenteraNavGraph(
         )
     }
 
+    val bottomBarRoutes = remember {
+        setOf(
+            Routes.MAHASISWA_DASHBOARD,
+            Routes.SIAGA,
+            Routes.MAGANG,
+            Routes.MAHASISWA_PROFIL,
+            Routes.ADMIN_DASHBOARD,
+            Routes.ADMIN_MAHASISWA,
+            Routes.ADMIN_SIAGA,
+            Routes.ADMIN_MAGANG,
+            Routes.ADMIN_PROFIL
+        )
+    }
+
+    fun isBottomBarDestination(route: String?): Boolean {
+        if (route == null) return false
+        val baseRoute = route.substringBefore('?').substringBefore('/')
+        return baseRoute in bottomBarRoutes || route in bottomBarRoutes
+    }
+
     NavHost(
         navController = navController,
         startDestination = Routes.SPLASH,
         enterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(300)
-            ) + fadeIn(animationSpec = tween(300))
+            val initial = initialState.destination.route
+            val target = targetState.destination.route
+            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
+                fadeIn(animationSpec = tween(200))
+            } else {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            }
         },
         exitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(300)
-            ) + fadeOut(animationSpec = tween(300))
+            val initial = initialState.destination.route
+            val target = targetState.destination.route
+            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
+                fadeOut(animationSpec = tween(200))
+            } else if (isBottomBarDestination(initial)) {
+                fadeOut(animationSpec = tween(250))
+            } else {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            }
         },
         popEnterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(300)
-            ) + fadeIn(animationSpec = tween(300))
+            val initial = initialState.destination.route
+            val target = targetState.destination.route
+            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
+                fadeIn(animationSpec = tween(200))
+            } else if (isBottomBarDestination(target)) {
+                fadeIn(animationSpec = tween(250))
+            } else {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            }
         },
         popExitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(300)
-            ) + fadeOut(animationSpec = tween(300))
+            val initial = initialState.destination.route
+            val target = targetState.destination.route
+            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
+                fadeOut(animationSpec = tween(200))
+            } else {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            }
         }
     ) {
         // Splash Screen
@@ -1655,9 +1717,9 @@ fun LenteraNavGraph(
                 onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onNavTabClick = { tab ->
                     when (tab) {
-                        SiagaNavTab.MAGANG_HUB -> navController.navigate(Routes.MAGANG)
-                        SiagaNavTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
-                        SiagaNavTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                        SiagaNavTab.MAGANG_HUB -> navigateMahasiswaTab(LenteraTab.MAGANG_HUB, LenteraTab.PENGADUAN)
+                        SiagaNavTab.BERANDA -> navigateMahasiswaTab(LenteraTab.BERANDA, LenteraTab.PENGADUAN)
+                        SiagaNavTab.PROFIL -> navigateMahasiswaTab(LenteraTab.PROFIL, LenteraTab.PENGADUAN)
                         SiagaNavTab.PENGADUAN -> {}
                     }
                 }
@@ -2194,9 +2256,9 @@ fun LenteraNavGraph(
                 onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
                 onNavTabClick = { tab ->
                     when (tab) {
-                        MagangNavTab.PENGADUAN -> navController.navigate(Routes.SIAGA)
-                        MagangNavTab.BERANDA -> navController.navigate(Routes.MAHASISWA_DASHBOARD)
-                        MagangNavTab.PROFIL -> navController.navigate(Routes.MAHASISWA_PROFIL)
+                        MagangNavTab.PENGADUAN -> navigateMahasiswaTab(LenteraTab.PENGADUAN, LenteraTab.MAGANG_HUB)
+                        MagangNavTab.BERANDA -> navigateMahasiswaTab(LenteraTab.BERANDA, LenteraTab.MAGANG_HUB)
+                        MagangNavTab.PROFIL -> navigateMahasiswaTab(LenteraTab.PROFIL, LenteraTab.MAGANG_HUB)
                         MagangNavTab.MAGANG_HUB -> {}
                     }
                 }
