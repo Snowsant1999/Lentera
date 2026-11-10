@@ -62,10 +62,24 @@ fun ProfilAdminScreen(
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUri = uri
+        if (uri != null) {
+            rawUriToCrop = uri
+        }
+    }
+
+    if (rawUriToCrop != null) {
+        ProfilePhotoCropDialog(
+            sourceUri = rawUriToCrop!!,
+            onDismiss = { rawUriToCrop = null },
+            onCropSuccess = { croppedUri, _ ->
+                imageUri = croppedUri
+                rawUriToCrop = null
+            }
+        )
     }
 
     Scaffold(

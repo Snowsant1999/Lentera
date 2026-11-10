@@ -18,11 +18,10 @@ class MainActivity : ComponentActivity() {
     private var pendingRecoveryUri by mutableStateOf<Uri?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        // Menyerahkan null agar Android tidak memulihkan bundle navigasi lama saat dibuka kembali dari Recent Apps
+        super.onCreate(null)
         enableEdgeToEdge()
-        if (savedInstanceState == null) {
-            pendingRecoveryUri = extractRecoveryUri(intent)
-        }
+        pendingRecoveryUri = extractRecoveryUri(intent)
         setContent {
             LenteraTheme {
                 val navController = rememberNavController()

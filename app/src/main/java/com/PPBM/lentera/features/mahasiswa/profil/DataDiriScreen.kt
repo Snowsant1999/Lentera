@@ -53,6 +53,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
+import com.PPBM.lentera.core.designsystem.components.ProfilePhotoCropDialog
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
@@ -75,7 +76,7 @@ fun DataDiriScreen(
     onPhotoUpdated: (Uri?) -> Unit = {},
     initialNama: String = "",
     onNamaUpdated: (String) -> Unit = {},
-    onSimpanDataDiri: (nama: String, noTelepon: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, onSuccess, _ -> onSuccess() }
+    onSimpanDataDiri: (nama: String, noTelepon: String, photoBytes: ByteArray?, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, _, onSuccess, _ -> onSuccess() }
 ) {
     val scrollState = rememberScrollState()
 
@@ -170,6 +171,7 @@ fun DataDiriScreen(
             ) {
                 ProfileAvatarImage(
                     photoUri = photoUri,
+                    photoUrl = userProfile?.fotoProfilUrl,
                     modifier = Modifier.size(60.dp)
                 )
 
@@ -353,12 +355,14 @@ fun DataDiriScreen(
             currentEmail = email,
             currentTelepon = nomorTelepon,
             currentPhotoUri = photoUri,
+            currentPhotoUrl = userProfile?.fotoProfilUrl,
             onDismiss = { showEditDialog = false },
-            onSave = { newNama, _, newTelepon, newPhotoUri ->
+            onSave = { newNama, _, newTelepon, newPhotoUri, photoBytes ->
                 val cleanedPhone = if (newTelepon == "Belum ditambahkan") "" else newTelepon
                 onSimpanDataDiri(
                     newNama,
                     cleanedPhone,
+                    photoBytes,
                     {
                         namaLengkap = newNama
                         onNamaUpdated(newNama)
@@ -399,13 +403,16 @@ private fun UbahDataDiriDialog(
     currentEmail: String,
     currentTelepon: String,
     currentPhotoUri: Uri?,
+    currentPhotoUrl: String? = null,
     onDismiss: () -> Unit,
-    onSave: (nama: String, email: String, telepon: String, photoUri: Uri?) -> Unit
+    onSave: (nama: String, email: String, telepon: String, photoUri: Uri?, photoBytes: ByteArray?) -> Unit
 ) {
     var tempNama by remember { mutableStateOf(currentNama) }
     var tempEmail by remember { mutableStateOf(if (currentEmail == "Belum ditambahkan") "" else currentEmail) }
     var tempTelepon by remember { mutableStateOf(if (currentTelepon == "Belum ditambahkan") "" else currentTelepon) }
     var tempPhotoUri by remember { mutableStateOf(currentPhotoUri) }
+    var croppedBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
 
     var showValidationError by remember { mutableStateOf(false) }
     var validationErrorTitle by remember { mutableStateOf("") }
@@ -415,8 +422,20 @@ private fun UbahDataDiriDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            tempPhotoUri = uri
+            rawUriToCrop = uri
         }
+    }
+
+    if (rawUriToCrop != null) {
+        ProfilePhotoCropDialog(
+            sourceUri = rawUriToCrop!!,
+            onDismiss = { rawUriToCrop = null },
+            onCropSuccess = { croppedUri, bytes ->
+                tempPhotoUri = croppedUri
+                croppedBytes = bytes
+                rawUriToCrop = null
+            }
+        )
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -449,6 +468,7 @@ private fun UbahDataDiriDialog(
                     // Preview avatar/foto bulat
                     ProfileAvatarImage(
                         photoUri = tempPhotoUri,
+                        photoUrl = currentPhotoUrl,
                         modifier = Modifier
                             .size(84.dp)
                             .clip(CircleShape)
@@ -649,7 +669,8 @@ private fun UbahDataDiriDialog(
                             cleanedNama,
                             if (cleanedEmail.isEmpty()) "Belum ditambahkan" else cleanedEmail,
                             if (cleanedPhone.isEmpty()) "Belum ditambahkan" else tempTelepon.trim(),
-                            tempPhotoUri
+                            tempPhotoUri,
+                            croppedBytes
                         )
                     },
                     modifier = Modifier

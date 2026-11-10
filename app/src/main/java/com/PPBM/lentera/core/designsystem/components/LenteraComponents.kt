@@ -209,7 +209,8 @@ fun ProfileAvatar(
     size: Dp = 42.dp,
     containerColor: Color = Color.Unspecified,
     iconTint: Color = Color.Unspecified,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    avatarUrl: String? = null
 ) {
     val actualBg = if (containerColor != Color.Unspecified) containerColor else LenteraColors.Background
     Box(
@@ -219,14 +220,27 @@ fun ProfileAvatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        androidx.compose.foundation.Image(
-            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
-            contentDescription = "Avatar",
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        )
+        if (!avatarUrl.isNullOrBlank()) {
+            coil.compose.AsyncImage(
+                model = avatarUrl,
+                placeholder = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                error = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                contentDescription = "Avatar",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        } else {
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                contentDescription = "Avatar",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        }
     }
 }
 

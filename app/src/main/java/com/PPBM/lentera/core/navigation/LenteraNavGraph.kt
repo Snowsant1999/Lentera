@@ -7,6 +7,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -148,10 +151,10 @@ fun LenteraNavGraph(
         }
         navController.navigate(destination) {
             popUpTo(Routes.ADMIN_DASHBOARD) {
-                saveState = true
+                saveState = false
             }
             launchSingleTop = true
-            restoreState = true
+            restoreState = false
         }
     }
 
@@ -165,10 +168,10 @@ fun LenteraNavGraph(
         }
         navController.navigate(destination) {
             popUpTo(Routes.MAHASISWA_DASHBOARD) {
-                saveState = true
+                saveState = false
             }
             launchSingleTop = true
-            restoreState = true
+            restoreState = false
         }
     }
 
@@ -392,52 +395,53 @@ fun LenteraNavGraph(
             val initial = initialState.destination.route
             val target = targetState.destination.route
             if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(200))
+                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) +
+                        scaleIn(initialScale = 0.98f, animationSpec = tween(220, easing = LinearOutSlowInEasing))
             } else {
                 slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(300)
-                ) + fadeIn(animationSpec = tween(300))
+                    initialOffsetX = { fullWidth -> (fullWidth * 0.35f).toInt() },
+                    animationSpec = tween(340, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(340, easing = FastOutSlowInEasing))
             }
         },
         exitTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
             if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeOut(animationSpec = tween(200))
+                fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
             } else if (isBottomBarDestination(initial)) {
-                fadeOut(animationSpec = tween(250))
+                fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing))
             } else {
                 slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(300)
-                ) + fadeOut(animationSpec = tween(300))
+                    targetOffsetX = { fullWidth -> -(fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(340, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing))
             }
         },
         popEnterTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
             if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(200))
+                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing))
             } else if (isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(250))
+                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing))
             } else {
                 slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(300)
-                ) + fadeIn(animationSpec = tween(300))
+                    initialOffsetX = { fullWidth -> -(fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(340, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(340, easing = FastOutSlowInEasing))
             }
         },
         popExitTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
             if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeOut(animationSpec = tween(200))
+                fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
             } else {
                 slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(300)
-                ) + fadeOut(animationSpec = tween(300))
+                    targetOffsetX = { fullWidth -> (fullWidth * 0.35f).toInt() },
+                    animationSpec = tween(340, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing))
             }
         }
     ) {
@@ -587,6 +591,7 @@ fun LenteraNavGraph(
             }
 
             MahasiswaDashboard().mhsDashboard(
+                photoUrl = profile?.fotoProfilUrl,
                 userName = profile?.namaLengkap?.ifBlank { "Mahasiswa" } ?: "Mahasiswa",
                 totalLaporan = dashboardState.totalLaporan,
                 laporanDiperiksa = dashboardState.laporanDiperiksa,
@@ -596,15 +601,15 @@ fun LenteraNavGraph(
                 aktivitasList = dashboardState.aktivitasTerbaru,
                 lowonganList = dashboardState.rekomendasiLowongan,
                 onTabSelected = { tab -> navigateMahasiswaTab(tab, LenteraTab.BERANDA) },
-                onProfileClick = { navController.navigate(Routes.MAHASISWA_PROFIL) },
+                onProfileClick = { navigateMahasiswaTab(LenteraTab.PROFIL, LenteraTab.BERANDA) },
                 onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
-                onSiagaClick = { navController.navigate(Routes.SIAGA) },
-                onMagangClick = { navController.navigate(Routes.MAGANG) },
-                onAktivitasLihatSemuaClick = { navController.navigate(Routes.SIAGA) },
+                onSiagaClick = { navigateMahasiswaTab(LenteraTab.PENGADUAN, LenteraTab.BERANDA) },
+                onMagangClick = { navigateMahasiswaTab(LenteraTab.MAGANG_HUB, LenteraTab.BERANDA) },
+                onAktivitasLihatSemuaClick = { navigateMahasiswaTab(LenteraTab.PENGADUAN, LenteraTab.BERANDA) },
                 onAktivitasItemClick = { laporanId ->
                     navController.navigate(Routes.detailLaporanTracking(laporanId))
                 },
-                onLowonganLihatSemuaClick = { navController.navigate(Routes.MAGANG) },
+                onLowonganLihatSemuaClick = { navigateMahasiswaTab(LenteraTab.MAGANG_HUB, LenteraTab.BERANDA) },
                 onLowonganItemClick = { lowonganId ->
                     navController.navigate(Routes.detailMagang(lowonganId))
                 }
@@ -712,7 +717,12 @@ fun LenteraNavGraph(
                     "lulus" -> "Lulus"
                     else -> "Belum Aktivasi"
                 }
-                Triple(mhs.namaLengkap, mhs.nim ?: "-", statusStr)
+                com.PPBM.lentera.features.admin.akunmahasiswa.StudentItem(
+                    name = mhs.namaLengkap,
+                    rawNim = mhs.nim ?: "-",
+                    status = statusStr,
+                    photoUrl = mhs.fotoProfilUrl
+                )
             }
 
             AdminMahasiswaScreen(
@@ -791,7 +801,8 @@ fun LenteraNavGraph(
                     nama = mhs.namaLengkap,
                     nim = mhs.nim ?: "-",
                     prodi = mhs.programStudi?.ifBlank { "-" } ?: "-",
-                    status = statusEnum
+                    status = statusEnum,
+                    fotoProfilUrl = mhs.fotoProfilUrl
                 )
             } else {
                 Mahasiswa(
@@ -1446,6 +1457,7 @@ fun LenteraNavGraph(
         // Daftar Lowongan Admin
         composable(Routes.ADMIN_DAFTAR_LOWONGAN) {
             LaunchedEffect(Unit) {
+                adminViewModel.loadTempatMagangList()
                 adminViewModel.loadLowonganAdminList()
             }
 
@@ -1740,6 +1752,9 @@ fun LenteraNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onUbahKategoriClick = { navController.popBackStack() },
                 onKembaliKeKategoriClick = { navController.popBackStack() },
+                onKategoriSelected = { selected ->
+                    siagaViewModel.setKategoriByName(selected)
+                },
                 onLanjutKeBuktiClick = { data ->
                     siagaViewModel.updateFormData(
                         judul = data.judul,
@@ -2606,13 +2621,29 @@ fun LenteraNavGraph(
             DataDiriScreen(
                 userProfile = profilState.profile,
                 onBackClick = { navController.popBackStack() },
-                onSimpanDataDiri = { nama, telp, onSuccess, onError ->
-                    profilViewModel.updateProfil(
-                        namaLengkap = nama,
-                        noTelepon = telp,
-                        onError = onError,
-                        onSuccess = onSuccess
-                    )
+                onSimpanDataDiri = { nama, telp, photoBytes, onSuccess, onError ->
+                    if (photoBytes != null) {
+                        profilViewModel.uploadFotoProfil(
+                            fileBytes = photoBytes,
+                            onError = onError,
+                            onSuccess = { newUrl ->
+                                profilViewModel.updateProfil(
+                                    namaLengkap = nama,
+                                    noTelepon = telp,
+                                    fotoProfilUrl = newUrl,
+                                    onError = onError,
+                                    onSuccess = onSuccess
+                                )
+                            }
+                        )
+                    } else {
+                        profilViewModel.updateProfil(
+                            namaLengkap = nama,
+                            noTelepon = telp,
+                            onError = onError,
+                            onSuccess = onSuccess
+                        )
+                    }
                 },
                 onTabSelected = { tab -> navigateMahasiswaTab(tab) }
             )

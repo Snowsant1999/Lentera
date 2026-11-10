@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.components.LenteraNotificationBell
 import com.PPBM.lentera.core.designsystem.theme.*
 
 data class DashboardLaporanItem(
@@ -208,20 +209,11 @@ fun HeaderAdmin(
         }
 
         // Bagian Lonceng Notifikasi (Disamakan dengan Mahasiswa Dashboard)
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onNotificationClick)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_bell_outline),
-                contentDescription = "Notifikasi",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        LenteraNotificationBell(
+            hasUnread = true,
+            onClick = onNotificationClick,
+            tint = Color.White
+        )
     }
 }
 

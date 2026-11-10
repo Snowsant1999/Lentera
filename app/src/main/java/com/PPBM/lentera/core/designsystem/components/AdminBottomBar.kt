@@ -1,5 +1,9 @@
 package com.PPBM.lentera.core.designsystem.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,17 +16,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -83,6 +90,23 @@ fun AdminBottomBar(
 
                 val interactionSource = remember { MutableInteractionSource() }
 
+                val offsetY by animateDpAsState(
+                    targetValue = if (isSelected) (-4).dp else 0.dp,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    ),
+                    label = "adminTabOffsetY"
+                )
+                val scale by animateFloatAsState(
+                    targetValue = if (isSelected) 1.05f else 1.0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    ),
+                    label = "adminTabScale"
+                )
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -91,10 +115,15 @@ fun AdminBottomBar(
                     contentAlignment = Alignment.Center
                 ) {
                     if (isSelected) {
-                        // Pill Aktif Admin (desain & ukuran harmonis dengan Mahasiswa)
+                        // Pill Aktif Admin (desain & ukuran harmonis dengan efek pop-up)
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .offset(y = offsetY)
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
                                 .clip(RoundedCornerShape(18.dp))
                                 .background(activeBgColor)
                                 .clickable(

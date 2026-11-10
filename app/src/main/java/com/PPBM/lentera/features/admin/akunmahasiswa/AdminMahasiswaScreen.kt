@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
@@ -32,9 +33,16 @@ import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.core.designsystem.theme.*
 
+data class StudentItem(
+    val name: String,
+    val rawNim: String,
+    val status: String,
+    val photoUrl: String? = null
+)
+
 @Composable
 fun AdminMahasiswaScreen(
-    studentList: List<Triple<String, String, String>> = emptyList(),
+    studentList: List<StudentItem> = emptyList(),
     onNavigateToBuatAkun: () -> Unit = {},
     onNavigateToDetail: (nim: String) -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
@@ -45,10 +53,10 @@ fun AdminMahasiswaScreen(
     val actualList = studentList
 
     val totalAll = actualList.size
-    val totalAktif = actualList.count { it.third.equals("Aktif", ignoreCase = true) }
-    val totalBelum = actualList.count { it.third.contains("Belum", ignoreCase = true) }
-    val totalNonaktif = actualList.count { it.third.equals("Nonaktif", ignoreCase = true) }
-    val totalLulus = actualList.count { it.third.equals("Lulus", ignoreCase = true) }
+    val totalAktif = actualList.count { it.status.equals("Aktif", ignoreCase = true) }
+    val totalBelum = actualList.count { it.status.contains("Belum", ignoreCase = true) }
+    val totalNonaktif = actualList.count { it.status.equals("Nonaktif", ignoreCase = true) }
+    val totalLulus = actualList.count { it.status.equals("Lulus", ignoreCase = true) }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -149,21 +157,21 @@ fun TabsMahasiswaDynamic(
 
 @Composable
 fun ListMahasiswaDynamic(
-    students: List<Triple<String, String, String>>,
+    students: List<StudentItem>,
     searchQuery: String = "",
     selectedFilter: String = "Semua",
     onItemClick: (nim: String) -> Unit = {}
 ) {
-    val filtered = students.filter { (name, rawNim, status) ->
+    val filtered = students.filter { item ->
         val matchesSearch = searchQuery.isBlank() ||
-                name.contains(searchQuery, ignoreCase = true) ||
-                rawNim.contains(searchQuery, ignoreCase = true)
+                item.name.contains(searchQuery, ignoreCase = true) ||
+                item.rawNim.contains(searchQuery, ignoreCase = true)
         val matchesTab = when {
             selectedFilter.startsWith("Semua") -> true
-            selectedFilter.startsWith("Aktif") -> status.equals("Aktif", ignoreCase = true)
-            selectedFilter.startsWith("Belum") -> status.contains("Belum", ignoreCase = true)
-            selectedFilter.startsWith("Nonaktif") -> status.equals("Nonaktif", ignoreCase = true)
-            selectedFilter.startsWith("Lulus") -> status.equals("Lulus", ignoreCase = true)
+            selectedFilter.startsWith("Aktif") -> item.status.equals("Aktif", ignoreCase = true)
+            selectedFilter.startsWith("Belum") -> item.status.contains("Belum", ignoreCase = true)
+            selectedFilter.startsWith("Nonaktif") -> item.status.equals("Nonaktif", ignoreCase = true)
+            selectedFilter.startsWith("Lulus") -> item.status.equals("Lulus", ignoreCase = true)
             else -> true
         }
         matchesSearch && matchesTab
@@ -193,21 +201,22 @@ fun ListMahasiswaDynamic(
             }
         } else {
             items(filtered.size) { index ->
-                val (name, rawNim, status) = filtered[index]
-                val formattedNim = if (rawNim.startsWith("NIM:")) rawNim else "NIM: $rawNim"
+                val student = filtered[index]
+                val formattedNim = if (student.rawNim.startsWith("NIM:")) student.rawNim else "NIM: ${student.rawNim}"
                 val (statusColor, bgColor) = when {
-                    status.equals("Aktif", ignoreCase = true) -> LenteraGreen to LenteraGreenBg
-                    status.contains("Belum", ignoreCase = true) -> Color(0xFFD97706) to Color(0xFFFEF3EB)
-                    status.equals("Lulus", ignoreCase = true) -> SlateGray to ScreenBackground
+                    student.status.equals("Aktif", ignoreCase = true) -> LenteraGreen to LenteraGreenBg
+                    student.status.contains("Belum", ignoreCase = true) -> Color(0xFFD97706) to Color(0xFFFEF3EB)
+                    student.status.equals("Lulus", ignoreCase = true) -> SlateGray to ScreenBackground
                     else -> ErrorRed to ErrorRedLight
                 }
                 StudentCard(
-                    name = name,
+                    name = student.name,
                     nim = formattedNim,
-                    status = status,
+                    status = student.status,
                     statusColor = statusColor,
                     bgColor = bgColor,
-                    onClick = { onItemClick(rawNim) }
+                    photoUrl = student.photoUrl,
+                    onClick = { onItemClick(student.rawNim) }
                 )
             }
         }
@@ -340,6 +349,7 @@ fun StudentCard(
     status: String,
     statusColor: Color,
     bgColor: Color,
+    photoUrl: String? = null,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -356,14 +366,27 @@ fun StudentCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_avatar_2),
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-            )
+            if (!photoUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = photoUrl,
+                    placeholder = painterResource(id = R.drawable.ic_avatar_2),
+                    error = painterResource(id = R.drawable.ic_avatar_2),
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_avatar_2),
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 

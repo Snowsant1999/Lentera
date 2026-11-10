@@ -141,7 +141,8 @@ fun DetailAkunMahasiswaScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         ProfileAvatar(
                             size = 46.dp,
-                            iconTint = LenteraColors.NavyPrimary
+                            iconTint = LenteraColors.NavyPrimary,
+                            avatarUrl = mahasiswa.fotoProfilUrl
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
