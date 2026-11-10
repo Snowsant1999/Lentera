@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.net.Uri
+import com.PPBM.lentera.backend.core.formatTanggalKejadian
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.core.designsystem.components.LenteraNotificationBell
 import com.PPBM.lentera.R
@@ -381,7 +382,7 @@ class MahasiswaDashboard {
                                 }
                                 AktivitasItem(
                                     title = item.judul,
-                                    date = item.tanggalKejadian,
+                                    date = formatTanggalKejadian(item.tanggalKejadian),
                                     status = item.status.replaceFirstChar { it.uppercase() },
                                     statusBg = statusBg,
                                     statusColor = statusColor,

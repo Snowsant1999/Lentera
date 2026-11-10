@@ -2,6 +2,7 @@ package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.backend.admin.model.AdminLaporan
+import com.PPBM.lentera.backend.core.formatTanggalKejadian
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +58,7 @@ fun VerifikasiKelengkapanScreen(
     val nomorLaporan = laporan?.nomorLaporan ?: "-"
     val judulLaporan = laporan?.judul ?: "Memuat laporan..."
     val canAct = !isUpdating && laporan != null
-    val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
+    val tanggalKejadian = formatTanggalKejadian(laporan?.tanggalKejadian ?: "-")
     val isAnonim = laporan?.isAnonim ?: true
     val statusStr = (laporan?.status ?: "baru").replaceFirstChar { it.uppercase() }
     val (statusBg, statusColor) = when (laporan?.status?.lowercase()) {

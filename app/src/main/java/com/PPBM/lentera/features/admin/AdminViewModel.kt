@@ -16,8 +16,11 @@ import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.backend.core.extractShortFileType
+import com.PPBM.lentera.backend.core.normalizeLamaranStatus
+import com.PPBM.lentera.backend.core.normalizeLaporanStatus
 import com.PPBM.lentera.backend.core.normalizeLowonganStatus
 import com.PPBM.lentera.backend.core.normalizeTempatStatus
+import com.PPBM.lentera.core.notification.LenteraNotificationHelper
 import com.PPBM.lentera.backend.mahasiswa.model.BuktiLaporanItem
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenHasilItem
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenLamaranItem
@@ -52,6 +55,8 @@ data class AdminUiState(
     val isCreatingMahasiswa: Boolean = false,
     val isUpdatingLaporan: Boolean = false,
     val isSubmittingMagang: Boolean = false,
+    val hasUnreadNotifications: Boolean = false,
+    val allNotificationsMarkedRead: Boolean = false,
     val errorMessage: String? = null,
     val actionSuccessMessage: String? = null
 )
@@ -80,7 +85,7 @@ class AdminViewModel(
     /**
      * Memuat data statistik dashboard, laporan terkini, dan referensi mitra/lowongan
      */
-    fun loadDashboardData() {
+    fun loadDashboardData(context: Context? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
@@ -94,6 +99,39 @@ class AdminViewModel(
             val lamaranResult = adminMagangRepo.getAllLamaranMasuk()
             val lamaranList = lamaranResult.getOrDefault(_uiState.value.lamaranMasukList)
 
+            val hasPendingLaporan = laporanList.any { normalizeLaporanStatus(it.status) == "baru" }
+            val hasPendingLamaran = lamaranList.any {
+                val norm = normalizeLamaranStatus(it.status)
+                norm == "terkirim" || norm == "pemeriksaan"
+            }
+            val hasDraftLowongan = lowonganList.any { normalizeLowonganStatus(it.status) == "draf" }
+            val unreadCount = (if (hasPendingLaporan) 1 else 0) + (if (hasPendingLamaran) 1 else 0) + (if (hasDraftLowongan) 1 else 0)
+            val shouldShowUnread = !_uiState.value.allNotificationsMarkedRead && unreadCount > 0
+
+            if (context != null && shouldShowUnread) {
+                if (hasPendingLaporan) {
+                    val count = laporanList.count { normalizeLaporanStatus(it.status) == "baru" }
+                    LenteraNotificationHelper.showSystemNotification(
+                        context = context,
+                        title = "Laporan Baru Perlu Verifikasi",
+                        message = "$count laporan baru menunggu verifikasi tim LENTERA Siaga.",
+                        notificationKey = "admin_laporan_baru_${count}"
+                    )
+                }
+                if (hasPendingLamaran) {
+                    val count = lamaranList.count {
+                        val norm = normalizeLamaranStatus(it.status)
+                        norm == "terkirim" || norm == "pemeriksaan"
+                    }
+                    LenteraNotificationHelper.showSystemNotification(
+                        context = context,
+                        title = "Lamaran Magang Masuk",
+                        message = "$count berkas lamaran mahasiswa menunggu verifikasi admin.",
+                        notificationKey = "admin_lamaran_baru_${count}"
+                    )
+                }
+            }
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stats = statsResult.getOrDefault(_uiState.value.stats),
@@ -102,9 +140,17 @@ class AdminViewModel(
                 lowonganAdminList = lowonganList,
                 tempatMagangList = tempatList,
                 lamaranMasukList = lamaranList,
+                hasUnreadNotifications = shouldShowUnread,
                 errorMessage = statsResult.exceptionOrNull()?.message
             )
         }
+    }
+
+    fun markAllNotificationsAsRead() {
+        _uiState.value = _uiState.value.copy(
+            hasUnreadNotifications = false,
+            allNotificationsMarkedRead = true
+        )
     }
 
     /**
@@ -1004,6 +1050,40 @@ class AdminViewModel(
                 onSuccess(updated)
             }.onFailure { err ->
                 val msg = err.message ?: "Gagal memperbarui profil admin"
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = msg
+                )
+                onError(msg)
+            }
+        }
+    }
+
+    /**
+     * Mengunggah foto profil admin dan memperbarui sesi lokal.
+     */
+    fun uploadFotoProfilAdmin(
+        context: Context,
+        fileBytes: ByteArray,
+        onError: (String) -> Unit = {},
+        onSuccess: (String) -> Unit = {}
+    ) {
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile() ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val res = adminMhsRepo.uploadFotoProfilAdmin(fileBytes)
+            res.onSuccess { newUrl ->
+                val updatedProfile = profile.copy(fotoProfilUrl = newUrl)
+                session.saveSession(updatedProfile)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    actionSuccessMessage = "Foto profil admin berhasil diperbarui"
+                )
+                onSuccess(newUrl)
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal mengunggah foto profil admin"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = msg

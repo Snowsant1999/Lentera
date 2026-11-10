@@ -309,3 +309,41 @@ fun extractShortFileType(fileName: String, fallback: String = "FILE"): String {
     return ext.ifBlank { fallback }.take(10)
 }
 
+/**
+ * Format tanggal kejadian laporan menjadi standar YYYY-MM-DD HH:mm:ss.
+ */
+fun formatTanggalKejadian(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isBlank() || trimmed == "-") return "-"
+
+    runCatching {
+        val odt = OffsetDateTime.parse(trimmed)
+        return odt.atZoneSameInstant(WITA_ZONE).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+    }.getOrNull()?.let { return it }
+
+    runCatching {
+        val inst = Instant.parse(trimmed)
+        return inst.atZone(WITA_ZONE).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+    }.getOrNull()?.let { return it }
+
+    runCatching {
+        val ldt = LocalDateTime.parse(trimmed, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        return ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+    }.getOrNull()?.let { return it }
+
+    for (pat in listOf("yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm")) {
+        runCatching {
+            val ldt = LocalDateTime.parse(trimmed, DateTimeFormatter.ofPattern(pat))
+            return ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        }.getOrNull()?.let { return it }
+    }
+
+    runCatching {
+        val ld = LocalDate.parse(trimmed.take(10), DateTimeFormatter.ISO_LOCAL_DATE)
+        return ld.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " 00:00:00"
+    }.getOrNull()?.let { return it }
+
+    return trimmed
+}
+
+

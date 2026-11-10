@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
+import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import androidx.compose.ui.res.painterResource
@@ -233,18 +234,20 @@ fun TopBarMahasiswa(
             .statusBarsPadding()
             .padding(horizontal = 24.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "AKUN MAHASISWA",
                 style = TextStyle(
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontFamily = PlusJakartaSans,
                     fontWeight = FontWeight.ExtraBold,
                     color = NavyDark,
-                    letterSpacing = 0.5.sp
-                )
+                    letterSpacing = 0.3.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "LENTERA · Admin Kampus",
@@ -253,12 +256,15 @@ fun TopBarMahasiswa(
                     fontFamily = PlusJakartaSans,
                     fontWeight = FontWeight.Normal,
                     color = SlateGray
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
         Box(
             modifier = Modifier
+                .wrapContentWidth()
                 .height(42.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .clickable { onAddClick() }
@@ -277,7 +283,8 @@ fun TopBarMahasiswa(
                         fontSize = 18.sp,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    softWrap = false
                 )
                 Text(
                     text = "Tambah",
@@ -286,7 +293,8 @@ fun TopBarMahasiswa(
                         fontSize = 13.sp,
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    softWrap = false
                 )
             }
         }
@@ -429,8 +437,8 @@ fun StudentCard(
             }
 
             Icon(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "Menu",
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Detail",
                 tint = SlateGray,
                 modifier = Modifier.size(22.dp)
             )

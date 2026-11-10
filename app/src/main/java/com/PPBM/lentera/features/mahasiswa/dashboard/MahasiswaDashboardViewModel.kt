@@ -1,5 +1,6 @@
 package com.PPBM.lentera.features.mahasiswa.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.PPBM.lentera.backend.core.normalizeLamaranStatus
@@ -9,6 +10,7 @@ import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.backend.mahasiswa.repository.MagangRepository
 import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
 import com.PPBM.lentera.backend.mahasiswa.repository.SiagaRepository
+import com.PPBM.lentera.core.notification.LenteraNotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +42,7 @@ class MahasiswaDashboardViewModel(
         loadDashboardData()
     }
 
-    fun loadDashboardData() {
+    fun loadDashboardData(context: Context? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
@@ -73,9 +75,22 @@ class MahasiswaDashboardViewModel(
             val lowonganResult = magangRepo.getLowonganTerbit()
             val lowonganList = lowonganResult.getOrDefault(emptyList()).take(5)
 
-            // 4. Periksa Notifikasi Baru (Unread)
+            // 4. Periksa Notifikasi Baru (Unread) & Bunyikan Notifikasi HP Sistem
             val notifResult = mahasiswaRepo.getNotifikasi()
-            val hasUnread = notifResult.getOrDefault(emptyList()).any { !it.isDibaca }
+            val notifList = notifResult.getOrDefault(emptyList())
+            val unreadNotifs = notifList.filter { !it.isDibaca }
+            val hasUnread = unreadNotifs.isNotEmpty()
+
+            if (context != null && unreadNotifs.isNotEmpty()) {
+                unreadNotifs.take(3).forEach { notif ->
+                    LenteraNotificationHelper.showSystemNotification(
+                        context = context,
+                        title = notif.judul,
+                        message = notif.isi,
+                        notificationKey = "mhs_notif_${notif.id}"
+                    )
+                }
+            }
 
             _uiState.value = MahasiswaDashboardUiState(
                 isLoading = false,
