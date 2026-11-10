@@ -1,21 +1,41 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard / R8 Rules for Lentera App
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep line numbers for debugging
+-keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*, InnerClasses, Signature
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Kotlinx Serialization
+-dontnote kotlinx.serialization.SerializationKt
+-keepclassmembers class * {
+    *** Companion;
+}
+-keepclasseswithmembers class * {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keepclassmembers class * {
+    @kotlinx.serialization.SerialName <fields>;
+}
+-keepclassmembers @kotlinx.serialization.Serializable class * {
+    *** Companion;
+}
+-keepclassmembers class * implements kotlinx.serialization.KSerializer {
+    <init>(...);
+}
+-keepclasseswithmembers class * {
+    @kotlinx.serialization.Serializable <fields>;
+}
+-keep @kotlinx.serialization.Serializable class * { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Supabase Client & Plugins
+-keep class io.github.jan.supabase.** { *; }
+-keep interface io.github.jan.supabase.** { *; }
+-dontwarn io.github.jan.supabase.**
+
+# Ktor HTTP Client & Engine
+-keep class io.ktor.** { *; }
+-keep interface io.ktor.** { *; }
+-dontwarn io.ktor.**
+
+# Models & DTOs
+-keep class com.PPBM.lentera.backend.**.model.** { *; }
+-keep class com.PPBM.lentera.features.**.model.** { *; }

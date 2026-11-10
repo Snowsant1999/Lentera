@@ -1,0 +1,554 @@
+package com.PPBM.lentera.features.mahasiswa.magang
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Card
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.theme.*
+
+// ============================================================================
+// Model & Data
+// ============================================================================
+
+data class LowonganItem(
+    val id: String,
+    val posisi: String,
+    val perusahaan: String,
+    val lokasi: String,
+    val durasi: String,
+    val kategori: String,
+    val sistemKerja: String = "",
+    val status: String = "Available",
+    val persentaseCocok: Int = 92,
+    val batasHari: Int = 5,
+    val logoDrawable: Int = R.drawable.ic_avatar_2,
+    val isBookmarked: Boolean = false
+)
+
+// ============================================================================
+// Main Screen: LowonganScreen
+// ============================================================================
+
+/**
+ * Halaman Daftar Lowongan Magang
+ * Sesuai desain UI Lowongan.png
+ */
+@Composable
+fun LowonganScreen(
+    lowonganList: List<LowonganItem> = emptyList(),
+    onBackClick: () -> Unit = {},
+    onSearchQueryChange: (String) -> Unit = {},
+    onLowonganClick: (LowonganItem) -> Unit = {},
+    bookmarkedIds: Set<String> = emptySet(),
+    onBookmarkToggle: (LowonganItem) -> Unit = {}
+) {
+    val plusJakarta = remember { FontFamily(Font(R.font.plus_jakarta_sans)) }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("Semua") }
+
+    val categories = remember {
+        listOf("Semua", "Tersimpan", "Teknologi", "Desain", "Bisnis", "Remote")
+    }
+
+    val displayList = lowonganList
+
+    val filteredList = remember(displayList, selectedCategory, searchQuery, bookmarkedIds) {
+        displayList.map { it.copy(isBookmarked = bookmarkedIds.contains(it.id)) }.filter { item ->
+            val matchCategory = when (selectedCategory) {
+                "Semua" -> true
+                "Tersimpan" -> item.isBookmarked
+                "Remote" -> item.sistemKerja.equals("Remote", ignoreCase = true) ||
+                    item.lokasi.equals("Remote", ignoreCase = true)
+                else -> item.kategori.equals(selectedCategory, ignoreCase = true)
+            }
+            val matchQuery = searchQuery.isEmpty() ||
+                    item.posisi.contains(searchQuery, ignoreCase = true) ||
+                    item.perusahaan.contains(searchQuery, ignoreCase = true) ||
+                    item.lokasi.contains(searchQuery, ignoreCase = true)
+            matchCategory && matchQuery
+        }
+    }
+
+    Scaffold(
+        containerColor = ScreenBackground
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .statusBarsPadding()
+                .navigationBarsPadding()
+        ) {
+            // 1. Top Bar dengan tombol back bulat & Judul "LOWONGAN"
+            LowonganTopBar(
+                onBackClick = onBackClick,
+                fontFamily = plusJakarta
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                // 2. Search Bar
+                LowonganSearchBar(
+                    query = searchQuery,
+                    onQueryChange = {
+                        searchQuery = it
+                        onSearchQueryChange(it)
+                    },
+                    fontFamily = plusJakarta
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. Filter Chips Horizontal
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    categories.forEach { category ->
+                        val isSelected = category == selectedCategory
+                        FilterChipButton(
+                            text = category,
+                            isSelected = isSelected,
+                            onClick = { selectedCategory = category },
+                            fontFamily = plusJakarta
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 4. Counter teks peluang
+                Text(
+                    text = "${filteredList.size} peluang untuk langkah pertamamu",
+                    style = TextStyle(
+                        fontFamily = plusJakarta,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = SlateGray
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+
+            // 5. Daftar Kartu Lowongan Vertikal
+            if (filteredList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = if (selectedCategory == "Tersimpan") R.drawable.ic_bookmark else R.drawable.ic_search_alt),
+                            contentDescription = null,
+                            tint = SlateGray,
+                            modifier = Modifier.size(44.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = if (selectedCategory == "Tersimpan") "Belum ada lowongan tersimpan" else "Lowongan tidak ditemukan",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (selectedCategory == "Tersimpan") "Klik ikon bookmark pada lowongan untuk menyimpannya di sini" else "Coba cari dengan kata kunci lain",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 12.5.sp,
+                                color = SlateGray,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(filteredList) { item ->
+                        LowonganItemCard(
+                            item = item,
+                            onClick = { onLowonganClick(item) },
+                            onBookmarkClick = { onBookmarkToggle(item) },
+                            fontFamily = plusJakarta
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Komponen Top Bar
+// ============================================================================
+
+@Composable
+private fun LowonganTopBar(
+    onBackClick: () -> Unit,
+    fontFamily: FontFamily
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(painter = painterResource(id = R.drawable.ic_back_button), contentDescription = "Kembali", modifier = Modifier.size(44.dp).clickable(onClick = onBackClick))
+
+        Spacer(modifier = Modifier.width(18.dp))
+
+        Text(
+            text = "LOWONGAN",
+            style = TextStyle(
+                fontFamily = fontFamily,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = NavyDark,
+                letterSpacing = 0.5.sp
+            )
+        )
+    }
+}
+
+// ============================================================================
+// Komponen Search Bar
+// ============================================================================
+
+@Composable
+private fun LowonganSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    fontFamily: FontFamily
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .shadow(0.5.dp, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.White)
+            .border(1.dp, CardBorder, RoundedCornerShape(24.dp))
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_search_alt),
+            contentDescription = "Search",
+            tint = SlateGray,
+            modifier = Modifier.size(18.dp)
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (query.isEmpty()) {
+                Text(
+                    text = "Cari tempat atau posisi magang",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = SlateGray
+                    )
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = NavyDark
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+// ============================================================================
+// Komponen Filter Chip
+// ============================================================================
+
+@Composable
+private fun FilterChipButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    fontFamily: FontFamily
+) {
+    Box(
+        modifier = Modifier
+            .height(38.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) MagangAmberPrimary else Color.White)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) MagangAmberPrimary else CardBorder,
+                shape = CircleShape
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = TextStyle(
+                fontFamily = fontFamily,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) NavyDark else NavyMedium
+            )
+        )
+    }
+}
+
+// ============================================================================
+// Komponen Kartu Lowongan Vertikal
+// ============================================================================
+
+@Composable
+private fun LowonganItemCard(
+    item: LowonganItem,
+    onClick: () -> Unit,
+    onBookmarkClick: () -> Unit,
+    fontFamily: FontFamily
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                // Sisi Kiri: Logo Perusahaan & Info Posisi
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Logo/Avatar Perusahaan Bulat
+                    Image(
+                        painter = painterResource(id = item.logoDrawable),
+                        contentDescription = "Logo Perusahaan",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = item.posisi,
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = item.perusahaan,
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.5.sp,
+                                color = SlateGray
+                            )
+                        )
+                    }
+                }
+
+                // Sisi Kanan: Bookmark Button Bulat
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(if (item.isBookmarked) MagangAmberPillBg else Color.White)
+                        .border(1.dp, if (item.isBookmarked) MagangAmberPrimary else CardBorder, CircleShape)
+                        .clickable(onClick = onBookmarkClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (item.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
+                        contentDescription = "Bookmark",
+                        tint = if (item.isBookmarked) MagangAmberPrimary else NavyDark,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Baris Lokasi & Status Available
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Lokasi dengan pin icon
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painter = painterResource(id = R.drawable.ic_map_pin), contentDescription = null, tint = SlateGrayLight, modifier = Modifier.size(13.dp))
+
+                    Spacer(modifier = Modifier.width(5.dp))
+
+                    Text(
+                        text = "${item.lokasi} · ${item.durasi}",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 12.sp,
+                            color = SlateGray
+                        )
+                    )
+                }
+
+                // Status Available
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.5.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF287D4A))
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = item.status,
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF287D4A)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Strip Bawah: Persentase cocok & Countdown Tutup
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFEFF5FA))
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${item.persentaseCocok}% cocok",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyDark
+                        )
+                    )
+
+                    Text(
+                        text = if (item.batasHari <= 0) "Berakhir hari ini" else "Tutup ${item.batasHari} hari lagi",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = NavyDark
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Preview
+// ============================================================================
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun LowonganScreenPreview() {
+    LenteraTheme {
+        LowonganScreen()
+    }
+}

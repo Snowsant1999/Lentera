@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Person / User - Mahasiswa nav icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M11,10.083C12.934,10.083 14.5,8.517 14.5,6.583C14.5,4.649 12.934,3.083 11,3.083C9.066,3.083 7.5,4.649 7.5,6.583C7.5,8.517 9.066,10.083 11,10.083Z"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M3.666,19.25C3.666,15.248 6.999,12 11,12C15.001,12 18.334,15.248 18.334,19.25"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#23496E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

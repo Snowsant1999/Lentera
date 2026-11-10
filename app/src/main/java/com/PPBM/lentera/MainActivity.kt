@@ -1,47 +1,58 @@
 package com.PPBM.lentera
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.PPBM.lentera.ui.theme.LenteraTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.navigation.compose.rememberNavController
+import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkParser
+import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
+import com.PPBM.lentera.core.navigation.LenteraNavGraph
 
 class MainActivity : ComponentActivity() {
+    private var pendingRecoveryUri by mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) {
+            pendingRecoveryUri = extractRecoveryUri(intent)
+        }
         setContent {
             LenteraTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                val navController = rememberNavController()
+                LenteraNavGraph(
+                    navController = navController,
+                    pendingRecoveryUri = pendingRecoveryUri,
+                    onRecoveryUriConsumed = {
+                        pendingRecoveryUri = null
+                        val currentIntent = intent
+                        if (currentIntent != null) {
+                            setIntent(Intent(currentIntent).apply { data = null })
+                        }
+                    }
+                )
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        extractRecoveryUri(intent)?.let { uri ->
+            pendingRecoveryUri = uri
+        }
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LenteraTheme {
-        Greeting("Android")
+    private fun extractRecoveryUri(intent: Intent?): Uri? {
+        if (intent == null) return null
+        if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return null
+        val data = intent.data ?: return null
+        return data.takeIf { RecoveryDeepLinkParser.isRecoveryUri(it.scheme, it.host) }
     }
 }

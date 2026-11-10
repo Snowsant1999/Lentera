@@ -1,0 +1,88 @@
+package com.PPBM.lentera.core.navigation
+
+/**
+ * Definisi semua route navigasi dalam aplikasi Lentera.
+ */
+object Routes {
+    const val SPLASH = "splash"
+    const val LOGIN = "login"
+    const val LUPA_PASSWORD = "lupa_password"
+    const val VERIFIKASI_PEMULIHAN = "verifikasi_pemulihan/{email}"
+    const val RESET_PASSWORD = "reset_password?email={email}"
+    const val ADMIN_DASHBOARD = "admin_dashboard"
+    const val MAHASISWA_DASHBOARD = "mahasiswa_dashboard"
+    const val SIAGA = "siaga"
+    const val BUAT_LAPORAN = "buat_laporan"
+    const val UPLOAD_BUKTI = "upload_bukti"
+    const val TINJAU_LAPORAN = "tinjau_laporan"
+    const val LAPORAN_TERKIRIM = "laporan_terkirim"
+    const val LAPORAN_TERKIRIM_ROUTE = "laporan_terkirim?ref={ref}"
+    const val DETAIL_LAPORAN = "detail_laporan"
+    const val DETAIL_LAPORAN_TRACKING = "detail_laporan_tracking"
+    const val DETAIL_LAPORAN_TRACKING_ROUTE = "detail_laporan_tracking?id={id}"
+    const val DETAIL_LAPORAN_LENGKAP = "detail_laporan" // Alias untuk DETAIL_LAPORAN
+    const val LENGKAPI_INFORMASI = "lengkapi_informasi"
+    const val DOKUMENTASI = "dokumentasi"
+    const val INFORMASI_TERKIRIM = "informasi_terkirim"
+    const val HASIL_PENANGANAN = "hasil_penanganan"
+    const val RIWAYAT_LAPORAN = "riwayat_laporan"
+    
+    // Mahasiswa Profil & Settings Routes
+    const val MAHASISWA_PROFIL = "mahasiswa_profil"
+    const val MAHASISWA_DATA_DIRI = "mahasiswa_data_diri"
+    const val MAHASISWA_DOKUMEN_SAYA = "mahasiswa_dokumen_saya"
+    const val MAHASISWA_NOTIFIKASI = "mahasiswa_notifikasi"
+    const val MAHASISWA_BANTUAN = "mahasiswa_bantuan"
+    const val MAHASISWA_TENTANG = "mahasiswa_tentang"
+
+    // Magang Hub Routes
+    const val MAGANG = "magang"
+    const val LOWONGAN_MAGANG = "lowongan_magang"
+    const val DETAIL_MAGANG = "detail_magang"
+    const val DETAIL_MAGANG_ROUTE = "detail_magang?id={id}"
+    const val FORMULIR_LAMARAN = "formulir_lamaran"
+    const val LAMARAN_SAYA = "lamaran_saya"
+    const val STATUS_LAMARAN = "status_lamaran"
+    const val STATUS_LAMARAN_ROUTE = "status_lamaran?id={id}"
+    const val STATUS_LAMARAN_FINAL = "status_lamaran_final"
+    const val INFORMASI_PENERIMAAN = "informasi_penerimaan"
+    const val INFORMASI_PENERIMAAN_FINAL = "informasi_penerimaan_final"
+    const val PERBAIKAN_DOKUMEN = "perbaikan_dokumen"
+    const val PERBAIKAN_TERKIRIM = "perbaikan_terkirim"
+
+    // Admin Routes
+    const val ADMIN_MAHASISWA = "admin_mahasiswa"
+    const val ADMIN_BUAT_AKUN_MAHASISWA = "admin_buat_akun_mahasiswa"
+    const val ADMIN_DETAIL_MAHASISWA = "admin_detail_mahasiswa"
+    const val ADMIN_DETAIL_MAHASISWA_ROUTE = "admin_detail_mahasiswa?id={id}"
+    const val ADMIN_SIAGA = "admin_siaga"
+    const val ADMIN_DETAIL_LAPORAN = "admin_detail_laporan"
+    const val ADMIN_DETAIL_LAPORAN_ROUTE = "admin_detail_laporan?id={id}"
+    const val ADMIN_CATATAN_TINDAKAN = "admin_catatan_tindakan"
+    const val ADMIN_PENUGASAN_LAPORAN = "admin_penugasan_laporan"
+    const val ADMIN_MINTA_INFORMASI = "admin_minta_informasi"
+    const val ADMIN_HASIL_PENYELESAIAN = "admin_hasil_penyelesaian"
+    const val ADMIN_MAGANG = "admin_magang"
+    const val ADMIN_TAMBAH_TEMPAT_MAGANG = "admin_tambah_tempat_magang"
+    const val ADMIN_DETAIL_TEMPAT_MAGANG = "admin_detail_tempat_magang"
+    const val ADMIN_KELOLA_STATUS_TEMPAT = "admin_kelola_status_tempat"
+    const val ADMIN_DAFTAR_LOWONGAN = "admin_daftar_lowongan"
+    const val ADMIN_FORM_LOWONGAN = "admin_form_lowongan"
+    const val ADMIN_DETAIL_LOWONGAN = "admin_detail_lowongan"
+    const val ADMIN_KELOLA_LAMARAN = "admin_kelola_lamaran"
+    const val ADMIN_DETAIL_VALIDASI_LAMARAN = "admin_detail_validasi_lamaran"
+    const val ADMIN_PROFIL = "admin_profil"
+    const val ADMIN_DATA_AKUN = "admin_data_akun"
+    const val ADMIN_BANTUAN = "admin_bantuan"
+    const val ADMIN_NOTIFIKASI = "admin_notifikasi"
+
+    // Helper untuk route dengan argumen
+    fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"
+    fun resetPassword(email: String = "") = "reset_password?email=${android.net.Uri.encode(email)}"
+    fun laporanTerkirim(nomorReferensi: String) = "laporan_terkirim?ref=$nomorReferensi"
+    fun detailLaporanTracking(id: String) = "detail_laporan_tracking?id=$id"
+    fun detailMagang(id: String) = "detail_magang?id=$id"
+    fun statusLamaran(id: String) = "status_lamaran?id=$id"
+    fun adminDetailMahasiswa(id: String) = "admin_detail_mahasiswa?id=$id"
+    fun adminDetailLaporan(id: String) = "admin_detail_laporan?id=$id"
+}
