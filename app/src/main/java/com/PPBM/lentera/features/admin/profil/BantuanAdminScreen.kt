@@ -78,7 +78,7 @@ private val SampleFaq = listOf(
 fun BantuanAdminScreen(
     kategori: List<KategoriBantuan> = SampleKategori,
     faq: List<FaqItem> = SampleFaq,
-    jamLayanan: String = "Senin–Jumat · 08.00–16.00 WIB",
+    jamLayanan: String = "Senin–Jumat · 08.00–16.00 WITA",
     onBackClick: () -> Unit = {},
     onKategoriClick: (KategoriBantuan) -> Unit = {},
     onHubungiDukunganClick: () -> Unit = {},

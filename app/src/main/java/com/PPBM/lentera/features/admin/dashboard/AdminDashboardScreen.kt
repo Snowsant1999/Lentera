@@ -48,26 +48,25 @@ data class DashboardLowonganItem(
 
 @Composable
 fun AdminDashboardScreen(
-    userName: String = "Rina Wulandari",
+    userName: String = "Admin Lentera",
+    totalMahasiswa: Int = 0,
+    totalLaporan: Int = 0,
+    totalMitra: Int = 0,
+    totalLowongan: Int = 0,
+    laporanList: List<DashboardLaporanItem> = emptyList(),
+    lowonganList: List<DashboardLowonganItem> = emptyList(),
     onNavigateToMahasiswa: () -> Unit = {},
     onNavigateToSiaga: () -> Unit = {},
     onNavigateToMagang: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = onNavigateToMagang,
     onNavigateToProfil: () -> Unit = {},
     onNavigateToNotifikasi: () -> Unit = {},
+    onLaporanClick: (DashboardLaporanItem) -> Unit = { onNavigateToSiaga() },
+    onLowonganItemClick: (DashboardLowonganItem) -> Unit = { onNavigateToLowongan() },
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    val laporanTerbaru = listOf(
-        DashboardLaporanItem("LTR-2026-00126", "Lampu Koridor Padam", "17 Okt 2026 · 08:15 WITA", "Baru", Color(0xFFFEF3C7), Color(0xFFB45309)),
-        DashboardLaporanItem("LTR-2026-00123", "Pelecehan Verbal", "15 Okt 2026 · 15:00 WITA", "Diperiksa", Color(0xFFFFEDD5), Color(0xFFC2410C)),
-        DashboardLaporanItem("LTR-2026-00122", "Keracunan Makanan", "12 Okt 2026 · 13:20 WITA", "Penanganan", Color(0xFFFFE4E6), Color(0xFFE11D48))
-    )
-
-    val lowonganTerbaru = listOf(
-        DashboardLowonganItem("UI/UX Designer", "PT. Maju Mundur · Bontang", 8, "Aktif", Color(0xFFE8F4F1), Color(0xFF2F7078)),
-        DashboardLowonganItem("Web Developer", "PT. Bismillah Berkah · Bontang", 5, "Aktif", Color(0xFFE8F4F1), Color(0xFF2F7078)),
-        DashboardLowonganItem("Content Creator", "PT. Cahaya Digital · Bontang", 2, "Draf", Color(0xFFF1F5F9), Color(0xFF64748B))
-    )
+    val laporanTerbaru = laporanList
+    val lowonganTerbaru = lowonganList
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -106,6 +105,10 @@ fun AdminDashboardScreen(
 
                     // 3. Grid Statistik
                     GridStatistik(
+                        totalMahasiswa = totalMahasiswa,
+                        totalLaporan = totalLaporan,
+                        totalMitra = totalMitra,
+                        totalLowongan = totalLowongan,
                         onMahasiswaClick = onNavigateToMahasiswa,
                         onSiagaClick = onNavigateToSiaga,
                         onTempatMagangClick = onNavigateToMagang,
@@ -117,7 +120,7 @@ fun AdminDashboardScreen(
                     KartuLaporanMasukTerakhir(
                         laporanList = laporanTerbaru,
                         onLihatSemuaClick = onNavigateToSiaga,
-                        onItemClick = { onNavigateToSiaga() }
+                        onItemClick = onLaporanClick
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -125,7 +128,7 @@ fun AdminDashboardScreen(
                     KartuLowonganMagangTerbaru(
                         lowonganList = lowonganTerbaru,
                         onLihatSemuaClick = onNavigateToLowongan,
-                        onItemClick = { onNavigateToLowongan() }
+                        onItemClick = onLowonganItemClick
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -136,7 +139,7 @@ fun AdminDashboardScreen(
 
 @Composable
 fun HeaderAdmin(
-    userName: String = "Rina Wulandari",
+    userName: String = "Admin Lentera",
     userRole: String = "Admin Kampus · LENTERA",
     onProfileClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
@@ -248,6 +251,10 @@ fun JudulDashboard() {
 
 @Composable
 fun GridStatistik(
+    totalMahasiswa: Int = 0,
+    totalLaporan: Int = 0,
+    totalMitra: Int = 0,
+    totalLowongan: Int = 0,
     onMahasiswaClick: () -> Unit = {},
     onSiagaClick: () -> Unit = {},
     onTempatMagangClick: () -> Unit = {},
@@ -268,9 +275,9 @@ fun GridStatistik(
                 bgColor = LenteraTealBg,
                 iconId = R.drawable.ic_student_accounts,
                 iconTint = LenteraTeal,
-                count = "128",
+                count = if (totalMahasiswa > 0) totalMahasiswa.toString() else "0",
                 title = "MAHASISWA",
-                subtitle = "124 aktif · 4 draf",
+                subtitle = if (totalMahasiswa > 0) "$totalMahasiswa terdaftar" else "Belum ada data",
                 onClick = onMahasiswaClick
             )
             StatCard(
@@ -280,9 +287,9 @@ fun GridStatistik(
                 bgColor = LenteraTealBg,
                 iconId = R.drawable.ic_shield,
                 iconTint = LenteraTeal,
-                count = "24",
+                count = if (totalLaporan > 0) totalLaporan.toString() else "0",
                 title = "LENTERA SIAGA",
-                subtitle = "3 baru · 16 selesai",
+                subtitle = if (totalLaporan > 0) "$totalLaporan laporan masuk" else "Belum ada laporan",
                 onClick = onSiagaClick
             )
         }
@@ -301,9 +308,9 @@ fun GridStatistik(
                 bgColor = LenteraYellowBg,
                 iconId = R.drawable.ic_briefcase_business,
                 iconTint = LenteraYellow,
-                count = "12",
+                count = if (totalMitra > 0) totalMitra.toString() else "0",
                 title = "MITRA MAGANG",
-                subtitle = "9 aktif · 2 draf",
+                subtitle = if (totalMitra > 0) "$totalMitra mitra terdaftar" else "Belum ada mitra",
                 onClick = onTempatMagangClick
             )
             StatCard(
@@ -313,9 +320,9 @@ fun GridStatistik(
                 bgColor = LenteraYellowBg,
                 iconId = R.drawable.ic_folder_open,
                 iconTint = LenteraYellow,
-                count = "8",
+                count = if (totalLowongan > 0) totalLowongan.toString() else "0",
                 title = "LOWONGAN",
-                subtitle = "4 terbit · 15 pelamar",
+                subtitle = if (totalLowongan > 0) "$totalLowongan lowongan aktif" else "Belum ada lowongan",
                 onClick = onLowonganClick
             )
         }

@@ -1,9 +1,17 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
+import com.PPBM.lentera.backend.mahasiswa.model.DokumenHasilItem
+import java.util.Locale
 
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,13 +38,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -48,17 +59,71 @@ import com.PPBM.lentera.R
 /**
  * FRAME 7: Hasil & Penyelesaian
  * Menampilkan draf ringkasan penanganan untuk mahasiswa, dokumen penyelesaian,
- * pengaturan tanggal penyelesaian, sakelar publikasi, dan tombol penutupan laporan.
+ * pengaturan publikasi, dan tombol penutupan laporan.
  */
 @Composable
 fun HasilPenyelesaianScreen(
-    onSimpanDanSelesaikan: () -> Unit = {},
+    laporan: AdminLaporan? = null,
+    dokumenHasilList: List<DokumenHasilItem> = emptyList(),
+    isUpdating: Boolean = false,
+    onOpenDokumen: (DokumenHasilItem) -> Unit = {},
+    onSimpanDanSelesaikan: (ringkasanPenanganan: String, isBagikanHasil: Boolean) -> Unit = { _, _ -> },
+    onSimpanLengkap: ((ringkasanPenanganan: String, isBagikanHasil: Boolean, newAttachments: List<Triple<String, ByteArray, Boolean>>) -> Unit)? = null,
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var isBagikanHasil by remember { mutableStateOf(true) }
-    var statusPenyelesaian by remember { mutableStateOf("Selesai") }
-    var tanggalSelesai by remember { mutableStateOf("17 Oktober 2026, 15:10 WITA") }
+    val context = LocalContext.current
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
+    val isAnonim = laporan?.isAnonim ?: true
+
+    var isBagikanHasil by remember(laporan?.id) { mutableStateOf(laporan?.hasilDipublikasi ?: true) }
+    var ringkasanPenanganan by remember(laporan?.id) {
+        mutableStateOf(laporan?.hasilPenanganan.orEmpty())
+    }
+    val pendingAttachments = remember(laporan?.id) {
+        mutableStateListOf<Triple<String, ByteArray, Boolean>>()
+    }
+    var validationError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(laporan?.id) {
+        if (laporan != null) {
+            isBagikanHasil = laporan.hasilDipublikasi
+            if (!laporan.hasilPenanganan.isNullOrBlank()) {
+                ringkasanPenanganan = laporan.hasilPenanganan
+            }
+        }
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        validationError = null
+        try {
+            var fileName = "dokumen_hasil_${System.currentTimeMillis()}"
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIdx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst() && nameIdx >= 0) {
+                    fileName = cursor.getString(nameIdx) ?: fileName
+                }
+            }
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            when {
+                bytes == null || bytes.isEmpty() -> {
+                    validationError = "Berkas '$fileName' kosong atau gagal dibaca."
+                }
+                bytes.size.toLong() > 20L * 1024L * 1024L -> {
+                    validationError = "Ukuran berkas '$fileName' melebihi batas maksimal 20 MB."
+                }
+                else -> {
+                    pendingAttachments.add(Triple(fileName, bytes, isBagikanHasil))
+                }
+            }
+        } catch (e: Exception) {
+            validationError = "Gagal membaca berkas: ${e.message ?: "kesalahan tidak diketahui"}"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -81,34 +146,12 @@ fun HasilPenyelesaianScreen(
         ) {
             // Ringkasan Laporan dengan Target Selesai
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal · Anonim",
-                subtitle = "",
-                extraRow = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_date),
-                            contentDescription = "Target",
-                            tint = SiagaNavyDark,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Target selesai 17 Okt 2026, 15:10 WITA",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = PlusJakartaFont,
-                                color = SiagaNavyDark
-                            )
-                        )
-                    }
-                }
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = "$judulLaporan · ${if (isAnonim) "Anonim" else "Terverifikasi"}",
+                subtitle = ""
             )
 
             // Card Hasil Penanganan
@@ -149,7 +192,7 @@ fun HasilPenyelesaianScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Ringkasan untuk mahasiswa",
+                        text = "Ringkasan penanganan untuk mahasiswa",
                         style = TextStyle(
                             fontSize = 12.sp,
                             fontFamily = PlusJakartaFont,
@@ -159,51 +202,67 @@ fun HasilPenyelesaianScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    Box(
+                    OutlinedTextField(
+                        value = ringkasanPenanganan,
+                        onValueChange = {
+                            ringkasanPenanganan = it
+                            if (validationError != null) validationError = null
+                        },
+                        placeholder = {
+                            Text(
+                                text = "Tulis ringkasan resmi penanganan laporan...",
+                                style = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaTextMuted)
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                            .padding(12.dp)
-                    ) {
+                            .height(110.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = SiagaBorderColor,
+                            focusedBorderColor = SiagaTealPrimary
+                        ),
+                        textStyle = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (dokumenHasilList.isEmpty() && pendingAttachments.isEmpty()) {
                         Text(
-                            text = "Tim Advokasi telah menindaklanjuti laporan dan melakukan koordinasi dengan pihak terkait. Pendampingan tersedia melalui kanal laporan ini.",
+                            text = "Belum ada dokumen penyelesaian yang dilampirkan.",
                             style = TextStyle(
                                 fontSize = 12.sp,
-                                lineHeight = 18.sp,
                                 fontFamily = PlusJakartaFont,
-                                color = SiagaNavyDark
+                                color = SiagaTextSecondary
                             )
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    val docs = listOf(
-                        Pair("ringkasan_penanganan.pdf", "PDF · 480 KB · Boleh dibagikan"),
-                        Pair("catatan_internal.pdf", "PDF · 320 KB · Internal, tidak dipublikasikan")
-                    )
-
-                    docs.forEach { (name, desc) ->
+                    dokumenHasilList.forEach { doc ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
                                 .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
+                                .clickable { onOpenDokumen(doc) }
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_file_text),
-                                    contentDescription = "PDF",
+                                    contentDescription = doc.tipeFile,
                                     tint = SiagaNavyDark,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Column {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = name,
+                                        text = doc.namaFile,
                                         style = TextStyle(
                                             fontSize = 13.sp,
                                             fontFamily = PlusJakartaFont,
@@ -212,7 +271,7 @@ fun HasilPenyelesaianScreen(
                                         )
                                     )
                                     Text(
-                                        text = desc,
+                                        text = "${doc.tipeFile} · ${formatHasilSize(doc.ukuranBytes)} · ${if (doc.bolehDibagikan) "Boleh dibagikan" else "Internal"}",
                                         style = TextStyle(
                                             fontSize = 11.sp,
                                             fontFamily = PlusJakartaFont,
@@ -230,10 +289,62 @@ fun HasilPenyelesaianScreen(
                         }
                     }
 
+                    pendingAttachments.forEachIndexed { idx, (fileName, bytes, shared) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .background(Color(0xFFEFF6FF), RoundedCornerShape(12.dp))
+                                .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "$fileName (baru)",
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SiagaNavyDark
+                                    )
+                                )
+                                Text(
+                                    text = "${formatHasilSize(bytes.size.toLong())} · ${if (shared) "Boleh dibagikan ke pelapor" else "Khusus internal"} · Ketuk untuk ubah visibilitas",
+                                    style = TextStyle(
+                                        fontSize = 11.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        color = SiagaTealPrimary
+                                    ),
+                                    modifier = Modifier.clickable(enabled = !isUpdating) {
+                                        pendingAttachments[idx] = Triple(fileName, bytes, !shared)
+                                    }
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Hapus",
+                                style = TextStyle(
+                                    fontSize = 11.5.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB91C1C)
+                                ),
+                                modifier = Modifier
+                                    .clickable(enabled = !isUpdating) {
+                                        pendingAttachments.removeAt(idx)
+                                    }
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedButton(
-                        onClick = { /* Tambah dokumentasi */ },
+                        onClick = { filePickerLauncher.launch("*/*") },
+                        enabled = !isUpdating && laporan != null,
                         shape = RoundedCornerShape(12.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
                             width = 1.dp,
@@ -257,7 +368,7 @@ fun HasilPenyelesaianScreen(
                 }
             }
 
-            // Card Status Penyelesaian
+            // Card Status Penyelesaian (Read-only info tercatat di server)
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -274,59 +385,28 @@ fun HasilPenyelesaianScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Status setelah disimpan",
+                        text = "Status setelah disimpan: Selesai",
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontFamily = PlusJakartaFont,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = SiagaNavyDark
                         )
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 14.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = statusPenyelesaian,
-                            style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
-                        )
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chevron_down),
-                            contentDescription = "Dropdown",
-                            tint = SiagaNavyDark,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Tanggal penyelesaian",
+                        text = if (!laporan?.tanggalPenyelesaian.isNullOrBlank()) {
+                            "Tanggal penyelesaian tercatat: ${laporan?.tanggalPenyelesaian?.take(16)?.replace("T", " ")}"
+                        } else {
+                            "Tanggal penyelesaian dicatat otomatis oleh server saat disimpan."
+                        },
                         style = TextStyle(
                             fontSize = 12.sp,
                             fontFamily = PlusJakartaFont,
-                            fontWeight = FontWeight.Bold,
-                            color = SiagaNavyDark
+                            color = SiagaTextSecondary
                         )
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = tanggalSelesai,
-                        onValueChange = { tanggalSelesai = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = SiagaBorderColor,
-                            focusedBorderColor = SiagaTealPrimary
-                        ),
-                        textStyle = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
                     )
                 }
             }
@@ -390,9 +470,42 @@ fun HasilPenyelesaianScreen(
                 }
             }
 
+            if (!validationError.isNullOrBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFEF2F2), RoundedCornerShape(12.dp))
+                        .border(1.dp, Color(0xFFFECACA), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = validationError!!,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontFamily = PlusJakartaFont,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFB91C1C)
+                        )
+                    )
+                }
+            }
+
             // Button: Simpan & Selesaikan Laporan
             Button(
-                onClick = onSimpanDanSelesaikan,
+                onClick = {
+                    val trimmed = ringkasanPenanganan.trim()
+                    if (trimmed.isBlank()) {
+                        validationError = "Ringkasan penanganan wajib diisi sebelum menyelesaikan laporan."
+                        return@Button
+                    }
+                    validationError = null
+                    if (onSimpanLengkap != null) {
+                        onSimpanLengkap(trimmed, isBagikanHasil, pendingAttachments.toList())
+                    } else {
+                        onSimpanDanSelesaikan(trimmed, isBagikanHasil)
+                    }
+                },
+                enabled = !isUpdating && laporan != null,
                 colors = ButtonDefaults.buttonColors(containerColor = SiagaTealPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
@@ -400,7 +513,7 @@ fun HasilPenyelesaianScreen(
                     .height(50.dp)
             ) {
                 Text(
-                    text = "Simpan & Selesaikan Laporan",
+                    text = if (isUpdating) "Menyimpan..." else "Simpan & Selesaikan Laporan",
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = PlusJakartaFont,
@@ -439,6 +552,14 @@ fun HasilPenyelesaianScreen(
 
         // 3. Bottom Bar
         AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
+    }
+}
+
+private fun formatHasilSize(bytes: Long): String {
+    return when {
+        bytes >= 1024L * 1024L -> String.format(Locale.US, "%.1f MB", bytes.toDouble() / (1024.0 * 1024.0))
+        bytes >= 1024L -> "${bytes / 1024L} KB"
+        else -> "$bytes B"
     }
 }
 

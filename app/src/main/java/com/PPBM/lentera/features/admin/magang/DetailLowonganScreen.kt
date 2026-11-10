@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.magang
 import com.PPBM.lentera.features.admin.magang.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.LowonganEntity
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,11 +46,26 @@ import com.PPBM.lentera.R
 
 @Composable
 fun DetailLowonganScreen(
-    onNavigateToPublikasiLowongan: () -> Unit = {},
+    lowongan: LowonganEntity? = null,
+    companyName: String? = null,
+    isSubmitting: Boolean = false,
+    onToggleStatus: (newStatus: String) -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
     onBackToDaftarLowongan: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val posisi = lowongan?.posisi ?: "Lowongan Magang"
+    val lokasi = lowongan?.lokasi ?: "-"
+    val subtitleLokasi = companyName?.takeIf { it.isNotBlank() }?.let { "$it · $lokasi" } ?: lokasi
+    val sistemKerja = lowongan?.sistemKerja ?: "-"
+    val periode = lowongan?.periodeMagang ?: "-"
+    val kuota = lowongan?.kuota ?: 1
+    val batas = lowongan?.batasPendaftaran ?: "-"
+    val deskripsi = lowongan?.deskripsiPekerjaan ?: "-"
+    val persyaratan = lowongan?.persyaratan ?: "-"
+    val isTerbit = lowongan?.status.equals("terbit", ignoreCase = true)
+    val statusText = (lowongan?.status ?: "draf").replaceFirstChar { it.uppercase() }
+
     Scaffold(
         topBar = {
             AdminMagangHeader(
@@ -105,7 +121,7 @@ fun DetailLowonganScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "UI/UX Design",
+                                    text = posisi,
                                     style = TextStyle(
                                         fontSize = 20.sp,
                                         fontFamily = PlusJakartaFont,
@@ -115,7 +131,7 @@ fun DetailLowonganScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "PT. Maju Mundur",
+                                    text = subtitleLokasi,
                                     style = TextStyle(
                                         fontSize = 14.sp,
                                         fontFamily = PlusJakartaFont,
@@ -132,17 +148,17 @@ fun DetailLowonganScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(MagangActiveGreenBg)
+                                .background(if (isTerbit) MagangActiveGreenBg else MagangCreamBox)
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Tempat aktif",
+                                text = statusText,
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     fontFamily = PlusJakartaFont,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MagangActiveGreenText
+                                    color = if (isTerbit) MagangActiveGreenText else MagangNavyDark
                                 )
                             )
                         }
@@ -151,7 +167,7 @@ fun DetailLowonganScreen(
 
                         // Lokasi & Durasi
                         Text(
-                            text = "Lokasi & durasi",
+                            text = "Lokasi & sistem kerja",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,
@@ -161,7 +177,7 @@ fun DetailLowonganScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Bontang · Di kantor · 3 Bulan",
+                            text = "$lokasi · $sistemKerja",
                             style = TextStyle(
                                 fontSize = 15.sp,
                                 fontFamily = PlusJakartaFont,
@@ -184,7 +200,7 @@ fun DetailLowonganScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Januari–Maret 2027 · 2 mahasiswa",
+                            text = "$periode · $kuota mahasiswa",
                             style = TextStyle(
                                 fontSize = 15.sp,
                                 fontFamily = PlusJakartaFont,
@@ -216,7 +232,7 @@ fun DetailLowonganScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "30 November 2026",
+                                    text = batas,
                                     style = TextStyle(
                                         fontSize = 15.sp,
                                         fontFamily = PlusJakartaFont,
@@ -226,29 +242,6 @@ fun DetailLowonganScreen(
                                 )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Lamaran lowongan ini
-                        Text(
-                            text = "Lamaran lowongan ini",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Normal,
-                                color = MagangTextSecondary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = "0 · Belum dipublikasikan",
-                            style = TextStyle(
-                                fontSize = 15.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Bold,
-                                color = MagangNavyDark
-                            )
-                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
                         HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
@@ -266,7 +259,7 @@ fun DetailLowonganScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Mendukung riset pengguna, membuat wireframe dan prototipe, serta berkolaborasi dengan tim pengembang untuk menyempurnakan pengalaman produk digital.",
+                            text = deskripsi,
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp,
@@ -289,77 +282,49 @@ fun DetailLowonganScreen(
                             )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        val bullets = listOf(
-                            "Mahasiswa aktif minimal semester 5",
-                            "Menguasai Figma dan dasar desain UI/UX",
-                            "Melampirkan CV dan portofolio",
-                            "Bersedia mengikuti magang selama 3 bulan"
+                        Text(
+                            text = persyaratan,
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                lineHeight = 19.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Normal,
+                                color = MagangNavyPrimary
+                            )
                         )
-                        bullets.forEach { bullet ->
-                            Row(
-                                modifier = Modifier.padding(vertical = 3.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Text(
-                                    text = "• ",
-                                    style = TextStyle(
-                                        fontSize = 14.sp,
-                                        fontFamily = PlusJakartaFont,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MagangNavyDark
-                                    )
-                                )
-                                Text(
-                                    text = bullet,
-                                    style = TextStyle(
-                                        fontSize = 14.sp,
-                                        lineHeight = 19.sp,
-                                        fontFamily = PlusJakartaFont,
-                                        fontWeight = FontWeight.Normal,
-                                        color = MagangNavyPrimary
-                                    )
-                                )
-                            }
-                        }
                     }
                 }
             }
 
-            // 2. Timestamp Info
-            item {
-                Text(
-                    text = "Dibuat admin 16 Okt 2026, 15:30 WITA. Draf periode baru, terpisah dari lowongan yang sudah terbit.",
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        fontFamily = PlusJakartaFont,
-                        fontWeight = FontWeight.Normal,
-                        color = MagangTextSecondary
-                    ),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-            }
-
-            // 3. Button: Tinjau & Terbitkan
+            // 2. Button: Terbitkan / Tutup Lowongan
             item {
                 Button(
-                    onClick = onNavigateToPublikasiLowongan,
+                    enabled = !isSubmitting && !lowongan?.id.isNullOrBlank(),
+                    onClick = {
+                        val newTargetStatus = if (isTerbit) "ditutup" else "terbit"
+                        onToggleStatus(newTargetStatus)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MagangGoldenOrange,
-                        contentColor = MagangNavyDark
+                        containerColor = if (isTerbit) Color(0xFFEF4444) else MagangGoldenOrange,
+                        contentColor = if (isTerbit) Color.White else MagangNavyDark
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
-                        text = "Tinjau & Terbitkan",
+                        text = when {
+                            isSubmitting -> "Memperbarui..."
+                            isTerbit -> "Tutup Lowongan Ini"
+                            else -> "Terbitkan Lowongan Sekarang"
+                        },
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontFamily = PlusJakartaFont,
                             fontWeight = FontWeight.Bold,
-                            color = MagangNavyDark
+                            color = if (isTerbit) Color.White else MagangNavyDark
                         )
                     )
                 }

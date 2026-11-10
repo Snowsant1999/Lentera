@@ -1,6 +1,11 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
+import com.PPBM.lentera.backend.admin.model.LogTindakanItem
+import com.PPBM.lentera.backend.mahasiswa.model.BuktiLaporanItem
+import com.PPBM.lentera.backend.mahasiswa.model.PermintaanInformasiItem
+import java.util.Locale
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +50,11 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun AdminDetailLaporanScreen(
+    laporan: AdminLaporan? = null,
+    buktiList: List<BuktiLaporanItem> = emptyList(),
+    logList: List<LogTindakanItem> = emptyList(),
+    permintaanList: List<PermintaanInformasiItem> = emptyList(),
+    onOpenBukti: (BuktiLaporanItem) -> Unit = {},
     onNavigateToVerifikasi: () -> Unit = {},
     onNavigateToMintaInformasi: () -> Unit = {},
     onNavigateToPenugasan: () -> Unit = {},
@@ -53,6 +63,23 @@ fun AdminDetailLaporanScreen(
     onBackToList: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat detail laporan..."
+    val kategori = laporan?.kategori ?: "Pengaduan"
+    val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
+    val lokasiKejadian = laporan?.lokasiKejadian ?: "-"
+    val kronologi = laporan?.kronologi ?: "-"
+    val isAnonim = laporan?.isAnonim ?: true
+    val pelaporDisplay = if (isAnonim) "Anonim" else (laporan?.pelaporNama ?: "Mahasiswa")
+    val statusStr = (laporan?.status ?: "baru").replaceFirstChar { it.uppercase() }
+    val (statusBg, statusColor) = when (laporan?.status?.lowercase()) {
+        "baru" -> Pair(Color(0xFFFEF3C7), Color(0xFFB45309))
+        "diproses", "penanganan", "investigasi" -> Pair(Color(0xFFFFE4E6), Color(0xFFE11D48))
+        "selesai" -> Pair(Color(0xFFE8F4F1), Color(0xFF2F7078))
+        "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
+        else -> Pair(Color(0xFFFFEDD5), Color(0xFFC2410C))
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,12 +101,12 @@ fun AdminDetailLaporanScreen(
         ) {
             // Ringkasan Laporan Teratas
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
-                statusText = "Diperiksa",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                id = nomorLaporan,
+                statusText = statusStr,
+                statusBg = statusBg,
+                statusColor = statusColor,
+                title = judulLaporan,
+                subtitle = "Tanggal Kejadian: $tanggalKejadian · ${if (isAnonim) "Anonim" else "Terverifikasi"}"
             )
 
             // Kartu: Kelola Laporan
@@ -196,14 +223,16 @@ fun AdminDetailLaporanScreen(
                         style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                     )
                     Text(
-                        text = "Anonim",
+                        text = pelaporDisplay,
                         style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, fontWeight = FontWeight.Bold, color = SiagaNavyDark)
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-                    AdminInfoBanner(
-                        text = "Identitas pelapor dirahasiakan. Komunikasi dilakukan melalui nomor laporan, tanpa membuka nama atau NIM."
-                    )
+                    if (isAnonim) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        AdminInfoBanner(
+                            text = "Identitas pelapor dirahasiakan (Anonim). Komunikasi dilakukan melalui nomor laporan, tanpa membuka nama atau NIM."
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = Color(0xFFF1F5F9))
@@ -214,7 +243,7 @@ fun AdminDetailLaporanScreen(
                         style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                     )
                     Text(
-                        text = "Pelecehan Verbal",
+                        text = kategori,
                         style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, fontWeight = FontWeight.Bold, color = SiagaNavyDark)
                     )
 
@@ -233,7 +262,7 @@ fun AdminDetailLaporanScreen(
                         )
                     }
                     Text(
-                        text = "15 Oktober 2026, 10:30 WITA",
+                        text = tanggalKejadian,
                         style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, fontWeight = FontWeight.SemiBold, color = SiagaNavyDark),
                         modifier = Modifier.padding(start = 22.dp)
                     )
@@ -244,7 +273,7 @@ fun AdminDetailLaporanScreen(
                         style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                     )
                     Text(
-                        text = "Koridor Gedung Baru, Lantai 2",
+                        text = lokasiKejadian,
                         style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, fontWeight = FontWeight.SemiBold, color = SiagaNavyDark)
                     )
                 }
@@ -268,7 +297,7 @@ fun AdminDetailLaporanScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Saat menunggu kelas, saya menerima ucapan yang merendahkan dari seorang mahasiswa. Kejadian ini berulang dan membuat saya merasa tidak aman.",
+                        text = kronologi,
                         style = TextStyle(
                             fontSize = 13.sp,
                             lineHeight = 20.sp,
@@ -287,7 +316,7 @@ fun AdminDetailLaporanScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Bukti yang dilampirkan",
+                        text = "Bukti yang dilampirkan (${buktiList.size})",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontFamily = PlusJakartaFont,
@@ -297,57 +326,65 @@ fun AdminDetailLaporanScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    val attachments = listOf(
-                        Pair("foto_lab.jpg", "JPG · 2,4 MB · Akses terbatas"),
-                        Pair("rekaman_suara.mp4", "MP4 · 2,4 MB · Akses terbatas"),
-                        Pair("dokumen_pendukung.pdf", "PDF · 2,4 MB · Akses terbatas")
-                    )
-
-                    attachments.forEach { (name, details) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_file_text),
-                                    contentDescription = "File",
-                                    tint = SiagaNavyDark,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = name,
-                                        style = TextStyle(
-                                            fontSize = 13.sp,
-                                            fontFamily = PlusJakartaFont,
-                                            fontWeight = FontWeight.Bold,
-                                            color = SiagaNavyDark
-                                        )
-                                    )
-                                    Text(
-                                        text = details,
-                                        style = TextStyle(
-                                            fontSize = 11.sp,
-                                            fontFamily = PlusJakartaFont,
-                                            color = SiagaTextSecondary
-                                        )
-                                    )
-                                }
-                            }
-
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_chevron_right),
-                                contentDescription = "Lihat Dokumen",
-                                tint = SiagaNavyDark,
-                                modifier = Modifier.size(16.dp)
+                    if (buktiList.isEmpty()) {
+                        Text(
+                            text = "Tidak ada lampiran berkas dokumen tambahan.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = SiagaTextSecondary
                             )
+                        )
+                    } else {
+                        buktiList.forEach { bukti ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
+                                    .clickable { onOpenBukti(bukti) }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_file_text),
+                                        contentDescription = bukti.tipeFile,
+                                        tint = SiagaNavyDark,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = bukti.namaFile,
+                                            style = TextStyle(
+                                                fontSize = 13.sp,
+                                                fontFamily = PlusJakartaFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SiagaNavyDark
+                                            )
+                                        )
+                                        Text(
+                                            text = "${bukti.tipeFile} · ${formatBuktiBytes(bukti.ukuranBytes)} · Ketuk untuk membuka",
+                                            style = TextStyle(
+                                                fontSize = 11.sp,
+                                                fontFamily = PlusJakartaFont,
+                                                color = SiagaTextSecondary
+                                            )
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_chevron_right),
+                                    contentDescription = "Buka",
+                                    tint = SiagaNavyDark,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -400,9 +437,68 @@ fun AdminDetailLaporanScreen(
                                 )
                             )
                             Text(
-                                text = "15 Okt 2026, 15:00 WITA",
+                                text = laporan?.createdAt?.take(16)?.replace("T", " ") ?: "Terkirim",
                                 style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                             )
+                        }
+                    }
+
+                    logList.forEach { log ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_timeline_marker),
+                                contentDescription = log.judulTindakan,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(16.dp, 48.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                                Text(
+                                    text = log.judulTindakan,
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SiagaNavyDark
+                                    )
+                                )
+                                Text(
+                                    text = "${log.createdAt?.take(16)?.replace("T", " ") ?: ""} · ${log.deskripsi}",
+                                    style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
+                                )
+                            }
+                        }
+                    }
+
+                    permintaanList.forEach { req ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_timeline_marker),
+                                contentDescription = "Permintaan informasi",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(16.dp, 48.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                                Text(
+                                    text = "Permintaan informasi",
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SiagaNavyDark
+                                    )
+                                )
+                                Text(
+                                    text = buildString {
+                                        append("Admin: ${req.pesanKePelapor}")
+                                        if (!req.balasanPelapor.isNullOrBlank()) {
+                                            append("\nBalasan pelapor: ${req.balasanPelapor}")
+                                        }
+                                    },
+                                    style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
+                                )
+                            }
                         }
                     }
 
@@ -416,7 +512,7 @@ fun AdminDetailLaporanScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Diperiksa oleh admin",
+                                text = "Status saat ini: $statusStr",
                                 style = TextStyle(
                                     fontSize = 13.sp,
                                     fontFamily = PlusJakartaFont,
@@ -425,7 +521,7 @@ fun AdminDetailLaporanScreen(
                                 )
                             )
                             Text(
-                                text = "17 Okt 2026, 09:20 WITA",
+                                text = if (!laporan?.unitPenanganan.isNullOrBlank()) "Ditugaskan ke: ${laporan?.unitPenanganan}" else "Pembaruan: ${laporan?.updatedAt?.take(16)?.replace("T", " ") ?: "-"}",
                                 style = TextStyle(fontSize = 12.sp, fontFamily = PlusJakartaFont, color = SiagaTextSecondary)
                             )
                         }
@@ -452,15 +548,15 @@ fun AdminDetailLaporanScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "3 bukti tersedia · Perlu pemeriksaan",
+                        text = "Status: $statusStr · ${if (laporan?.status == "selesai") "Laporan telah ditutup & diselesaikan" else "Perlu pemeriksaan & penanganan admin"}",
                         modifier = Modifier
-                            .background(color = Color(0xFFFEF3C7), shape = RoundedCornerShape(12.dp))
+                            .background(color = statusBg, shape = RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         style = TextStyle(
                             fontSize = 11.sp,
                             fontFamily = PlusJakartaFont,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFB45309)
+                            color = statusColor
                         )
                     )
 
@@ -521,6 +617,14 @@ fun AdminDetailLaporanScreen(
 
         // 3. Bottom Bar
         AdminSiagaBottomBar(currentRoute = "Laporan", onNavClick = onNavClick)
+    }
+}
+
+private fun formatBuktiBytes(bytes: Long): String {
+    return when {
+        bytes >= 1024L * 1024L -> String.format(Locale.US, "%.1f MB", bytes.toDouble() / (1024.0 * 1024.0))
+        bytes >= 1024L -> "${bytes / 1024L} KB"
+        else -> "$bytes B"
     }
 }
 

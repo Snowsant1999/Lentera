@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,11 +29,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -78,56 +81,60 @@ data class DokumenModel(
     val title: String,
     val fileName: String,
     val fileInfo: String,
+    val filePath: String = "",
     val localUri: Uri? = null
 )
 
-// 6 Kategori Dokumen Baku & Terstandarisasi
+// 3 Kategori Dokumen Arsip Profil sesuai CHECK constraint `dokumen_mahasiswa.jenis`
 val KATEGORI_DOKUMEN_BAKU = listOf(
-    "Curriculum Vitae (CV)",
-    "Transkrip Nilai",
-    "Portofolio",
-    "Sertifikat Pendukung",
-    "Kartu Tanda Mahasiswa (KTM)",
-    "Surat Pengantar Kampus"
+    "CV",
+    "Transkrip",
+    "Portofolio"
 )
 
 @Composable
 fun DokumenSayaScreen(
+    dokumenList: List<com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem> = emptyList(),
+    ownerName: String = "-",
+    ownerNim: String = "-",
+    ownerProdi: String = "-",
+    onUploadDokumen: (jenis: String, fileName: String, fileBytes: ByteArray, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, _, onSuccess, _ -> onSuccess() },
+    onDeleteDokumen: (docId: String, filePath: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, onSuccess, _ -> onSuccess() },
     onBackClick: () -> Unit = {},
     onTabSelected: (LenteraTab) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val dokumenList = remember {
-        mutableStateListOf(
-            DokumenModel(
-                id = "1",
-                iconRes = R.drawable.ic_document_symbol,
-                title = "Curriculum Vitae (CV)",
-                fileName = "CV_Budi_Santoso.pdf",
-                fileInfo = "PDF Ã‚· 245 KB Ã‚· 12 Okt 2026"
-            ),
-            DokumenModel(
-                id = "2",
-                iconRes = R.drawable.ic_document_symbol_2,
-                title = "Transkrip Nilai",
-                fileName = "Transkrip_Budi_Santoso.pdf",
-                fileInfo = "PDF Ã‚· 1,2 MB Ã‚· 10 Okt 2026"
-            ),
-            DokumenModel(
-                id = "3",
-                iconRes = R.drawable.ic_document_symbol_3,
-                title = "Portofolio",
-                fileName = "Portofolio_Budi_Santoso.pdf",
-                fileInfo = "PDF Ã‚· 3,4 MB Ã‚· 10 Okt 2026"
-            )
+    val displayDocs = dokumenList.map { item ->
+        val icon = when {
+            item.jenis.contains("CV", ignoreCase = true) -> R.drawable.ic_document_symbol
+            item.jenis.contains("Transkrip", ignoreCase = true) -> R.drawable.ic_document_symbol_2
+            item.jenis.contains("Portofolio", ignoreCase = true) -> R.drawable.ic_document_symbol_3
+            item.jenis.contains("KTM", ignoreCase = true) -> R.drawable.ic_document_symbol
+            else -> R.drawable.ic_document_symbol_2
+        }
+        val sizeKb = item.ukuranBytes / 1024
+        val sizeStr = if (sizeKb > 1024) String.format(java.util.Locale.US, "%.1f MB", sizeKb / 1024.0) else "$sizeKb KB"
+        val dateStr = item.createdAt?.take(10) ?: "Tersimpan"
+        DokumenModel(
+            id = item.id ?: "",
+            iconRes = icon,
+            title = item.jenis,
+            fileName = item.namaFile,
+            fileInfo = "PDF · $sizeStr · $dateStr",
+            filePath = item.filePath
         )
     }
 
     var showUploadDialog by remember { mutableStateOf(false) }
     var uploadTargetCategory by remember { mutableStateOf<String?>(null) }
     var selectedDocForPreview by remember { mutableStateOf<DokumenModel?>(null) }
-    var terakhirDiperbarui by remember { mutableStateOf("12 Oktober 2026") }
+    var docPendingDelete by remember { mutableStateOf<DokumenModel?>(null) }
+    val terakhirDiperbarui = remember(dokumenList) {
+        dokumenList.maxOfOrNull { it.createdAt?.take(10).orEmpty() }
+            ?.takeIf { it.isNotBlank() } ?: "Belum ada unggahan"
+    }
 
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var feedbackIsSuccess by remember { mutableStateOf(true) }
@@ -147,7 +154,7 @@ fun DokumenSayaScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tombol Kembali: "Ã¢â€ Â Profil"
+            // Tombol Kembali
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -210,7 +217,7 @@ fun DokumenSayaScreen(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "${dokumenList.size} dokumen tersimpan",
+                        text = "${displayDocs.size} dokumen tersimpan",
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
@@ -228,16 +235,46 @@ fun DokumenSayaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Daftar Dokumen (Dapat diklik untuk In-App Preview)
-            dokumenList.forEach { doc ->
-                DokumenCard(
-                    iconRes = doc.iconRes,
-                    title = doc.title,
-                    fileName = doc.fileName,
-                    fileInfo = doc.fileInfo,
-                    onClick = { selectedDocForPreview = doc }
-                )
+            // Daftar Dokumen
+            if (displayDocs.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, spotColor = Color(0x09173B57), shape = RoundedCornerShape(16.dp))
+                        .background(Color.White, shape = RoundedCornerShape(16.dp))
+                        .padding(28.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Belum Ada Dokumen",
+                            fontFamily = PlusJakartaSans,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = LenteraNavy
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Unggah CV, Transkrip Nilai, atau Portofolio Anda untuk kebutuhan pendaftaran magang.",
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = LenteraTextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(14.dp))
+            } else {
+                displayDocs.forEach { doc ->
+                    DokumenCard(
+                        iconRes = doc.iconRes,
+                        title = doc.title,
+                        fileName = doc.fileName,
+                        fileInfo = doc.fileInfo,
+                        onClick = { selectedDocForPreview = doc }
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -281,7 +318,7 @@ fun DokumenSayaScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Format PDF Ã‚· Maksimal 5 MB per dokumen",
+                text = "Format PDF · Maksimal 5 MB per dokumen",
                 fontFamily = PlusJakartaSans,
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
@@ -350,6 +387,9 @@ fun DokumenSayaScreen(
     selectedDocForPreview?.let { doc ->
         InAppDocumentPreviewDialog(
             doc = doc,
+            ownerName = ownerName,
+            ownerNim = ownerNim,
+            ownerProdi = ownerProdi,
             onDismiss = { selectedDocForPreview = null },
             onGanti = {
                 uploadTargetCategory = doc.title
@@ -357,12 +397,60 @@ fun DokumenSayaScreen(
                 showUploadDialog = true
             },
             onDelete = {
-                dokumenList.remove(doc)
                 selectedDocForPreview = null
-                feedbackIsSuccess = true
-                feedbackTitle = "Dokumen Dihapus"
-                feedbackMessage = "Berkas ${doc.title} (${doc.fileName}) telah berhasil dihapus dari daftar dokumen."
-                showFeedbackDialog = true
+                docPendingDelete = doc
+            }
+        )
+    }
+
+    docPendingDelete?.let { doc ->
+        AlertDialog(
+            onDismissRequest = { docPendingDelete = null },
+            title = {
+                Text(
+                    text = "Hapus Dokumen?",
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.Bold,
+                    color = LenteraNavy
+                )
+            },
+            text = {
+                Text(
+                    text = "Berkas ${doc.title} (${doc.fileName}) akan dihapus dari arsip profil Anda.",
+                    fontFamily = PlusJakartaSans,
+                    color = LenteraTextPrimary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        docPendingDelete = null
+                        onDeleteDokumen(
+                            doc.id,
+                            doc.filePath,
+                            {
+                                feedbackIsSuccess = true
+                                feedbackTitle = "Dokumen Dihapus"
+                                feedbackMessage = "Berkas ${doc.title} (${doc.fileName}) berhasil dihapus dari akun Anda."
+                                showFeedbackDialog = true
+                            },
+                            { err ->
+                                feedbackIsSuccess = false
+                                feedbackTitle = "Gagal Menghapus"
+                                feedbackMessage = err
+                                showFeedbackDialog = true
+                            }
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = LenteraRedMuted)
+                ) {
+                    Text("Hapus", color = Color.White, fontFamily = PlusJakartaSans, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { docPendingDelete = null }) {
+                    Text("Batal", fontFamily = PlusJakartaSans, color = LenteraNavy)
+                }
             }
         )
     }
@@ -372,32 +460,48 @@ fun DokumenSayaScreen(
         UploadDokumenDialog(
             initialCategory = uploadTargetCategory ?: KATEGORI_DOKUMEN_BAKU[0],
             onDismiss = { showUploadDialog = false },
-            onUploadSuccess = { kategori, namaFile, ukuran, uri ->
-                val icon = when (kategori) {
-                    "Curriculum Vitae (CV)" -> R.drawable.ic_document_symbol
-                    "Transkrip Nilai" -> R.drawable.ic_document_symbol_2
-                    "Portofolio" -> R.drawable.ic_document_symbol_3
-                    "Kartu Tanda Mahasiswa (KTM)" -> R.drawable.ic_document_symbol
-                    else -> R.drawable.ic_document_symbol_2
+            onUploadSuccess = { kategori, namaFile, _, uri ->
+                val bytes = uri?.let { u ->
+                    try {
+                        context.contentResolver.openInputStream(u)?.use { it.readBytes() }
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
-                dokumenList.removeAll { it.title == kategori }
-                dokumenList.add(
-                    DokumenModel(
-                        id = System.currentTimeMillis().toString(),
-                        iconRes = icon,
-                        title = kategori,
-                        fileName = namaFile,
-                        fileInfo = "PDF Ã‚· $ukuran Ã‚· Baru saja",
-                        localUri = uri
-                    )
-                )
-                terakhirDiperbarui = "Hari ini"
-                showUploadDialog = false
-
-                feedbackIsSuccess = true
-                feedbackTitle = "Dokumen Berhasil Disimpan"
-                feedbackMessage = "Berkas $namaFile untuk $kategori berhasil diunggah dan disimpan ke profil."
-                showFeedbackDialog = true
+                when {
+                    bytes == null || bytes.isEmpty() -> {
+                        feedbackIsSuccess = false
+                        feedbackTitle = "Gagal Membaca File"
+                        feedbackMessage = "Berkas $namaFile kosong atau tidak dapat dibaca."
+                        showFeedbackDialog = true
+                    }
+                    bytes.size > 5 * 1024 * 1024 -> {
+                        feedbackIsSuccess = false
+                        feedbackTitle = "Ukuran Terlalu Besar"
+                        feedbackMessage = "Ukuran maksimal dokumen adalah 5 MB."
+                        showFeedbackDialog = true
+                    }
+                    else -> {
+                        showUploadDialog = false
+                        onUploadDokumen(
+                            kategori,
+                            namaFile,
+                            bytes,
+                            {
+                                feedbackIsSuccess = true
+                                feedbackTitle = "Dokumen Berhasil Diunggah"
+                                feedbackMessage = "Berkas $namaFile untuk kategori $kategori berhasil tersimpan."
+                                showFeedbackDialog = true
+                            },
+                            { err ->
+                                feedbackIsSuccess = false
+                                feedbackTitle = "Gagal Mengunggah Dokumen"
+                                feedbackMessage = err
+                                showFeedbackDialog = true
+                            }
+                        )
+                    }
+                }
             }
         )
     }
@@ -518,6 +622,9 @@ private fun DokumenCard(
 @Composable
 private fun InAppDocumentPreviewDialog(
     doc: DokumenModel,
+    ownerName: String,
+    ownerNim: String,
+    ownerProdi: String,
     onDismiss: () -> Unit,
     onGanti: () -> Unit,
     onDelete: () -> Unit
@@ -651,18 +758,17 @@ private fun InAppDocumentPreviewDialog(
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        PreviewInfoRow(label = "Nama Mahasiswa", value = "Budi Santoso")
-                        PreviewInfoRow(label = "NIM", value = "2023110045")
-                        PreviewInfoRow(label = "Program Studi", value = "Teknik Informatika")
+                        PreviewInfoRow(label = "Nama Mahasiswa", value = ownerName)
+                        PreviewInfoRow(label = "NIM", value = ownerNim)
+                        PreviewInfoRow(label = "Program Studi", value = ownerProdi)
                         PreviewInfoRow(label = "Nama Berkas", value = doc.fileName)
                         PreviewInfoRow(label = "Informasi File", value = doc.fileInfo)
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Isi Konten Simulasi Dokumen Sesuai Jenisnya
                     Text(
-                        text = "Ringkasan Muatan Dokumen:",
+                        text = "Keterangan Dokumen:",
                         fontFamily = PlusJakartaSans,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
@@ -672,23 +778,10 @@ private fun InAppDocumentPreviewDialog(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     val detailContent = when (doc.title) {
-                        "Curriculum Vitae (CV)" ->
-                            "• Ringkasan Profesional: Mahasiswa aktif Teknik Informatika berfokus pada UI/UX Design & Front-End Android Development.\n" +
-                            "• Keahlian Utama: Jetpack Compose, Figma, Kotlin, REST API, Git Version Control.\n" +
-                            "• Pengalaman Organisasi: Koordinator Divisi Desain Himpunan Mahasiswa Informatika (2024–2025).\n" +
-                            "• Riwayat Pelatihan: Google Developer Student Clubs UI/UX Intensive Bootcamp."
-                        "Transkrip Nilai" ->
-                            "• Indeks Prestasi Kumulatif (IPK): 3.85 / 4.00 (Cum Laude)\n" +
-                            "• Total SKS Lulus: 84 SKS (Semester 1–4)\n" +
-                            "• Mata Kuliah Relevan: Pemrograman Berbasis Bergerak (A), Rekayasa Perangkat Lunak (A), Interaksi Manusia & Komputer (A)."
-                        "Portofolio" ->
-                            "• Proyek 1: Redesign UI Aplikasi Mobile LENTERA Kampus (Figma & Compose UI Prototype)\n" +
-                            "• Proyek 2: Website Portal Career & Magang Terpadu\n" +
-                            "• Link Portofolio Daring: https://behance.net/budisantoso"
-                        "Kartu Tanda Mahasiswa (KTM)" ->
-                            "• Nomor Induk: 2023110045\n• Status: Terdaftar & Terverifikasi Aktif Semester Berjalan\n• Masa Berlaku: Hingga September 2027"
-                        else ->
-                            "Dokumen resmi ini telah diverifikasi dan siap diteruskan sebagai kelengkapan berkas magang mahasiswa."
+                        "CV" -> "Dokumen Curriculum Vitae resmi tersimpan pada arsip profil mahasiswa dan siap dilampirkan otomatis saat pengajuan magang."
+                        "Transkrip" -> "Dokumen Transkrip Nilai akademik resmi tersimpan pada arsip profil mahasiswa untuk verifikasi persyaratan magang."
+                        "Portofolio" -> "Dokumen Portofolio karya mahasiswa tersimpan pada arsip profil dan dapat dipilih langsung saat melamar posisi magang."
+                        else -> "Dokumen ini telah tersimpan di arsip profil dan siap digunakan sebagai kelengkapan berkas magang."
                     }
 
                     Text(
@@ -845,7 +938,7 @@ private fun UploadDokumenDialog(
     var selectedKategori by remember { mutableStateOf(initialCategory) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var fileNameDisplay by remember { mutableStateOf("") }
-    var fileSizeDisplay by remember { mutableStateOf("520 KB") }
+    var fileSizeDisplay by remember { mutableStateOf("") }
 
     var showUploadError by remember { mutableStateOf(false) }
     var uploadErrorTitle by remember { mutableStateOf("") }
@@ -888,11 +981,11 @@ private fun UploadDokumenDialog(
                 color = LenteraNavy
             )
 
-            // 6 Kategori Baku
+            // Kategori Arsip Profil (CV, Transkrip, Portofolio)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(170.dp)
+                    .heightIn(max = 170.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1010,7 +1103,7 @@ private fun UploadDokumenDialog(
                             fileNameDisplay
                         } else {
                             val sanitizedCat = selectedKategori.replace(" ", "_").replace("(", "").replace(")", "")
-                            "${sanitizedCat}_Budi_Santoso.pdf"
+                            "${sanitizedCat}_Mahasiswa.pdf"
                         }
 
                         if (selectedUri == null && fileNameDisplay.isBlank()) {

@@ -1,12 +1,10 @@
 package com.PPBM.lentera.features.admin.magang
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import com.PPBM.lentera.features.admin.magang.components.*
-import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -27,8 +26,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,10 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,20 +46,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.admin.model.LowonganEntity
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.features.admin.magang.components.*
 
 @Composable
 fun DaftarLowonganScreen(
-    onNavigateToDetailLowongan: () -> Unit = {},
+    lowonganList: List<LowonganEntity> = emptyList(),
+    companyNamesById: Map<String, String> = emptyMap(),
+    isUpdating: Boolean = false,
+    onNavigateToDetailLowongan: (LowonganEntity) -> Unit = {},
     onNavigateToTambahLowongan: () -> Unit = {},
-    onNavigateToFormLowongan: () -> Unit = {},
-    onNavigateToPublikasiLowongan: () -> Unit = {},
+    onNavigateToUbahLowongan: (LowonganEntity) -> Unit = {},
+    onTogglePublish: (LowonganEntity, String) -> Unit = { _, _ -> },
+    onTutupLowongan: (LowonganEntity) -> Unit = {},
     onNavigateToLamaran: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
-    val filterChips = listOf("Semua 8", "Draf 3", "Terbit 4", "Ditutup 1")
+    val totalCount = lowonganList.size
+    val drafCount = lowonganList.count { it.status.equals("draf", ignoreCase = true) }
+    val terbitCount = lowonganList.count { it.status.equals("terbit", ignoreCase = true) }
+    val ditutupCount = lowonganList.count { it.status.equals("ditutup", ignoreCase = true) }
+    val filterChips = listOf("Semua $totalCount", "Draf $drafCount", "Terbit $terbitCount", "Ditutup $ditutupCount")
 
     Scaffold(
         topBar = {
@@ -85,7 +92,7 @@ fun DaftarLowonganScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 0. Sub-tab Pills (Mitra Magang / Kelola Lowongan / Lamaran Masuk)
+            // Sub-tab Pills
             item {
                 Row(
                     modifier = Modifier
@@ -93,7 +100,6 @@ fun DaftarLowonganScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Inactive Tab: Mitra Magang
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -113,7 +119,6 @@ fun DaftarLowonganScreen(
                         )
                     }
 
-                    // Active Tab: Kelola Lowongan
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -132,7 +137,6 @@ fun DaftarLowonganScreen(
                         )
                     }
 
-                    // Inactive Tab: Lamaran Masuk
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -154,7 +158,7 @@ fun DaftarLowonganScreen(
                 }
             }
 
-            // 1. Primary Action Button: + Tambah Lowongan
+            // Primary Action Button: + Tambah Lowongan
             item {
                 Button(
                     onClick = onNavigateToTambahLowongan,
@@ -180,16 +184,16 @@ fun DaftarLowonganScreen(
                 }
             }
 
-            // 2. Search Bar
+            // Search Bar
             item {
                 MagangSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    placeholder = "Cari posisi atau perusahaan"
+                    placeholder = "Cari posisi, lokasi, atau perusahaan"
                 )
             }
 
-            // 3. Filter Chips
+            // Filter Chips
             item {
                 MagangFilterChips(
                     chips = filterChips,
@@ -198,7 +202,7 @@ fun DaftarLowonganScreen(
                 )
             }
 
-            // 4. Summary Banner Card: 28 lamaran masuk
+            // Summary Banner Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -208,7 +212,7 @@ fun DaftarLowonganScreen(
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
-                            text = "28 lamaran masuk",
+                            text = "${lowonganList.size} lowongan terdaftar",
                             style = TextStyle(
                                 fontSize = 16.sp,
                                 fontFamily = PlusJakartaFont,
@@ -218,7 +222,7 @@ fun DaftarLowonganScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "4 lowongan terbit · 3 draf · 1 ditutup",
+                            text = "$terbitCount lowongan terbit · $drafCount draf · $ditutupCount ditutup",
                             style = TextStyle(
                                 fontSize = 13.sp,
                                 fontFamily = PlusJakartaFont,
@@ -230,46 +234,126 @@ fun DaftarLowonganScreen(
                 }
             }
 
-            // 5. Card 1: UI/UX Design (Draf)
-            item {
-                LowonganItemCard(
-                    logoRes = R.drawable.ic_avatar_2,
-                    title = "UI/UX Design",
-                    company = "PT. Maju Mundur",
-                    metaText = "Periode Jan–Mar 2027 · 0 lamaran",
-                    badgeText = "Draf",
-                    badgeBg = MagangCreamBox,
-                    badgeColor = MagangNavyDark,
-                    onCardClick = onNavigateToDetailLowongan,
-                    onUbahClick = onNavigateToFormLowongan,
-                    actionPrimaryText = "Terbitkan",
-                    onActionPrimaryClick = onNavigateToPublikasiLowongan,
-                    onArsipkanClick = { /* Arsipkan */ }
-                )
+            val filteredLowongan = lowonganList.filter { item ->
+                val companyName = companyNamesById[item.tempatMagangId].orEmpty()
+                val matchesSearch = searchQuery.isBlank() ||
+                    item.posisi.contains(searchQuery, ignoreCase = true) ||
+                    item.lokasi.contains(searchQuery, ignoreCase = true) ||
+                    companyName.contains(searchQuery, ignoreCase = true)
+                val matchesChip = when (selectedFilterIndex) {
+                    0 -> true
+                    1 -> item.status.equals("draf", ignoreCase = true)
+                    2 -> item.status.equals("terbit", ignoreCase = true)
+                    3 -> item.status.equals("ditutup", ignoreCase = true)
+                    else -> true
+                }
+                matchesSearch && matchesChip
             }
 
-            // 6. Card 2: Web Developer (Terbit)
-            item {
-                LowonganItemCard(
-                    logoRes = R.drawable.ic_avatar_2,
-                    title = "Web Developer",
-                    company = "PT. Bismillah Berkah",
-                    metaText = "Bontang · 8 lamaran",
-                    badgeText = "Terbit",
-                    badgeBg = MagangActiveGreenBg,
-                    badgeColor = MagangActiveGreenText,
-                    onCardClick = onNavigateToDetailLowongan,
-                    onUbahClick = onNavigateToFormLowongan,
-                    actionPrimaryText = "Tutup",
-                    onActionPrimaryClick = { /* Tutup lowongan */ },
-                    onArsipkanClick = { /* Arsipkan */ }
-                )
+            if (filteredLowongan.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Text(
+                            text = if (lowonganList.isEmpty()) {
+                                "Belum ada lowongan terdaftar. Silakan buat lowongan baru."
+                            } else {
+                                "Tidak ada lowongan yang sesuai dengan filter pencarian."
+                            },
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = MagangTextSecondary
+                            ),
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            } else {
+                items(filteredLowongan.size) { index ->
+                    val item = filteredLowongan[index]
+                    val isTerbit = item.status.equals("terbit", ignoreCase = true)
+                    val isDraf = item.status.equals("draf", ignoreCase = true)
+                    val companyLabel = companyNamesById[item.tempatMagangId]
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { "$it · ${item.lokasi}" }
+                        ?: item.lokasi
+                    LowonganItemCard(
+                        title = item.posisi,
+                        company = companyLabel,
+                        metaText = "Periode: ${item.periodeMagang} · Kuota: ${item.kuota}",
+                        badgeText = item.status.replaceFirstChar { it.uppercase() },
+                        badgeBg = if (isTerbit) MagangActiveGreenBg else MagangCreamBox,
+                        badgeColor = if (isTerbit) MagangActiveGreenText else MagangNavyDark,
+                        isUpdating = isUpdating,
+                        showCloseButton = isDraf,
+                        onCardClick = { onNavigateToDetailLowongan(item) },
+                        onUbahClick = { onNavigateToUbahLowongan(item) },
+                        actionPrimaryText = if (isTerbit) "Tutup" else "Terbitkan",
+                        onActionPrimaryClick = {
+                            onTogglePublish(item, if (isTerbit) "ditutup" else "terbit")
+                        },
+                        onTutupClick = { onTutupLowongan(item) }
+                    )
+                }
             }
 
-            // 7. Caption Info
+            if (lowonganList.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MagangCardBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp)) {
+                            Text(
+                                text = "Ringkasan Batas Pendaftaran",
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MagangNavyDark
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            lowonganList.take(3).forEachIndexed { idx, lowongan ->
+                                if (idx > 0) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
+                                val mitraName = companyNamesById[lowongan.tempatMagangId] ?: "Mitra"
+                                Text(
+                                    text = "${lowongan.posisi} · $mitraName",
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MagangNavyDark
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Status: ${lowongan.status.replaceFirstChar { it.uppercase() }} · Batas ${lowongan.batasPendaftaran} · Kuota ${lowongan.kuota}",
+                                    style = TextStyle(
+                                        fontSize = 12.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        color = MagangTextSecondary
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Text(
-                    text = "Pilih kartu untuk detail · Ubah untuk formulir",
+                    text = "Pilih kartu untuk melihat detail lowongan atau tombol Ubah untuk menyunting.",
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontFamily = PlusJakartaFont,
@@ -280,75 +364,6 @@ fun DaftarLowonganScreen(
                 )
             }
 
-            // 8. Pembaruan Portal Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MagangCardBg),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Text(
-                            text = "Pembaruan Portal",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Bold,
-                                color = MagangNavyDark
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "17 Okt, 08:45 · PT. Bismillah Berkah",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Bold,
-                                color = MagangNavyDark
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "1 lamaran baru untuk Web Developer. Total lowongan ini: 8 lamaran.",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Normal,
-                                color = MagangTextSecondary
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-                        HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "16 Okt, 15:30 · PT. Maju Mundur",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Bold,
-                                color = MagangNavyDark
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Draf UI/UX Design periode Jan–Mar 2027 siap ditinjau admin.",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                fontFamily = PlusJakartaFont,
-                                fontWeight = FontWeight.Normal,
-                                color = MagangTextSecondary
-                            )
-                        )
-                    }
-                }
-            }
-
-            // 9. Back to Tempat Magang Button
             item {
                 Box(
                     modifier = Modifier
@@ -381,18 +396,19 @@ fun DaftarLowonganScreen(
 
 @Composable
 fun LowonganItemCard(
-    logoRes: Int,
     title: String,
     company: String,
     metaText: String,
     badgeText: String,
     badgeBg: Color,
     badgeColor: Color,
+    isUpdating: Boolean = false,
+    showCloseButton: Boolean = true,
     onCardClick: () -> Unit,
     onUbahClick: () -> Unit,
     actionPrimaryText: String,
     onActionPrimaryClick: () -> Unit,
-    onArsipkanClick: () -> Unit
+    onTutupClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -403,7 +419,6 @@ fun LowonganItemCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Logo + Title/Company
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -452,7 +467,6 @@ fun LowonganItemCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Meta row + Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -489,19 +503,17 @@ fun LowonganItemCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Action Buttons Row: Ubah | Terbitkan/Tutup | Arsipkan
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Button 1: Ubah
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.White)
                         .border(1.dp, MagangNavyDark, RoundedCornerShape(12.dp))
-                        .clickable { onUbahClick() }
+                        .clickable(enabled = !isUpdating) { onUbahClick() }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -516,13 +528,12 @@ fun LowonganItemCard(
                     )
                 }
 
-                // Button 2: Terbitkan / Tutup
                 Box(
                     modifier = Modifier
                         .weight(1.2f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MagangGoldenOrange)
-                        .clickable { onActionPrimaryClick() }
+                        .clickable(enabled = !isUpdating) { onActionPrimaryClick() }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -537,26 +548,27 @@ fun LowonganItemCard(
                     )
                 }
 
-                // Button 3: Arsipkan
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .border(1.dp, MagangRedBrown, RoundedCornerShape(12.dp))
-                        .clickable { onArsipkanClick() }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Arsipkan",
-                        style = TextStyle(
-                            fontSize = 13.sp,
-                            fontFamily = PlusJakartaFont,
-                            fontWeight = FontWeight.Bold,
-                            color = MagangRedBrown
+                if (showCloseButton) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .border(1.dp, MagangRedBrown, RoundedCornerShape(12.dp))
+                            .clickable(enabled = !isUpdating) { onTutupClick() }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Tutup",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Bold,
+                                color = MagangRedBrown
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

@@ -1,10 +1,13 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,12 +24,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,14 +55,52 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun PenugasanLaporanScreen(
-    onSimpanPenugasan: () -> Unit = {},
+    laporan: AdminLaporan? = null,
+    isUpdating: Boolean = false,
+    onSimpanPenugasan: (unitPetugas: String, jalurTindakLanjut: String, catatanPenugasan: String) -> Unit = { _, _, _ -> },
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var jalurTindakLanjut by remember { mutableStateOf("Alihkan ke pihak berwenang") }
-    var unitPetugas by remember { mutableStateOf("Tim Advokasi Kampus") }
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
+    val isAnonim = laporan?.isAnonim ?: true
+
+    val jalurOptions = remember {
+        listOf(
+            "Pemeriksaan dan Pendampingan Tim Advokasi",
+            "Klarifikasi & Mediasi Internal",
+            "Investigasi Satgas Kampus",
+            "Rujukan Layanan Konseling / Psikologis"
+        )
+    }
+    val unitOptions = remember {
+        listOf(
+            "Tim Advokasi Kampus",
+            "Satgas PPKS Kampus",
+            "Layanan Konseling Mahasiswa",
+            "Bidang Kemahasiswaan"
+        )
+    }
+
+    var jalurTindakLanjut by remember {
+        mutableStateOf(laporan?.jalurTindakLanjut?.takeIf { it.isNotBlank() } ?: jalurOptions.first())
+    }
+    var unitPetugas by remember {
+        mutableStateOf(laporan?.unitPenanganan?.takeIf { it.isNotBlank() } ?: unitOptions.first())
+    }
     var catatanPenugasan by remember {
-        mutableStateOf("Koordinasikan pendampingan dan pemeriksaan dengan menjaga kerahasiaan pelapor.")
+        mutableStateOf(laporan?.catatanPenugasan.orEmpty())
+    }
+    var showJalurMenu by remember { mutableStateOf(false) }
+    var showUnitMenu by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(laporan?.id) {
+        if (laporan != null) {
+            if (!laporan.jalurTindakLanjut.isNullOrBlank()) jalurTindakLanjut = laporan.jalurTindakLanjut
+            if (!laporan.unitPenanganan.isNullOrBlank()) unitPetugas = laporan.unitPenanganan
+            if (laporan.catatanPenugasan != null) catatanPenugasan = laporan.catatanPenugasan
+        }
     }
 
     Column(
@@ -80,17 +124,17 @@ fun PenugasanLaporanScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = judulLaporan,
+                subtitle = "Pelapor: ${if (isAnonim) "Anonim" else (laporan?.pelaporNama ?: "Mahasiswa")}"
             )
 
             // Banner Info Pelapor Anonim
             AdminInfoBanner(
-                text = "Pelapor anonim. Seluruh komunikasi dilakukan melalui kanal laporan LTR-2026-00123 tanpa membuka identitas."
+                text = "Pelapor ${if (isAnonim) "anonim" else "terverifikasi"}. Seluruh komunikasi dilakukan melalui kanal laporan $nomorLaporan tanpa membuka identitas."
             )
 
             // Card Penugasan & Jalur Penanganan
@@ -124,24 +168,43 @@ fun PenugasanLaporanScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     // Dropdown Box 1: Jalur
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 14.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = jalurTindakLanjut,
-                            style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
-                        )
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chevron_down),
-                            contentDescription = "Dropdown",
-                            tint = SiagaNavyDark,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
+                                .clickable { showJalurMenu = true }
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = jalurTindakLanjut,
+                                modifier = Modifier.weight(1f),
+                                style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
+                            )
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_chevron_down),
+                                contentDescription = "Dropdown",
+                                tint = SiagaNavyDark,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showJalurMenu,
+                            onDismissRequest = { showJalurMenu = false }
+                        ) {
+                            jalurOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option, fontFamily = PlusJakartaFont, fontSize = 13.sp) },
+                                    onClick = {
+                                        jalurTindakLanjut = option
+                                        validationError = null
+                                        showJalurMenu = false
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -158,24 +221,43 @@ fun PenugasanLaporanScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     // Dropdown Box 2: Unit
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 14.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = unitPetugas,
-                            style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
-                        )
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chevron_down),
-                            contentDescription = "Dropdown",
-                            tint = SiagaNavyDark,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, SiagaBorderColor, RoundedCornerShape(12.dp))
+                                .clickable { showUnitMenu = true }
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = unitPetugas,
+                                modifier = Modifier.weight(1f),
+                                style = TextStyle(fontSize = 14.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
+                            )
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_chevron_down),
+                                contentDescription = "Dropdown",
+                                tint = SiagaNavyDark,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showUnitMenu,
+                            onDismissRequest = { showUnitMenu = false }
+                        ) {
+                            unitOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option, fontFamily = PlusJakartaFont, fontSize = 13.sp) },
+                                    onClick = {
+                                        unitPetugas = option
+                                        validationError = null
+                                        showUnitMenu = false
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -194,6 +276,12 @@ fun PenugasanLaporanScreen(
                     OutlinedTextField(
                         value = catatanPenugasan,
                         onValueChange = { catatanPenugasan = it },
+                        placeholder = {
+                            Text(
+                                text = "Tulis catatan atau arahan penugasan (opsional)...",
+                                style = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaTextMuted)
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(95.dp),
@@ -205,6 +293,19 @@ fun PenugasanLaporanScreen(
                         textStyle = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
                     )
 
+                    if (!validationError.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = validationError!!,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFB91C1C)
+                            )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Alternatif jalur: koordinasi penanganan oleh admin sesuai prosedur kampus.",
@@ -215,7 +316,17 @@ fun PenugasanLaporanScreen(
 
             // Button: Simpan Penugasan
             Button(
-                onClick = onSimpanPenugasan,
+                onClick = {
+                    val unitTrim = unitPetugas.trim()
+                    val jalurTrim = jalurTindakLanjut.trim()
+                    if (unitTrim.isBlank() || jalurTrim.isBlank()) {
+                        validationError = "Jalur tindak lanjut dan unit petugas wajib dipilih."
+                        return@Button
+                    }
+                    validationError = null
+                    onSimpanPenugasan(unitTrim, jalurTrim, catatanPenugasan.trim())
+                },
+                enabled = !isUpdating && laporan != null,
                 colors = ButtonDefaults.buttonColors(containerColor = SiagaNavyPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
@@ -230,7 +341,7 @@ fun PenugasanLaporanScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Simpan Penugasan",
+                    text = if (isUpdating) "Menyimpan..." else "Simpan Penugasan",
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = PlusJakartaFont,

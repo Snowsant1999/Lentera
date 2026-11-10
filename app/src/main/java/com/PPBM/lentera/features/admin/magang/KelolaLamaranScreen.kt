@@ -26,24 +26,25 @@ import com.PPBM.lentera.core.designsystem.theme.*
 import com.PPBM.lentera.features.admin.magang.components.*
 
 data class PelamarLamaranItem(
-    val id: String = "LNT-MG-2026-0891",
-    val namaMahasiswa: String = "Budi Santoso",
-    val nim: String = "2023110045",
-    val jurusan: String = "Teknologi Informasi",
-    val prodi: String = "Teknik Informatika",
-    val posisi: String = "UI/UX Designer Intern",
-    val mitra: String = "PT Maju Mundur",
-    val tanggalLamar: String = "24 Okt 2026",
-    val status: String = "Perlu Perbaikan",
-    val cvFileName: String = "cv_budi_santoso.pdf (1.2 MB)",
-    val suratPengantarFileName: String = "surat_pengantar_fakultas.pdf (850 KB)",
-    val transkripFileName: String = "transkrip_nilai_semester_4.pdf (1.8 MB)",
-    val catatanRevisi: String = "Transkrip Nilai Terakhir buram atau tidak terbaca. Harap unggah scan dokumen asli beresolusi tinggi sebelum 15 Nov 2026."
+    val id: String = "",
+    val lamaranUuid: String = "",
+    val namaMahasiswa: String = "",
+    val nim: String = "",
+    val jurusan: String = "",
+    val prodi: String = "",
+    val posisi: String = "",
+    val mitra: String = "",
+    val tanggalLamar: String = "",
+    val status: String = "Menunggu Verifikasi",
+    val cvFileName: String = "",
+    val suratPengantarFileName: String = "",
+    val transkripFileName: String = "",
+    val catatanRevisi: String = ""
 )
 
 @Composable
 fun KelolaLamaranScreen(
-    lamaranList: List<PelamarLamaranItem> = SampleDaftarLamaran,
+    lamaranList: List<PelamarLamaranItem> = emptyList(),
     onNavigateToDetailValidasi: (PelamarLamaranItem) -> Unit = {},
     onNavigateToMitra: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = {},
@@ -54,9 +55,9 @@ fun KelolaLamaranScreen(
     val filterChips = listOf(
         "Semua",
         "Menunggu Verifikasi",
+        "Pemeriksaan Berkas",
         "Perlu Perbaikan",
-        "Dikirim ke Mitra",
-        "Wawancara",
+        "Seleksi / Wawancara",
         "Diterima",
         "Ditolak"
     )
@@ -281,9 +282,9 @@ fun PelamarCardItem(
 ) {
     val statusColors = when (pelamar.status) {
         "Menunggu Verifikasi" -> Pair(Color(0xFFFEF3C7), Color(0xFFB45309))
+        "Pemeriksaan Berkas" -> Pair(Color(0xFFE0F2FE), Color(0xFF0369A1))
         "Perlu Perbaikan" -> Pair(Color(0xFFFFEDD5), Color(0xFFC2410C))
-        "Dikirim ke Mitra" -> Pair(Color(0xFFE0F2FE), Color(0xFF0369A1))
-        "Wawancara" -> Pair(Color(0xFFEDE9FE), Color(0xFF6D28D9))
+        "Seleksi / Wawancara", "Wawancara", "Dikirim ke Mitra" -> Pair(Color(0xFFEDE9FE), Color(0xFF6D28D9))
         "Diterima" -> Pair(Color(0xFFD1FAE5), Color(0xFF065F46))
         "Ditolak" -> Pair(Color(0xFFFEE2E2), Color(0xFFB91C1C))
         else -> Pair(Color(0xFFF1F5F9), Color(0xFF475569))
@@ -390,54 +391,6 @@ fun PelamarCardItem(
         }
     }
 }
-
-val SampleDaftarLamaran = listOf(
-    PelamarLamaranItem(
-        id = "LNT-MG-2026-0891",
-        namaMahasiswa = "Budi Santoso",
-        nim = "2023110045",
-        jurusan = "Teknologi Informasi",
-        prodi = "Teknik Informatika",
-        posisi = "UI/UX Designer Intern",
-        mitra = "PT Maju Mundur",
-        tanggalLamar = "24 Okt 2026",
-        status = "Perlu Perbaikan",
-        catatanRevisi = "Transkrip Nilai Terakhir buram atau tidak terbaca. Harap unggah scan dokumen asli beresolusi tinggi sebelum 15 Nov 2026."
-    ),
-    PelamarLamaranItem(
-        id = "LNT-MG-2026-0892",
-        namaMahasiswa = "Siti Rahma",
-        nim = "2023110022",
-        jurusan = "Teknologi Informasi",
-        prodi = "Teknik Informatika",
-        posisi = "Web Developer",
-        mitra = "PT Bismillah Berkah",
-        tanggalLamar = "25 Okt 2026",
-        status = "Menunggu Verifikasi"
-    ),
-    PelamarLamaranItem(
-        id = "LNT-MG-2026-0888",
-        namaMahasiswa = "Ahmad Faisal",
-        nim = "2023110011",
-        jurusan = "Teknologi Informasi",
-        prodi = "Sistem Informasi",
-        posisi = "UI/UX Designer Intern",
-        mitra = "PT Maju Mundur",
-        tanggalLamar = "22 Okt 2026",
-        status = "Dikirim ke Mitra"
-    ),
-    PelamarLamaranItem(
-        id = "LNT-MG-2026-0870",
-        namaMahasiswa = "Rizky Ramadhan",
-        nim = "2023110034",
-        jurusan = "Teknologi Informasi",
-        prodi = "Teknik Informatika",
-        posisi = "Content Creator",
-        mitra = "PT Cahaya Digital",
-        tanggalLamar = "18 Okt 2026",
-        status = "Wawancara"
-    )
-)
 
 @Preview(showBackground = true)
 @Composable

@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -51,32 +50,26 @@ import com.PPBM.lentera.core.designsystem.theme.*
  */
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
-    onLoginMahasiswa: () -> Unit = onLoginSuccess,
-    onLoginAdmin: () -> Unit = onLoginSuccess,
+    onLoginSuccess: (role: String, statusAkun: String) -> Unit = { _, _ -> },
+    onLoginMahasiswa: () -> Unit = { onLoginSuccess("mahasiswa", "aktif") },
+    onLoginAdmin: () -> Unit = { onLoginSuccess("admin", "aktif") },
     onForgotPassword: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val viewModel = remember { LoginViewModel(context.applicationContext as android.app.Application) }
+    val uiState by viewModel.uiState.collectAsState()
+
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     val focusManager = LocalFocusManager.current
 
     var nimOrEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var showError by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
 
-    // Simulasi login dummy tanpa backend
     fun doLogin() {
-        if (nimOrEmail.isBlank() || password.isBlank()) {
-            showError = true
-            return
-        }
-        isLoading = true
-        showError = false
-        if (nimOrEmail.contains("admin", ignoreCase = true)) {
-            onLoginAdmin()
-        } else {
-            onLoginMahasiswa()
+        focusManager.clearFocus()
+        viewModel.login(nimOrEmail, password) { role, statusAkun ->
+            onLoginSuccess(role, statusAkun)
         }
     }
 
@@ -156,7 +149,7 @@ fun LoginScreen(
             ) {
                 // Error banner
                 AnimatedVisibility(
-                    visible = showError,
+                    visible = uiState.errorMessage != null,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -191,7 +184,7 @@ fun LoginScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "NIM / email atau password salah. Periksa kembali dan coba lagi.",
+                                    text = uiState.errorMessage ?: "NIM / email atau password salah. Periksa kembali dan coba lagi.",
                                     style = TextStyle(
                                         fontSize = 12.sp,
                                         lineHeight = 18.sp,
@@ -227,7 +220,7 @@ fun LoginScreen(
                         .height(52.dp)
                         .border(
                             width = 1.dp,
-                            color = if (showError) ErrorRedBorder else InputBorder,
+                            color = if (uiState.errorMessage != null) ErrorRedBorder else InputBorder,
                             shape = RoundedCornerShape(14.dp)
                         )
                         .background(InputBackground, RoundedCornerShape(14.dp))
@@ -246,7 +239,7 @@ fun LoginScreen(
                         value = nimOrEmail,
                         onValueChange = {
                             nimOrEmail = it
-                            if (showError) showError = false
+                            viewModel.clearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -331,7 +324,7 @@ fun LoginScreen(
                         .height(52.dp)
                         .border(
                             width = 1.dp,
-                            color = if (showError) ErrorRedBorder else InputBorder,
+                            color = if (uiState.errorMessage != null) ErrorRedBorder else InputBorder,
                             shape = RoundedCornerShape(14.dp)
                         )
                         .background(InputBackground, RoundedCornerShape(14.dp))
@@ -350,7 +343,7 @@ fun LoginScreen(
                         value = password,
                         onValueChange = {
                             password = it
-                            if (showError) showError = false
+                            viewModel.clearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -445,14 +438,18 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(NavyMedium, RoundedCornerShape(16.dp))
+                        .background(
+                            if (uiState.isLoading) NavyMedium.copy(alpha = 0.7f) else NavyMedium,
+                            RoundedCornerShape(16.dp)
+                        )
                         .clickable(
+                            enabled = !uiState.isLoading,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) { doLogin() }
                 ) {
                     Text(
-                        text = if (showError) "Coba Masuk Lagi" else "Masuk",
+                        text = if (uiState.isLoading) "Memproses..." else if (uiState.errorMessage != null) "Coba Masuk Lagi" else "Masuk",
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontFamily = plusJakarta,
@@ -462,66 +459,6 @@ fun LoginScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Demo Accounts Fast Login
-                Text(
-                    text = "— Masuk Cepat untuk Demo —",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = plusJakarta,
-                        fontWeight = FontWeight.Medium,
-                        color = SlateGray,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .border(1.dp, NavyMedium, RoundedCornerShape(12.dp))
-                            .background(Color.White, RoundedCornerShape(12.dp))
-                            .clickable { onLoginMahasiswa() }
-                    ) {
-                        Text(
-                            text = "Demo Mahasiswa",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = plusJakarta,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyMedium
-                            )
-                        )
-                    }
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .background(Color(0xFFEEB042), RoundedCornerShape(12.dp))
-                            .clickable { onLoginAdmin() }
-                    ) {
-                        Text(
-                            text = "Demo Admin",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = plusJakarta,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDark
-                            )
-                        )
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

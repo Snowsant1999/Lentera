@@ -7,14 +7,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -24,22 +25,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.mahasiswa.model.LamaranSaya
+import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.core.designsystem.theme.*
 
-/**
- * Informasi Penerimaan Screen
- * Sesuai referensi Informasi Penerimaan.png & Informasi Penerimaan Final.png
- */
 @Composable
 fun InformasiPenerimaanScreen(
-    posisi: String = "Product Design Intern",
-    perusahaan: String = "PT Bismillah Berkah",
-    isFinal: Boolean = true,
-    onBackClick: () -> Unit = {},
-    onDownloadPdf: () -> Unit = {},
-    onKonfirmasiKehadiran: () -> Unit = {}
+    lamaran: LamaranSaya? = null,
+    lowongan: LowonganTerbit? = null,
+    onBackClick: () -> Unit = {}
 ) {
     val fontFamily = FontFamily(Font(R.font.plus_jakarta_sans))
+    val perusahaan = lowongan?.namaPerusahaan ?: "Mitra Magang"
+    val posisi = lowongan?.posisi ?: "-"
+    val periode = lowongan?.periodeMagang ?: "-"
+    val sistemKerja = lowongan?.sistemKerja ?: "-"
+    val lokasiGabungan = listOfNotNull(
+        lowongan?.lokasi?.takeIf { it.isNotBlank() },
+        lowongan?.kota?.takeIf { it.isNotBlank() },
+        lowongan?.provinsi?.takeIf { it.isNotBlank() }
+    ).distinct().joinToString(", ").ifBlank { "-" }
+    val catatanAdmin = lamaran?.catatanAdmin?.takeIf { it.isNotBlank() }
 
     Scaffold(
         modifier = Modifier
@@ -78,14 +84,14 @@ fun InformasiPenerimaanScreen(
                 shadowElevation = 8.dp,
                 color = Color.White
             ) {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 14.dp)
                 ) {
                     Button(
-                        onClick = onKonfirmasiKehadiran,
+                        onClick = onBackClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
@@ -93,33 +99,12 @@ fun InformasiPenerimaanScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MagangAmberPrimary)
                     ) {
                         Text(
-                            text = "Konfirmasi Kehadiran",
+                            text = "Kembali ke Status Lamaran",
                             style = TextStyle(
                                 fontFamily = fontFamily,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedButton(
-                        onClick = onDownloadPdf,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
-                    ) {
-                        Text(
-                            text = "Unduh Surat Penerimaan (PDF)",
-                            style = TextStyle(
-                                fontFamily = fontFamily,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = NavyDark
                             )
                         )
                     }
@@ -134,12 +119,11 @@ fun InformasiPenerimaanScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Letterhead Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -166,7 +150,7 @@ fun InformasiPenerimaanScreen(
                                 )
                             )
                             Text(
-                                text = "Surat Keterangan Penerimaan Magang",
+                                text = "Konfirmasi Penerimaan Magang",
                                 style = TextStyle(
                                     fontFamily = fontFamily,
                                     fontSize = 12.sp,
@@ -181,7 +165,7 @@ fun InformasiPenerimaanScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Dengan bangga kami menginformasikan bahwa Saudara dinyatakan lolos seleksi dan diterima untuk mengikuti program magang industri.",
+                        text = "Selamat, Saudara ${lamaran?.namaLengkap ?: "Mahasiswa"} (NIM ${lamaran?.nim ?: "-"}) dinyatakan diterima untuk mengikuti program magang industri sesuai rincian penempatan berikut.",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.5.sp,
@@ -194,16 +178,15 @@ fun InformasiPenerimaanScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Rincian Penempatan Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "Rincian Penempatan & Jadwal",
+                        text = "Rincian Penempatan",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 14.sp,
@@ -213,24 +196,25 @@ fun InformasiPenerimaanScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    InfoPenerimaanRow("Nomor Lamaran", lamaran?.nomorLamaran ?: "-", fontFamily)
                     InfoPenerimaanRow("Posisi", posisi, fontFamily)
-                    InfoPenerimaanRow("Divisi / Departemen", "Product & Technology", fontFamily)
-                    InfoPenerimaanRow("Periode Magang", "1 Des 2026 - 31 Mei 2027 (6 Bulan)", fontFamily)
-                    InfoPenerimaanRow("Tipe Kerja", "Hybrid (3 Hari WFO, 2 Hari WFH)", fontFamily)
-                    InfoPenerimaanRow("Lokasi Kantor", "Gedung Equity Tower Lt. 22, SCBD, Jakarta Selatan", fontFamily)
-                    InfoPenerimaanRow("Mentor Lapangan", "Hendra Gunawan, S.Kom", fontFamily)
-                    InfoPenerimaanRow("Uang Saku & Benefit", "Tersedia sesuai ketentuan mitra", fontFamily, isLast = true)
+                    InfoPenerimaanRow("Bidang Usaha", lowongan?.bidangUsaha ?: "-", fontFamily)
+                    InfoPenerimaanRow("Periode Magang", periode, fontFamily)
+                    InfoPenerimaanRow("Sistem Kerja", sistemKerja, fontFamily)
+                    InfoPenerimaanRow("Lokasi Penempatan", lokasiGabungan, fontFamily, isLast = catatanAdmin == null)
+                    if (catatanAdmin != null) {
+                        InfoPenerimaanRow("Catatan Admin / Mitra", catatanAdmin, fontFamily, isLast = true)
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Petunjuk Onboarding Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = InputBackground),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(InputBorder))
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(InputBorder))
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -242,7 +226,7 @@ fun InformasiPenerimaanScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Petunjuk Persiapan Magang",
+                            text = "Langkah Selanjutnya",
                             style = TextStyle(
                                 fontFamily = fontFamily,
                                 fontSize = 13.5.sp,
@@ -253,9 +237,8 @@ fun InformasiPenerimaanScreen(
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "1. Lengkapi Surat Tugas Resmi Magang dari fakultas sebelum tanggal mulai.\n" +
-                                "2. Konfirmasi kehadiran melalui tombol di bawah paling lambat 25 November 2026.\n" +
-                                "3. Hadir pada sesi induksi pertama tanggal 1 Desember 2026 pukul 09:00 WIB di kantor mitra.",
+                        text = "1. Hubungi koordinator magang program studi untuk penerbitan surat tugas resmi.\n" +
+                            "2. Ikuti arahan jadwal onboarding dari admin kampus atau kontak mitra $perusahaan.",
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.sp,
@@ -278,7 +261,11 @@ private fun InfoPenerimaanRow(
     fontFamily: FontFamily,
     isLast: Boolean = false
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = if (isLast) 0.dp else 10.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (isLast) 0.dp else 10.dp)
+    ) {
         Text(
             text = label,
             style = TextStyle(
@@ -311,4 +298,3 @@ fun InformasiPenerimaanScreenPreview() {
         InformasiPenerimaanScreen()
     }
 }
-

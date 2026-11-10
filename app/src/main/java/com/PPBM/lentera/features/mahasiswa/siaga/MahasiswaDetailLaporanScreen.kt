@@ -47,31 +47,23 @@ import com.PPBM.lentera.core.designsystem.theme.*
 data class LampiranBuktiDetail(
     val nama: String,
     val ukuran: String,
-    val tipe: String // "PHOTO", "AUDIO", "DOC"
+    val tipe: String, // "PHOTO", "AUDIO", "DOC"
+    val filePath: String = ""
 )
 
 data class DetailLaporanFullData(
-    val nomorLaporan: String = "LTR-2026-00123",
-    val judul: String = "Pelecehan Verbal",
-    val status: String = "Selesai",
-    val waktuKirim: String = "Dikirim 15 Oktober 2026, jam 15:00 WITA",
-    val pelaporNama: String = "Anonim",
-    val pelaporDeskripsi: String = "Identitas pelapor dirahasiakan",
-    val kategori: String = "Pelecehan Verbal",
-    val tanggalKejadian: String = "15 Oktober 2026, 10:30 WITA",
-    val lokasiKejadian: String = "Koridor Gedung Baru, Lantai 2",
-    val ringkasanLaporan: String = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    val listLampiran: List<LampiranBuktiDetail> = listOf(
-        LampiranBuktiDetail("foto_lab.jpg", "2,4 MB", "PHOTO"),
-        LampiranBuktiDetail("rekaman_suara.mp4", "2,4 MB", "AUDIO"),
-        LampiranBuktiDetail("dokumen_pendukung.pdf", "2,4 MB", "DOC")
-    ),
-    val listTimeline: List<Pair<String, String>> = listOf(
-        "Laporan Dikirim" to "12 Oktober 2026, 12:30 WITA",
-        "Diverifikasi dan Divalidasi" to "12 Oktober 2026, 15:10 WITA",
-        "Dalam Proses Penanganan" to "13 Oktober 2026, 12:30 WITA",
-        "Selesai" to "15 Oktober 2026, 15:10 WITA"
-    )
+    val nomorLaporan: String = "",
+    val judul: String = "",
+    val status: String = "",
+    val waktuKirim: String = "",
+    val pelaporNama: String = "",
+    val pelaporDeskripsi: String = "",
+    val kategori: String = "",
+    val tanggalKejadian: String = "",
+    val lokasiKejadian: String = "",
+    val ringkasanLaporan: String = "",
+    val listLampiran: List<LampiranBuktiDetail> = emptyList(),
+    val listTimeline: List<Pair<String, String>> = emptyList()
 )
 
 // ============================================================================
@@ -99,33 +91,35 @@ fun MahasiswaDetailLaporanScreen(
     Scaffold(
         containerColor = ScreenBackground,
         bottomBar = {
-            // Tombol "Lihat Hasil Penanganan" di bagian bawah
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(ScreenBackground)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
+            if (data.status.equals("Selesai", ignoreCase = true)) {
+                // Tombol "Lihat Hasil Penanganan" di bagian bawah hanya untuk laporan selesai
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SiagaTealPrimary)
-                        .clickable(onClick = onLihatHasilPenangananClick),
-                    contentAlignment = Alignment.Center
+                        .background(ScreenBackground)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = "Lihat Hasil Penanganan",
-                        style = TextStyle(
-                            fontFamily = plusJakarta,
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .shadow(2.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SiagaTealPrimary)
+                            .clickable(onClick = onLihatHasilPenangananClick),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Lihat Hasil Penanganan",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -179,11 +173,20 @@ fun MahasiswaDetailLaporanScreen(
                                 )
                             )
 
-                            // Status Badge "Selesai"
+                            val (badgeBg, badgeText) = when {
+                                data.status.equals("Selesai", ignoreCase = true) ->
+                                    SiagaBadgeSelesaiBg to SiagaBadgeSelesaiText
+                                data.status.equals("Ditolak", ignoreCase = true) ->
+                                    Color(0xFFFEE2E2) to Color(0xFFB91C1C)
+                                else ->
+                                    SiagaBadgeDiperiksaBg to SiagaBadgeDiperiksaText
+                            }
+
+                            // Status Badge
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(SiagaBadgeSelesaiBg)
+                                    .background(badgeBg)
                                     .padding(horizontal = 14.dp, vertical = 5.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -193,7 +196,7 @@ fun MahasiswaDetailLaporanScreen(
                                         fontFamily = plusJakarta,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = SiagaBadgeSelesaiText
+                                        color = badgeText
                                     )
                                 )
                             }
@@ -379,7 +382,17 @@ fun MahasiswaDetailLaporanScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        data.listLampiran.forEach { lampiran ->
+                        if (data.listLampiran.isEmpty()) {
+                            Text(
+                                text = "Tidak ada berkas bukti yang dilampirkan.",
+                                style = TextStyle(
+                                    fontFamily = plusJakarta,
+                                    fontSize = 13.sp,
+                                    color = SlateGrayLight
+                                )
+                            )
+                        } else {
+                            data.listLampiran.forEach { lampiran ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -448,7 +461,8 @@ fun MahasiswaDetailLaporanScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
                         }
                     }
                 }
@@ -480,7 +494,17 @@ fun MahasiswaDetailLaporanScreen(
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        data.listTimeline.forEachIndexed { index, pair ->
+                        if (data.listTimeline.isEmpty()) {
+                            Text(
+                                text = "Belum ada catatan progres penanganan.",
+                                style = TextStyle(
+                                    fontFamily = plusJakarta,
+                                    fontSize = 13.sp,
+                                    color = SlateGrayLight
+                                )
+                            )
+                        } else {
+                            data.listTimeline.forEachIndexed { index, pair ->
                             val isLast = index == data.listTimeline.lastIndex
 
                             Row(
@@ -538,6 +562,7 @@ fun MahasiswaDetailLaporanScreen(
                                     )
                                 }
                             }
+                        }
                         }
                     }
                 }
@@ -682,6 +707,27 @@ private fun TopBarDetailLaporanLengkap(
 @Composable
 fun MahasiswaDetailLaporanScreenPreview() {
     LenteraTheme {
-        MahasiswaDetailLaporanScreen()
+        MahasiswaDetailLaporanScreen(
+            data = DetailLaporanFullData(
+                nomorLaporan = "LTR-2026-00123",
+                judul = "Pelecehan Verbal",
+                status = "Selesai",
+                waktuKirim = "Dikirim 15 Oktober 2026, jam 15:00 WITA",
+                pelaporNama = "Anonim",
+                pelaporDeskripsi = "Identitas pelapor dirahasiakan",
+                kategori = "Pelecehan Verbal",
+                tanggalKejadian = "15 Oktober 2026, 10:30 WITA",
+                lokasiKejadian = "Koridor Gedung Baru, Lantai 2",
+                ringkasanLaporan = "Pelaporan kejadian pelecehan verbal di sekitar koridor kampus.",
+                listLampiran = listOf(
+                    LampiranBuktiDetail("foto_lab.jpg", "2.4 MB", "PHOTO"),
+                    LampiranBuktiDetail("rekaman_suara.mp4", "2.4 MB", "AUDIO")
+                ),
+                listTimeline = listOf(
+                    "Laporan Dikirim" to "12 Oktober 2026, 12:30 WITA",
+                    "Selesai" to "15 Oktober 2026, 15:10 WITA"
+                )
+            )
+        )
     }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,7 @@ enum class LaporanStatus(
     val textColor: Color,
     val backgroundColor: Color
 ) {
+    BARU("Baru", SiagaAmberTextDark, Color(0xFFFEF3C7)),
     DIPERIKSA("Diperiksa", SiagaBadgeDiperiksaText, SiagaBadgeDiperiksaBg),
     SELESAI("Selesai", SiagaBadgeSelesaiText, SiagaBadgeSelesaiBg),
     DIPROSES("Diproses", InfoBlue, InfoBlueLight),
@@ -75,22 +77,6 @@ enum class SiagaNavTab(val label: String) {
     MAGANG_HUB("Magang Hub"),
     PROFIL("Profil")
 }
-
-// Sample data default sesuai UI mockup
-val sampleLaporanList = listOf(
-    LaporanItem(
-        id = "LTR-2026-00123",
-        title = "Pelecehan Verbal",
-        date = "12 Okt 2026",
-        status = LaporanStatus.DIPERIKSA
-    ),
-    LaporanItem(
-        id = "LTR-2026-00108",
-        title = "Perundungan di kelas",
-        date = "08 Okt 2026",
-        status = LaporanStatus.SELESAI
-    )
-)
 
 // ============================================================================
 // Main Screen: MahasiswaSiagaScreen
@@ -113,13 +99,13 @@ val sampleLaporanList = listOf(
  */
 @Composable
 fun MahasiswaSiagaScreen(
-    userName: String = "Budi Santoso",
+    userName: String = "Mahasiswa",
     userRole: String = "Mahasiswa",
-    laporanList: List<LaporanItem> = sampleLaporanList,
+    laporanList: List<LaporanItem> = emptyList(),
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onEmergencyHelpClick: () -> Unit = {},
-    onCreateReportClick: () -> Unit = {},
+    onCreateReportClick: (KategoriLaporanType) -> Unit = {},
     onViewAllReportsClick: () -> Unit = {},
     onReportClick: (LaporanItem) -> Unit = {},
     onNavTabClick: (SiagaNavTab) -> Unit = {}
@@ -236,13 +222,34 @@ fun MahasiswaSiagaScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Daftar Kartu Laporan
-                laporanList.forEach { laporan ->
-                    LaporanCard(
-                        item = laporan,
-                        onClick = { onReportClick(laporan) },
-                        fontFamily = plusJakarta
-                    )
+                if (laporanList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(CardWhite)
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Belum ada laporan pengaduan aktif.",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontFamily = plusJakarta,
+                                color = SlateGray
+                            )
+                        )
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    laporanList.forEach { laporan ->
+                        LaporanCard(
+                            item = laporan,
+                            onClick = { onReportClick(laporan) },
+                            fontFamily = plusJakarta
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -256,7 +263,7 @@ fun MahasiswaSiagaScreen(
         onDismiss = { showPilihKategoriSheet = false },
         onLanjutKeDetail = { kategori ->
             showPilihKategoriSheet = false
-            onCreateReportClick()
+            onCreateReportClick(kategori)
         }
     )
 }
@@ -265,7 +272,7 @@ fun MahasiswaSiagaScreen(
 @Composable
 fun SiagaScreen(
     onEmergencyHelpClick: () -> Unit = {},
-    onCreateReportClick: () -> Unit = {}
+    onCreateReportClick: (KategoriLaporanType) -> Unit = {}
 ) {
     MahasiswaSiagaScreen(
         onEmergencyHelpClick = onEmergencyHelpClick,

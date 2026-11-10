@@ -24,16 +24,18 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun BuatAkunMahasiswaScreen(
+    isSubmitting: Boolean = false,
     onBackClick: () -> Unit = {},
     onSimpanSuccess: () -> Unit = onBackClick,
+    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: (tempPassword: String, emailSent: Boolean, emailError: String?) -> Unit, onError: (String) -> Unit) -> Unit)? = null,
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var namaLengkap by remember { mutableStateOf("Dewi Lestari") }
-    var nim by remember { mutableStateOf("2026110009") }
-    var jurusan by remember { mutableStateOf("Teknologi Informasi") }
-    var programStudi by remember { mutableStateOf("Teknik Informatika") }
-    var angkatan by remember { mutableStateOf("2026") }
-    var emailKampus by remember { mutableStateOf("dewi.lestari@kampus.ac.id") }
+    var namaLengkap by remember { mutableStateOf("") }
+    var nim by remember { mutableStateOf("") }
+    var jurusan by remember { mutableStateOf("") }
+    var programStudi by remember { mutableStateOf("") }
+    var angkatan by remember { mutableStateOf("") }
+    var emailKampus by remember { mutableStateOf("") }
 
     var showFeedback by remember { mutableStateOf(false) }
     var feedbackTitle by remember { mutableStateOf("") }
@@ -89,17 +91,69 @@ fun BuatAkunMahasiswaScreen(
             // Action Buttons
             item {
                 ActionButtons(
+                    isSubmitting = isSubmitting,
                     onSimpan = {
-                        if (namaLengkap.isBlank() || nim.isBlank() || emailKampus.isBlank() || jurusan.isBlank()) {
-                            feedbackTitle = "Data Belum Lengkap"
-                            feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, Jurusan, dan Email Kampus."
-                            feedbackIsSuccess = false
-                            showFeedback = true
-                        } else {
-                            feedbackTitle = "Akun Berhasil Dibuat"
-                            feedbackMessage = "Akun mahasiswa $namaLengkap ($nim) berhasil disimpan dan langsung aktif digunakan."
-                            feedbackIsSuccess = true
-                            showFeedback = true
+                        if (isSubmitting) return@ActionButtons
+                        val cleanNama = namaLengkap.trim()
+                        val cleanNim = nim.trim()
+                        val cleanEmail = emailKampus.trim()
+                        val cleanJurusan = jurusan.trim()
+                        val cleanProdi = programStudi.trim()
+                        val cleanAngkatan = angkatan.trim()
+                        when {
+                            cleanNama.isBlank() || cleanNim.isBlank() || cleanJurusan.isBlank() ||
+                                cleanProdi.isBlank() || cleanAngkatan.isBlank() || cleanEmail.isBlank() -> {
+                                feedbackTitle = "Data Belum Lengkap"
+                                feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, Jurusan, Program Studi, Angkatan, dan Email Kampus."
+                                feedbackIsSuccess = false
+                                showFeedback = true
+                            }
+                            cleanAngkatan.length != 4 || !cleanAngkatan.all { it.isDigit() } -> {
+                                feedbackTitle = "Angkatan Tidak Valid"
+                                feedbackMessage = "Angkatan harus berupa 4 digit tahun masuk (contoh: 2024)."
+                                feedbackIsSuccess = false
+                                showFeedback = true
+                            }
+                            !cleanEmail.contains("@") || !cleanEmail.contains(".") -> {
+                                feedbackTitle = "Email Tidak Valid"
+                                feedbackMessage = "Masukkan alamat email kampus yang valid."
+                                feedbackIsSuccess = false
+                                showFeedback = true
+                            }
+                            onSimpanAkun != null -> {
+                                onSimpanAkun(
+                                    cleanNama,
+                                    cleanNim,
+                                    cleanEmail,
+                                    cleanJurusan,
+                                    cleanProdi,
+                                    cleanAngkatan,
+                                    { tempPass, emailSent, emailError ->
+                                        feedbackTitle = "Akun Mahasiswa Berhasil Dibuat"
+                                        val emailNotice = if (emailSent) {
+                                            "Tautan aktivasi akun telah dikirim ke email $cleanEmail."
+                                        } else {
+                                            val reason = emailError?.takeIf { it.isNotBlank() } ?: "layanan email sedang bermasalah"
+                                            "Tautan aktivasi belum berhasil dikirim ke email ($reason). Kirim ulang dari menu Detail Akun."
+                                        }
+                                        feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dengan status Belum Aktivasi.\n\n$emailNotice\n\nPassword Sementara (cadangan):\n$tempPass"
+                                        feedbackIsSuccess = true
+                                        showFeedback = true
+                                    },
+                                    { errMsg ->
+                                        feedbackTitle = "Gagal Membuat Akun"
+                                        feedbackMessage = errMsg
+                                        feedbackIsSuccess = false
+                                        showFeedback = true
+                                    }
+                                )
+                            }
+                            else -> {
+                                feedbackTitle = "Akun Berhasil Dibuat"
+                                feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dan siap diaktivasi mahasiswa saat login pertama kali."
+                                feedbackIsSuccess = true
+                                showFeedback = true
+                            }
                         }
                     },
                     onKembali = onBackClick
@@ -157,7 +211,7 @@ fun HeaderTopBar(onBackClick: () -> Unit = {}) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Formulir pendaftaran akun mahasiswa baru. Akun yang dibuat akan langsung aktif dan dapat digunakan untuk masuk ke aplikasi LENTERA.",
+            text = "Formulir pendaftaran akun mahasiswa baru. Akun baru berstatus Belum Aktivasi sampai mahasiswa login dan mengatur password sendiri.",
             fontSize = 13.sp,
             fontFamily = PlusJakartaSans,
             color = Color(0xFF7A8B9B),
@@ -428,6 +482,7 @@ fun CardInformasiAkademik(
 
 @Composable
 fun ActionButtons(
+    isSubmitting: Boolean = false,
     onSimpan: () -> Unit = {},
     onKembali: () -> Unit = {}
 ) {
@@ -435,6 +490,7 @@ fun ActionButtons(
         // Simpan Akun Mahasiswa
         Button(
             onClick = onSimpan,
+            enabled = !isSubmitting,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -442,7 +498,7 @@ fun ActionButtons(
             shape = RoundedCornerShape(14.dp)
         ) {
             Text(
-                text = "Simpan Akun Mahasiswa",
+                text = if (isSubmitting) "Menyimpan Akun..." else "Simpan Akun Mahasiswa",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = PlusJakartaSans,

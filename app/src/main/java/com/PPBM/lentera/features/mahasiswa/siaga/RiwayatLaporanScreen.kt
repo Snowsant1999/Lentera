@@ -15,8 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,8 +47,9 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 enum class FilterStatusTab(val label: String) {
     SEMUA("Semua"),
-    AKTIF("Aktif"),
-    SELESAI("Selesai")
+    AKTIF("Diproses"),
+    SELESAI("Selesai"),
+    DITOLAK("Ditolak")
 }
 
 data class RiwayatLaporanItem(
@@ -58,43 +61,8 @@ data class RiwayatLaporanItem(
     val statusBadge: String,
     val badgeBgColor: Color,
     val badgeTextColor: Color,
-    val isSelesai: Boolean
-)
-
-val sampleRiwayatLaporan = listOf(
-    RiwayatLaporanItem(
-        id = "1",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Selesai",
-        badgeBgColor = Color(0xFFE3F5EB),
-        badgeTextColor = Color(0xFF287D4A),
-        isSelesai = true
-    ),
-    RiwayatLaporanItem(
-        id = "2",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Selesai",
-        badgeBgColor = Color(0xFFE3F5EB),
-        badgeTextColor = Color(0xFF287D4A),
-        isSelesai = true
-    ),
-    RiwayatLaporanItem(
-        id = "3",
-        nomorLaporan = "LTR-2026-00123",
-        judul = "Pelecehan Verbal",
-        kategori = "Pelecehan Verbal",
-        waktu = "15 Okt 2026, 15:00",
-        statusBadge = "Perlu Informasi Tambahan",
-        badgeBgColor = Color(0xFFE6B363),
-        badgeTextColor = Color.White,
-        isSelesai = false
-    )
+    val isSelesai: Boolean,
+    val isDitolak: Boolean = false
 )
 
 // ============================================================================
@@ -112,7 +80,7 @@ val sampleRiwayatLaporan = listOf(
  */
 @Composable
 fun RiwayatLaporanScreen(
-    reportList: List<RiwayatLaporanItem> = sampleRiwayatLaporan,
+    reportList: List<RiwayatLaporanItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onReportClick: (RiwayatLaporanItem) -> Unit = {},
     onKembaliKeDashboard: () -> Unit = {}
@@ -129,8 +97,9 @@ fun RiwayatLaporanScreen(
 
             val matchFilter = when (selectedFilter) {
                 FilterStatusTab.SEMUA -> true
-                FilterStatusTab.AKTIF -> !item.isSelesai
+                FilterStatusTab.AKTIF -> !item.isSelesai && !item.isDitolak
                 FilterStatusTab.SELESAI -> item.isSelesai
+                FilterStatusTab.DITOLAK -> item.isDitolak
             }
 
             matchQuery && matchFilter
@@ -210,21 +179,58 @@ fun RiwayatLaporanScreen(
             }
 
             // 4. Daftar Kartu Laporan (LazyColumn)
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(filteredList, key = { it.id }) { item ->
-                    RiwayatLaporanCard(
-                        item = item,
-                        onClick = { onReportClick(item) },
-                        fontFamily = plusJakarta
-                    )
+            if (filteredList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_shield),
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Belum Ada Riwayat Laporan",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Laporan yang Anda buat akan muncul di sini.",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 13.sp,
+                                color = SlateGray
+                            )
+                        )
+                    }
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(filteredList, key = { it.id }) { item ->
+                        RiwayatLaporanCard(
+                            item = item,
+                            onClick = { onReportClick(item) },
+                            fontFamily = plusJakarta
+                        )
+                    }
 
-                item {
-                    Spacer(modifier = Modifier.height(20.dp))
+                    item {
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
                 }
             }
         }
@@ -380,13 +386,15 @@ private fun FilterTabsRow(
             ) {
                 Text(
                     text = tab.label,
+                    maxLines = 1,
                     style = TextStyle(
                         fontFamily = fontFamily,
-                        fontSize = 13.5.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
                         color = when {
                             isSelected -> Color.White
                             tab == FilterStatusTab.SELESAI -> Color(0xFF287D4A)
+                            tab == FilterStatusTab.DITOLAK -> Color(0xFFB91C1C)
                             else -> SiagaTealPrimary
                         }
                     )

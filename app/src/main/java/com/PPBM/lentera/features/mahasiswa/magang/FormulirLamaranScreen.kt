@@ -4,10 +4,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,8 +19,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -33,8 +31,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.WITA_ZONE
+import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
+import com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.theme.*
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private const val MAX_FORM_LAMARAN_BYTES = 20L * 1024L * 1024L
 
 data class LamaranDokumenItem(
     val id: String,
@@ -45,88 +54,74 @@ data class LamaranDokumenItem(
     val isRequired: Boolean = false
 )
 
-/**
- * Multi-step Formulir Lamaran Magang:
- * Step 1: Data Diri (Formulir Lamaran.png)
- * Step 2: Unggah Dokumen (Formulir Lamaran-1.png)
- * Step 3: Konfirmasi (Formulir Lamaran-2.png)
- * Step 4: Selesai / Konfirmasi Sukses (Konfirmasi Lamaran.png)
- */
+data class FormLamaranData(
+    val namaLengkap: String,
+    val nim: String,
+    val tempatTanggalLahir: String,
+    val alamatKtp: String,
+    val alamatDomisili: String,
+    val agama: String,
+    val noWa: String,
+    val email: String,
+    val golonganDarah: String,
+    val prodi: String = "",
+    val semester: String = "",
+    val ipk: String = "",
+    val dokumenFiles: List<Triple<String, String, ByteArray>> = emptyList(),
+    val profileDocPaths: List<Triple<String, String, String>> = emptyList()
+)
+
 @Composable
 fun FormulirLamaranScreen(
-    posisiJudul: String = "UI/UX Designer",
-    perusahaan: String = "PT Teknologi Nusantara",
+    posisiJudul: String = "",
+    perusahaan: String = "",
+    initialNama: String = "",
+    initialNim: String = "",
+    initialEmail: String = "",
+    initialProdi: String = "",
+    initialNoWa: String = "",
+    profileDocs: List<DokumenMahasiswaItem> = emptyList(),
+    isSubmitting: Boolean = false,
     onBackClick: () -> Unit = {},
+    onSubmitLamaran: ((
+        formData: FormLamaranData,
+        onError: (String) -> Unit,
+        onSuccess: (nomorLamaran: String) -> Unit
+    ) -> Unit)? = null,
     onCekStatusLamaran: () -> Unit = {},
     onKembaliKeBeranda: () -> Unit = {}
 ) {
     val fontFamily = FontFamily(Font(R.font.plus_jakarta_sans))
     var currentStep by remember { mutableIntStateOf(1) }
 
-    // State Step 1: Data Diri
-    var namaLengkap by remember { mutableStateOf("Budi Santoso") }
-    var nim by remember { mutableStateOf("2023110045") }
-    var emailKampus by remember { mutableStateOf("budi.santoso@mhs.kampus.ac.id") }
-    var prodi by remember { mutableStateOf("Teknik Informatika") }
-    var semester by remember { mutableStateOf("Semester 5") }
-    var noWa by remember { mutableStateOf("0812-3456-7890") }
-    var ipk by remember { mutableStateOf("3.85") }
+    // State Step 1: Data Diri lengkap sesuai skema `lamaran`
+    var namaLengkap by remember(initialNama) { mutableStateOf(initialNama) }
+    var nim by remember(initialNim) { mutableStateOf(initialNim) }
+    var tempatTanggalLahir by remember { mutableStateOf("") }
+    var alamatKtp by remember { mutableStateOf("") }
+    var alamatDomisili by remember { mutableStateOf("") }
+    var agama by remember { mutableStateOf("") }
+    var noWa by remember(initialNoWa) { mutableStateOf(initialNoWa) }
+    var emailKampus by remember(initialEmail) { mutableStateOf(initialEmail) }
+    var golonganDarah by remember { mutableStateOf("") }
+    var prodi by remember(initialProdi) { mutableStateOf(initialProdi) }
+    var semester by remember { mutableStateOf("") }
+    var ipk by remember { mutableStateOf("") }
 
-    // State Step 3: Pernyataan Checkbox
-    var isAgreed by remember { mutableStateOf(true) }
+    var isAgreed by remember { mutableStateOf(false) }
 
-    // State Step 2: Daftar Dokumen Persyaratan
+    var submittedNomorLamaran by remember { mutableStateOf("") }
+    var submittedTimestampText by remember { mutableStateOf("") }
+
     var dokumenList by remember {
         mutableStateOf(
             listOf(
-                LamaranDokumenItem(
-                    id = "cv",
-                    title = "Curriculum Vitae (CV)",
-                    iconRes = R.drawable.ic_doc_cv,
-                    fileName = "cv_budi_santoso.pdf (1.2 MB)",
-                    isUploaded = true,
-                    isRequired = true
-                ),
-                LamaranDokumenItem(
-                    id = "surat_pengantar",
-                    title = "Surat Pengantar Kampus",
-                    iconRes = R.drawable.ic_doc_surat_pengantar,
-                    fileName = "surat_pengantar_fakultas.pdf (850 KB)",
-                    isUploaded = true,
-                    isRequired = true
-                ),
-                LamaranDokumenItem(
-                    id = "transkrip",
-                    title = "Transkrip Nilai Terakhir",
-                    iconRes = R.drawable.ic_doc_transkrip,
-                    fileName = "transkrip_nilai_sem4.pdf (1.8 MB)",
-                    isUploaded = true,
-                    isRequired = true
-                ),
-                LamaranDokumenItem(
-                    id = "ktm",
-                    title = "Foto Kartu Tanda Mahasiswa (KTM)",
-                    iconRes = R.drawable.ic_doc_ktm,
-                    fileName = "ktm_budi_santoso.jpg (450 KB)",
-                    isUploaded = true,
-                    isRequired = true
-                ),
-                LamaranDokumenItem(
-                    id = "portofolio",
-                    title = "Portofolio Desain",
-                    iconRes = R.drawable.ic_doc_portfolio,
-                    fileName = "portofolio_uiux_budi.pdf (4.5 MB)",
-                    isUploaded = true,
-                    isRequired = false
-                ),
-                LamaranDokumenItem(
-                    id = "sertifikat",
-                    title = "Sertifikat Pendukung",
-                    iconRes = R.drawable.ic_doc_sertifikat,
-                    fileName = null,
-                    isUploaded = false,
-                    isRequired = false
-                )
+                LamaranDokumenItem("cv", "Curriculum Vitae (CV)", R.drawable.ic_doc_cv, isRequired = true),
+                LamaranDokumenItem("surat_pengantar", "Surat Pengantar Kampus", R.drawable.ic_doc_surat_pengantar, isRequired = true),
+                LamaranDokumenItem("transkrip", "Transkrip Nilai Terakhir", R.drawable.ic_doc_transkrip, isRequired = true),
+                LamaranDokumenItem("ktm", "Foto Kartu Tanda Mahasiswa (KTM)", R.drawable.ic_doc_ktm, isRequired = true),
+                LamaranDokumenItem("portofolio", "Portofolio Desain", R.drawable.ic_doc_portfolio, isRequired = false),
+                LamaranDokumenItem("sertifikat", "Sertifikat Pendukung", R.drawable.ic_doc_sertifikat, isRequired = false)
             )
         )
     }
@@ -141,25 +136,44 @@ fun FormulirLamaranScreen(
     var feedbackSuccess by remember { mutableStateOf(true) }
 
     val context = LocalContext.current
+    var docFilesMap by remember { mutableStateOf<Map<String, Triple<String, String, ByteArray>>>(emptyMap()) }
+    var profileDocsMap by remember { mutableStateOf<Map<String, Triple<String, String, String>>>(emptyMap()) }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null) {
-            val (name, sizeStr) = getFileDetails(context, uri)
-            activeDocForUpload?.let { doc ->
-                dokumenList = dokumenList.map {
-                    if (it.id == doc.id) {
-                        it.copy(fileName = "$name ($sizeStr)", isUploaded = true)
-                    } else it
-                }
-                feedbackTitle = "Berkas Berhasil Diunggah"
-                feedbackMessage = "Berkas $name ($sizeStr) berhasil dilampirkan untuk ${doc.title}."
-                feedbackSuccess = true
-                showFeedback = true
-            }
-            showUploadModal = false
-            activeDocForUpload = null
+        if (uri == null) return@rememberLauncherForActivityResult
+        val (name, sizeStr) = getFileDetails(context, uri)
+        val bytes = try {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: ByteArray(0)
+        } catch (_: Exception) {
+            ByteArray(0)
         }
+        val doc = activeDocForUpload
+        if (bytes.isEmpty()) {
+            feedbackTitle = "Gagal Membaca Berkas"
+            feedbackMessage = "Berkas kosong atau tidak dapat diakses dari perangkat."
+            feedbackSuccess = false
+            showFeedback = true
+        } else if (bytes.size > MAX_FORM_LAMARAN_BYTES) {
+            feedbackTitle = "Ukuran Berkas Melebihi Batas"
+            feedbackMessage = "Ukuran maksimal setiap dokumen lamaran adalah 20 MB."
+            feedbackSuccess = false
+            showFeedback = true
+        } else if (doc != null) {
+            val jenisNormalized = normalizeDokumenLamaranJenis(doc.title)
+            dokumenList = dokumenList.map {
+                if (it.id == doc.id) it.copy(fileName = "$name ($sizeStr)", isUploaded = true) else it
+            }
+            docFilesMap = docFilesMap + (doc.id to Triple(jenisNormalized, name, bytes))
+            profileDocsMap = profileDocsMap - doc.id
+            feedbackTitle = "Berkas Berhasil Dipilih"
+            feedbackMessage = "Berkas $name ($sizeStr) siap dikirim untuk ${doc.title}."
+            feedbackSuccess = true
+            showFeedback = true
+        }
+        showUploadModal = false
+        activeDocForUpload = null
     }
 
     Scaffold(
@@ -170,9 +184,11 @@ fun FormulirLamaranScreen(
             if (currentStep < 4) {
                 FormulirTopBar(
                     title = "Formulir Lamaran",
-                    subtitle = "$perusahaan · $posisiJudul",
+                    subtitle = listOf(perusahaan, posisiJudul).filter { it.isNotBlank() }.joinToString(" · "),
                     onBackClick = {
-                        if (currentStep > 1) currentStep-- else onBackClick()
+                        if (!isSubmitting) {
+                            if (currentStep > 1) currentStep-- else onBackClick()
+                        }
                     },
                     fontFamily = fontFamily
                 )
@@ -180,12 +196,94 @@ fun FormulirLamaranScreen(
         },
         bottomBar = {
             if (currentStep < 4) {
+                val requiredComplete = dokumenList.filter { it.isRequired }.all { it.isUploaded }
                 FormulirBottomBar(
                     currentStep = currentStep,
-                    isNextEnabled = if (currentStep == 3) isAgreed else true,
-                    onPrevClick = { if (currentStep > 1) currentStep-- },
+                    isNextEnabled = when (currentStep) {
+                        3 -> isAgreed && !isSubmitting
+                        else -> !isSubmitting
+                    },
+                    nextLabel = when {
+                        currentStep == 3 && isSubmitting -> "Mengirim Lamaran..."
+                        currentStep == 3 -> "Kirim Lamaran"
+                        else -> "Selanjutnya"
+                    },
+                    onPrevClick = { if (!isSubmitting && currentStep > 1) currentStep-- },
                     onNextClick = {
-                        if (currentStep < 4) currentStep++
+                        when (currentStep) {
+                            1 -> {
+                                val missing = buildList {
+                                    if (namaLengkap.isBlank()) add("Nama lengkap")
+                                    if (nim.isBlank()) add("NIM")
+                                    if (tempatTanggalLahir.isBlank()) add("Tempat, tanggal lahir")
+                                    if (alamatKtp.isBlank()) add("Alamat KTP")
+                                    if (alamatDomisili.isBlank()) add("Alamat domisili")
+                                    if (agama.isBlank()) add("Agama")
+                                    if (noWa.isBlank()) add("Nomor WhatsApp/Telepon")
+                                    if (emailKampus.isBlank() || !emailKampus.contains("@")) add("Email aktif")
+                                    if (golonganDarah.isBlank()) add("Golongan darah")
+                                }
+                                if (missing.isNotEmpty()) {
+                                    feedbackTitle = "Data Diri Belum Lengkap"
+                                    feedbackMessage = "Mohon lengkapi kolom wajib: ${missing.joinToString(", ")}."
+                                    feedbackSuccess = false
+                                    showFeedback = true
+                                } else {
+                                    currentStep = 2
+                                }
+                            }
+                            2 -> {
+                                if (!requiredComplete) {
+                                    val missingDocs = dokumenList.filter { it.isRequired && !it.isUploaded }.map { it.title }
+                                    feedbackTitle = "Dokumen Wajib Belum Lengkap"
+                                    feedbackMessage = "Silakan unggah dokumen wajib berikut: ${missingDocs.joinToString(", ")}."
+                                    feedbackSuccess = false
+                                    showFeedback = true
+                                } else {
+                                    currentStep = 3
+                                }
+                            }
+                            3 -> {
+                                if (!requiredComplete) {
+                                    feedbackTitle = "Dokumen Wajib Belum Lengkap"
+                                    feedbackMessage = "Kembali ke langkah Dokumen untuk melengkapi berkas wajib."
+                                    feedbackSuccess = false
+                                    showFeedback = true
+                                    return@FormulirBottomBar
+                                }
+                                val formData = FormLamaranData(
+                                    namaLengkap = namaLengkap.trim(),
+                                    nim = nim.trim(),
+                                    tempatTanggalLahir = tempatTanggalLahir.trim(),
+                                    alamatKtp = alamatKtp.trim(),
+                                    alamatDomisili = alamatDomisili.trim(),
+                                    agama = agama.trim(),
+                                    noWa = noWa.trim(),
+                                    email = emailKampus.trim(),
+                                    golonganDarah = golonganDarah.trim(),
+                                    prodi = prodi.trim(),
+                                    semester = semester.trim(),
+                                    ipk = ipk.trim(),
+                                    dokumenFiles = docFilesMap.values.toList(),
+                                    profileDocPaths = profileDocsMap.values.toList()
+                                )
+                                onSubmitLamaran?.invoke(
+                                    formData,
+                                    { errMsg ->
+                                        feedbackTitle = "Gagal Mengirim Lamaran"
+                                        feedbackMessage = errMsg
+                                        feedbackSuccess = false
+                                        showFeedback = true
+                                    },
+                                    { nomorLamaran ->
+                                        submittedNomorLamaran = nomorLamaran
+                                        submittedTimestampText = ZonedDateTime.now(WITA_ZONE)
+                                            .format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale("id", "ID"))) + " WITA"
+                                        currentStep = 4
+                                    }
+                                )
+                            }
+                        }
                     },
                     fontFamily = fontFamily
                 )
@@ -199,7 +297,6 @@ fun FormulirLamaranScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             if (currentStep < 4) {
-                // Stepper Header (1, 2, 3, 4)
                 StepperHeader(
                     currentStep = currentStep,
                     fontFamily = fontFamily
@@ -211,10 +308,15 @@ fun FormulirLamaranScreen(
                 1 -> Step1DataDiri(
                     nama = namaLengkap, onNamaChange = { namaLengkap = it },
                     nimVal = nim, onNimChange = { nim = it },
+                    ttlVal = tempatTanggalLahir, onTtlChange = { tempatTanggalLahir = it },
+                    alamatKtpVal = alamatKtp, onAlamatKtpChange = { alamatKtp = it },
+                    alamatDomisiliVal = alamatDomisili, onAlamatDomisiliChange = { alamatDomisili = it },
+                    agamaVal = agama, onAgamaChange = { agama = it },
+                    golDarahVal = golonganDarah, onGolDarahChange = { golonganDarah = it },
                     email = emailKampus, onEmailChange = { emailKampus = it },
+                    waVal = noWa, onWaChange = { noWa = it },
                     prodiVal = prodi, onProdiChange = { prodi = it },
                     semVal = semester, onSemChange = { semester = it },
-                    waVal = noWa, onWaChange = { noWa = it },
                     ipkVal = ipk, onIpkChange = { ipk = it },
                     fontFamily = fontFamily
                 )
@@ -229,6 +331,8 @@ fun FormulirLamaranScreen(
                 3 -> Step3Konfirmasi(
                     nama = namaLengkap,
                     nim = nim,
+                    ttl = tempatTanggalLahir,
+                    alamatDomisili = alamatDomisili,
                     email = emailKampus,
                     wa = noWa,
                     posisi = posisiJudul,
@@ -243,6 +347,8 @@ fun FormulirLamaranScreen(
                 4 -> Step4Sukses(
                     posisi = posisiJudul,
                     perusahaan = perusahaan,
+                    nomorLamaran = submittedNomorLamaran,
+                    tanggalKirim = submittedTimestampText,
                     onCekStatus = onCekStatusLamaran,
                     onKembali = onKembaliKeBeranda,
                     fontFamily = fontFamily
@@ -272,21 +378,27 @@ fun FormulirLamaranScreen(
     if (showSelectFromProfileDialog && activeDocForUpload != null) {
         PilihDariProfilDialog(
             docTitle = activeDocForUpload!!.title,
+            profileDocs = profileDocs,
             onDismiss = {
                 showSelectFromProfileDialog = false
                 activeDocForUpload = null
             },
-            onDocSelected = { selectedDocName ->
+            onDocSelected = { selectedDoc ->
                 val currentDoc = activeDocForUpload!!
+                val jenisNormalized = normalizeDokumenLamaranJenis(currentDoc.title)
                 dokumenList = dokumenList.map {
                     if (it.id == currentDoc.id) {
-                        it.copy(fileName = selectedDocName, isUploaded = true)
+                        it.copy(fileName = "${selectedDoc.namaFile} (Dari Profil)", isUploaded = true)
                     } else it
                 }
+                profileDocsMap = profileDocsMap + (
+                    currentDoc.id to Triple(jenisNormalized, selectedDoc.namaFile, selectedDoc.filePath)
+                )
+                docFilesMap = docFilesMap - currentDoc.id
                 showSelectFromProfileDialog = false
                 activeDocForUpload = null
                 feedbackTitle = "Berkas Dipilih dari Profil"
-                feedbackMessage = "$selectedDocName berhasil dilampirkan untuk ${currentDoc.title}."
+                feedbackMessage = "${selectedDoc.namaFile} akan dilampirkan untuk ${currentDoc.title}."
                 feedbackSuccess = true
                 showFeedback = true
             },
@@ -302,10 +414,6 @@ fun FormulirLamaranScreen(
         onDismiss = { showFeedback = false }
     )
 }
-
-// ============================================================================
-// Top Bar
-// ============================================================================
 
 @Composable
 private fun FormulirTopBar(
@@ -339,22 +447,20 @@ private fun FormulirTopBar(
                     color = NavyDark
                 )
             )
-            Text(
-                text = subtitle,
-                style = TextStyle(
-                    fontFamily = fontFamily,
-                    fontSize = 12.sp,
-                    color = SlateGray
-                ),
-                maxLines = 1
-            )
+            if (subtitle.isNotBlank()) {
+                Text(
+                    text = subtitle,
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 12.sp,
+                        color = SlateGray
+                    ),
+                    maxLines = 1
+                )
+            }
         }
     }
 }
-
-// ============================================================================
-// Stepper Header Component
-// ============================================================================
 
 @Composable
 private fun StepperHeader(
@@ -375,9 +481,7 @@ private fun StepperHeader(
             val isDone = stepNumber < currentStep
             val isActive = stepNumber == currentStep
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -427,7 +531,7 @@ private fun StepperHeader(
                     modifier = Modifier
                         .weight(1f)
                         .height(2.dp)
-                        .padding(horizontal = 4.dp, vertical = 0.dp)
+                        .padding(horizontal = 4.dp)
                         .background(if (stepNumber < currentStep) MagangAmberPrimary else Color(0xFFE2E8F0))
                 )
             }
@@ -435,18 +539,19 @@ private fun StepperHeader(
     }
 }
 
-// ============================================================================
-// Step 1: Data Diri (Formulir Lamaran.png)
-// ============================================================================
-
 @Composable
 private fun Step1DataDiri(
     nama: String, onNamaChange: (String) -> Unit,
     nimVal: String, onNimChange: (String) -> Unit,
+    ttlVal: String, onTtlChange: (String) -> Unit,
+    alamatKtpVal: String, onAlamatKtpChange: (String) -> Unit,
+    alamatDomisiliVal: String, onAlamatDomisiliChange: (String) -> Unit,
+    agamaVal: String, onAgamaChange: (String) -> Unit,
+    golDarahVal: String, onGolDarahChange: (String) -> Unit,
     email: String, onEmailChange: (String) -> Unit,
+    waVal: String, onWaChange: (String) -> Unit,
     prodiVal: String, onProdiChange: (String) -> Unit,
     semVal: String, onSemChange: (String) -> Unit,
-    waVal: String, onWaChange: (String) -> Unit,
     ipkVal: String, onIpkChange: (String) -> Unit,
     fontFamily: FontFamily
 ) {
@@ -465,7 +570,7 @@ private fun Step1DataDiri(
             )
         )
         Text(
-            text = "Pastikan data diri Anda sesuai dengan data resmi di kampus.",
+            text = "Semua kolom bertanda * wajib diisi sesuai identitas resmi Anda.",
             style = TextStyle(
                 fontFamily = fontFamily,
                 fontSize = 12.sp,
@@ -474,13 +579,50 @@ private fun Step1DataDiri(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        FormFieldItem(label = "Nama Lengkap", value = nama, onValueChange = onNamaChange, fontFamily = fontFamily)
-        FormFieldItem(label = "Nomor Induk Mahasiswa (NIM)", value = nimVal, onValueChange = onNimChange, fontFamily = fontFamily)
-        FormFieldItem(label = "Email Kampus", value = email, onValueChange = onEmailChange, fontFamily = fontFamily)
-        FormFieldItem(label = "Program Studi", value = prodiVal, onValueChange = onProdiChange, fontFamily = fontFamily)
-        FormFieldItem(label = "Semester Saat Ini", value = semVal, onValueChange = onSemChange, fontFamily = fontFamily)
-        FormFieldItem(label = "Nomor WhatsApp", value = waVal, onValueChange = onWaChange, fontFamily = fontFamily)
-        FormFieldItem(label = "IPK Terakhir", value = ipkVal, onValueChange = onIpkChange, fontFamily = fontFamily)
+        FormFieldItem(label = "Nama Lengkap *", value = nama, onValueChange = onNamaChange, fontFamily = fontFamily)
+        FormFieldItem(label = "Nomor Induk Mahasiswa (NIM) *", value = nimVal, onValueChange = onNimChange, fontFamily = fontFamily)
+        FormFieldItem(
+            label = "Tempat, Tanggal Lahir *",
+            value = ttlVal,
+            onValueChange = onTtlChange,
+            placeholder = "Contoh: Balikpapan, 12 Mei 2004",
+            fontFamily = fontFamily
+        )
+        FormFieldItem(
+            label = "Alamat Sesuai KTP *",
+            value = alamatKtpVal,
+            onValueChange = onAlamatKtpChange,
+            singleLine = false,
+            fontFamily = fontFamily
+        )
+        FormFieldItem(
+            label = "Alamat Domisili Saat Ini *",
+            value = alamatDomisiliVal,
+            onValueChange = onAlamatDomisiliChange,
+            singleLine = false,
+            fontFamily = fontFamily
+        )
+        DropdownSelectFieldItem(
+            label = "Agama *",
+            value = agamaVal,
+            placeholder = "Pilih agama",
+            options = listOf("Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya"),
+            onOptionSelected = onAgamaChange,
+            fontFamily = fontFamily
+        )
+        DropdownSelectFieldItem(
+            label = "Golongan Darah *",
+            value = golDarahVal,
+            placeholder = "Pilih golongan darah",
+            options = listOf("A", "B", "AB", "O", "Tidak Tahu"),
+            onOptionSelected = onGolDarahChange,
+            fontFamily = fontFamily
+        )
+        FormFieldItem(label = "Nomor WhatsApp / Telepon *", value = waVal, onValueChange = onWaChange, fontFamily = fontFamily)
+        FormFieldItem(label = "Email Kampus *", value = email, onValueChange = onEmailChange, fontFamily = fontFamily)
+        FormFieldItem(label = "Program Studi (Opsional)", value = prodiVal, onValueChange = onProdiChange, fontFamily = fontFamily)
+        FormFieldItem(label = "Semester Saat Ini (Opsional)", value = semVal, onValueChange = onSemChange, fontFamily = fontFamily)
+        FormFieldItem(label = "IPK Terakhir (Opsional)", value = ipkVal, onValueChange = onIpkChange, fontFamily = fontFamily)
 
         Spacer(modifier = Modifier.height(24.dp))
     }
@@ -491,6 +633,8 @@ private fun FormFieldItem(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    placeholder: String = "",
+    singleLine: Boolean = true,
     fontFamily: FontFamily
 ) {
     Column(modifier = Modifier.padding(bottom = 14.dp)) {
@@ -507,6 +651,9 @@ private fun FormFieldItem(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            placeholder = if (placeholder.isNotEmpty()) {
+                { Text(placeholder, fontFamily = fontFamily, fontSize = 13.sp, color = SlateGrayLight) }
+            } else null,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White, RoundedCornerShape(12.dp)),
@@ -520,14 +667,78 @@ private fun FormFieldItem(
                 fontSize = 14.sp,
                 color = NavyDark
             ),
-            singleLine = true
+            singleLine = singleLine,
+            maxLines = if (singleLine) 1 else 3
         )
     }
 }
 
-// ============================================================================
-// Step 2: Unggah Dokumen (Formulir Lamaran-1.png)
-// ============================================================================
+@Composable
+private fun DropdownSelectFieldItem(
+    label: String,
+    value: String,
+    placeholder: String,
+    options: List<String>,
+    onOptionSelected: (String) -> Unit,
+    fontFamily: FontFamily
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.padding(bottom = 14.dp)) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontFamily = fontFamily,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = NavyDark
+            )
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White)
+                    .border(1.dp, InputBorder, RoundedCornerShape(12.dp))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = value.ifBlank { placeholder },
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 14.sp,
+                        color = if (value.isBlank()) SlateGrayLight else NavyDark
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_chevron_down_alt),
+                    contentDescription = "Pilih",
+                    tint = NavyDark,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option, fontFamily = fontFamily) },
+                        onClick = {
+                            onOptionSelected(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun Step2UnggahDokumen(
@@ -550,7 +761,7 @@ private fun Step2UnggahDokumen(
             )
         )
         Text(
-            text = "Format PDF atau JPG/PNG, maksimal 5MB per dokumen.",
+            text = "Format PDF atau JPG/PNG, maksimal 20 MB per dokumen.",
             style = TextStyle(
                 fontFamily = fontFamily,
                 fontSize = 12.sp,
@@ -584,7 +795,7 @@ private fun DocUploadCard(
             .clickable(onClick = onUploadClick),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
     ) {
         Row(
             modifier = Modifier
@@ -685,14 +896,12 @@ private fun DocUploadCard(
     }
 }
 
-// ============================================================================
-// Step 3: Konfirmasi (Formulir Lamaran-2.png)
-// ============================================================================
-
 @Composable
 private fun Step3Konfirmasi(
     nama: String,
     nim: String,
+    ttl: String,
+    alamatDomisili: String,
     email: String,
     wa: String,
     posisi: String,
@@ -728,12 +937,11 @@ private fun Step3Konfirmasi(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Kartu Posisi Magang
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
         ) {
             Row(
                 modifier = Modifier
@@ -771,12 +979,11 @@ private fun Step3Konfirmasi(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Ringkasan Data Diri Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(
@@ -807,6 +1014,8 @@ private fun Step3Konfirmasi(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Nama: $nama", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
                 Text(text = "NIM: $nim", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
+                Text(text = "TTL: $ttl", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
+                Text(text = "Domisili: $alamatDomisili", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
                 Text(text = "Email: $email", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
                 Text(text = "WhatsApp: $wa", style = TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, color = NavyDark))
             }
@@ -814,12 +1023,11 @@ private fun Step3Konfirmasi(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Ringkasan Dokumen Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
         ) {
             Row(
                 modifier = Modifier
@@ -870,7 +1078,6 @@ private fun Step3Konfirmasi(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Checkbox Pernyataan
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -901,14 +1108,12 @@ private fun Step3Konfirmasi(
     }
 }
 
-// ============================================================================
-// Step 4: Konfirmasi Lamaran Selesai (Konfirmasi Lamaran.png)
-// ============================================================================
-
 @Composable
 private fun Step4Sukses(
     posisi: String,
     perusahaan: String,
+    nomorLamaran: String,
+    tanggalKirim: String,
     onCekStatus: () -> Unit,
     onKembali: () -> Unit,
     fontFamily: FontFamily
@@ -944,7 +1149,7 @@ private fun Step4Sukses(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Lamaran Anda untuk posisi $posisi di $perusahaan berhasil terkirim dan diteruskan ke tim rekrutmen.",
+            text = "Lamaran Anda untuk posisi $posisi di $perusahaan berhasil terkirim dan diteruskan untuk verifikasi berkas.",
             style = TextStyle(
                 fontFamily = fontFamily,
                 fontSize = 13.sp,
@@ -960,14 +1165,14 @@ private fun Step4Sukses(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(CardBorder))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                DetailInfoRow(label = "Nomor Lamaran", value = "LNT-MG-2026-0891", fontFamily = fontFamily)
+                DetailInfoRow(label = "Nomor Lamaran", value = nomorLamaran.ifBlank { "-" }, fontFamily = fontFamily)
                 Spacer(modifier = Modifier.height(8.dp))
-                DetailInfoRow(label = "Tanggal Kirim", value = "30 Okt 2026, 14:30 WIB", fontFamily = fontFamily)
+                DetailInfoRow(label = "Waktu Kirim", value = tanggalKirim.ifBlank { "-" }, fontFamily = fontFamily)
                 Spacer(modifier = Modifier.height(8.dp))
-                DetailInfoRow(label = "Estimasi Proses", value = "3 - 5 Hari Kerja", fontFamily = fontFamily)
+                DetailInfoRow(label = "Status Awal", value = "Menunggu Verifikasi", fontFamily = fontFamily)
             }
         }
 
@@ -1000,7 +1205,7 @@ private fun Step4Sukses(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(14.dp),
-            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(CardBorder))
         ) {
             Text(
                 text = "Kembali ke Beranda Magang",
@@ -1030,14 +1235,11 @@ private fun DetailInfoRow(
     }
 }
 
-// ============================================================================
-// Bottom Action Bar
-// ============================================================================
-
 @Composable
 private fun FormulirBottomBar(
     currentStep: Int,
     isNextEnabled: Boolean,
+    nextLabel: String,
     onPrevClick: () -> Unit,
     onNextClick: () -> Unit,
     fontFamily: FontFamily
@@ -1061,7 +1263,7 @@ private fun FormulirBottomBar(
                         .weight(1f)
                         .height(48.dp),
                     shape = RoundedCornerShape(14.dp),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+                    border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(CardBorder))
                 ) {
                     Text(
                         text = "Sebelumnya",
@@ -1088,7 +1290,7 @@ private fun FormulirBottomBar(
                 )
             ) {
                 Text(
-                    text = if (currentStep == 3) "Kirim Lamaran" else "Selanjutnya",
+                    text = nextLabel,
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 14.sp,
@@ -1100,20 +1302,6 @@ private fun FormulirBottomBar(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun FormulirLamaranScreenPreview() {
-    LenteraTheme {
-        FormulirLamaranScreen()
-    }
-}
-
-
-
-// ============================================================================
-// Komponen Dialog Unggah & Pemilihan Dokumen
-// ============================================================================
 
 @Composable
 private fun UploadDokumenLamaranDialog(
@@ -1142,7 +1330,6 @@ private fun UploadDokumenLamaranDialog(
                     .background(Color.White)
                     .padding(horizontal = 24.dp, vertical = 20.dp)
             ) {
-                // Drag handle bar
                 Box(
                     modifier = Modifier
                         .size(width = 40.dp, height = 4.dp)
@@ -1166,7 +1353,7 @@ private fun UploadDokumenLamaranDialog(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Pilih sumber berkas untuk $docTitle (PDF, JPG, atau PNG maks 5MB).",
+                    text = "Pilih sumber berkas untuk $docTitle (PDF, JPG, atau PNG maks. 20 MB).",
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 12.5.sp,
@@ -1176,7 +1363,6 @@ private fun UploadDokumenLamaranDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Opsi 1: Ambil dari Dokumen Saya
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1235,7 +1421,6 @@ private fun UploadDokumenLamaranDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Opsi 2: Upload File Baru dari Perangkat
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1300,7 +1485,7 @@ private fun UploadDokumenLamaranDialog(
                         .fillMaxWidth()
                         .height(46.dp),
                     shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+                    border = BorderStroke(1.dp, CardBorder)
                 ) {
                     Text(
                         text = "Batal",
@@ -1322,19 +1507,11 @@ private fun UploadDokumenLamaranDialog(
 @Composable
 private fun PilihDariProfilDialog(
     docTitle: String,
+    profileDocs: List<DokumenMahasiswaItem> = emptyList(),
     onDismiss: () -> Unit,
-    onDocSelected: (String) -> Unit,
+    onDocSelected: (DokumenMahasiswaItem) -> Unit,
     fontFamily: FontFamily
 ) {
-    val sampleProfileDocs = remember {
-        listOf(
-            "sertifikat_pelatihan_uiux.pdf (1.5 MB)",
-            "sertifikat_web_development.pdf (950 KB)",
-            "cv_budi_santoso_2026.pdf (1.2 MB)",
-            "portofolio_uiux_design_budi.pdf (4.8 MB)"
-        )
-    }
-
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -1364,35 +1541,56 @@ private fun PilihDariProfilDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            sampleProfileDocs.forEach { docName ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                        .clickable { onDocSelected(docName) }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_circle_check),
-                        contentDescription = null,
-                        tint = Color(0xFF287D4A),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = docName,
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = NavyDark
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
+            if (profileDocs.isEmpty()) {
+                Text(
+                    text = "Belum ada berkas tersimpan di Dokumen Saya. Gunakan opsi 'Pilih Berkas Baru dari HP'.",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 12.5.sp,
+                        color = SlateGray
+                    ),
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            } else {
+                profileDocs.forEach { doc ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF8FAFC))
+                            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                            .clickable { onDocSelected(doc) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_circle_check),
+                            contentDescription = null,
+                            tint = Color(0xFF287D4A),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = doc.namaFile,
+                                style = TextStyle(
+                                    fontFamily = fontFamily,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = NavyDark
+                                )
+                            )
+                            Text(
+                                text = doc.jenis,
+                                style = TextStyle(
+                                    fontFamily = fontFamily,
+                                    fontSize = 11.sp,
+                                    color = SlateGray
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -1420,10 +1618,9 @@ private fun PilihDariProfilDialog(
     }
 }
 
-// Helper untuk membaca nama & ukuran file asli dari Content Resolver Android
 private fun getFileDetails(context: android.content.Context, uri: Uri): Pair<String, String> {
     var name = "dokumen_terlampir.pdf"
-    var sizeStr = "512 KB"
+    var sizeStr = "0 KB"
     try {
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -1434,14 +1631,25 @@ private fun getFileDetails(context: android.content.Context, uri: Uri): Pair<Str
                 }
                 if (sizeIndex != -1) {
                     val bytes = cursor.getLong(sizeIndex)
-                    sizeStr = if (bytes > 1024 * 1024) {
-                        String.format(java.util.Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
+                    sizeStr = if (bytes >= 1024 * 1024) {
+                        String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
                     } else {
-                        "${bytes / 1024} KB"
+                        "${(bytes / 1024).coerceAtLeast(1)} KB"
                     }
                 }
             }
         }
     } catch (_: Exception) {}
     return Pair(name, sizeStr)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FormulirLamaranScreenPreview() {
+    LenteraTheme {
+        FormulirLamaranScreen(
+            posisiJudul = "UI/UX Designer",
+            perusahaan = "PT Teknologi Nusantara"
+        )
+    }
 }

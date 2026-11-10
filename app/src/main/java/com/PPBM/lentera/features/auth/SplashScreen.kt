@@ -21,19 +21,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.SessionManager
+import com.PPBM.lentera.backend.core.SupabaseConfig
 import com.PPBM.lentera.core.designsystem.theme.*
+import com.PPBM.lentera.core.navigation.Routes
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.delay
 
 /**
  * Splash Screen — AUTH-001
  *
  * Menampilkan logo LENTERA dengan tagline dan progress bar loading.
- * Otomatis navigasi ke Login setelah 2.5 detik.
+ * Otomatis mengecek sesi pengguna dan mengarahkan ke Dashboard atau Login.
  */
 @Composable
 fun SplashScreen(
-    onSplashFinished: () -> Unit = {}
+    holdNavigation: Boolean = false,
+    onSplashFinished: (destinationRoute: String) -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
 
     // Animasi progress bar
@@ -48,10 +54,36 @@ fun SplashScreen(
         label = "progress"
     )
 
-    // Timer untuk navigasi
-    LaunchedEffect(Unit) {
-        delay(2500)
-        onSplashFinished()
+    // Timer untuk navigasi & pengecekan sesi auto-login
+    LaunchedEffect(holdNavigation) {
+        if (holdNavigation) return@LaunchedEffect
+        delay(2000)
+        try {
+            SupabaseConfig.client.auth.awaitInitialization()
+        } catch (_: Exception) {}
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile()
+        val hasSupabaseSession = SupabaseConfig.client.auth.currentSessionOrNull() != null
+        val destination = when {
+            !session.isLoggedIn() || profile == null || !hasSupabaseSession -> {
+                if (profile?.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                    session.clearSession()
+                }
+                Routes.LOGIN
+            }
+            profile.statusAkun.equals("nonaktif", ignoreCase = true) -> {
+                try {
+                    SupabaseConfig.client.auth.signOut()
+                } catch (_: Exception) {}
+                session.clearSession()
+                Routes.LOGIN
+            }
+            profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
+            profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
+                Routes.resetPassword(profile.email)
+            else -> Routes.MAHASISWA_DASHBOARD
+        }
+        onSplashFinished(destination)
     }
 
     Box(

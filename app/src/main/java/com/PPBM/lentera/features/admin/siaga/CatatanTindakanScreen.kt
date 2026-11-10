@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,14 +50,22 @@ import com.PPBM.lentera.R
  */
 @Composable
 fun CatatanTindakanScreen(
+    laporan: AdminLaporan? = null,
+    logTindakanList: List<com.PPBM.lentera.backend.admin.model.LogTindakanItem> = emptyList(),
+    permintaanList: List<com.PPBM.lentera.backend.mahasiswa.model.PermintaanInformasiItem> = emptyList(),
+    isUpdating: Boolean = false,
     onHasilPenyelesaian: () -> Unit = {},
     onSimpanCatatan: (String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var catatanTindakan by remember {
-        mutableStateOf("Pendampingan telah dilakukan. Tim berwenang telah menyampaikan tindak lanjut sesuai prosedur.")
-    }
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
+    val isAnonim = laporan?.isAnonim ?: true
+    val unitPenanganan = laporan?.unitPenanganan?.takeIf { it.isNotBlank() } ?: "Tim Kampus"
+
+    var catatanTindakan by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -79,12 +88,12 @@ fun CatatanTindakanScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Penanganan",
-                statusBg = Color(0xFFFFEDD5),
-                statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal · Anonim",
-                subtitle = "Ditugaskan ke Tim Advokasi Kampus · 17 Okt, 10:30"
+                statusBg = Color(0xFFFFE4E6),
+                statusColor = Color(0xFFE11D48),
+                title = judulLaporan,
+                subtitle = "Ditugaskan ke: $unitPenanganan · ${if (isAnonim) "Anonim" else "Terverifikasi"}"
             )
 
             // Card Ringkasan Permintaan Informasi
@@ -115,30 +124,66 @@ fun CatatanTindakanScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    val latestPermintaan = permintaanList.lastOrNull()
+                    val (infoBadgeText, infoBadgeBg, infoBadgeColor) = when {
+                        permintaanList.isEmpty() ->
+                            Triple("Belum ada permintaan informasi", Color(0xFFF1F5F9), SiagaTextSecondary)
+                        permintaanList.any { it.balasanPelapor.isNullOrBlank() } ->
+                            Triple("Menunggu balasan pelapor", Color(0xFFFEF3C7), Color(0xFFB45309))
+                        else ->
+                            Triple("Balasan pelapor diterima", SiagaTealLight, SiagaTealPrimary)
+                    }
+
                     Text(
-                        text = "Informasi sudah dilengkapi",
+                        text = infoBadgeText,
                         modifier = Modifier
-                            .background(color = SiagaTealLight, shape = RoundedCornerShape(12.dp))
+                            .background(color = infoBadgeBg, shape = RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         style = TextStyle(
                             fontSize = 11.sp,
                             fontFamily = PlusJakartaFont,
                             fontWeight = FontWeight.SemiBold,
-                            color = SiagaTealPrimary
+                            color = infoBadgeColor
                         )
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Text(
-                        text = "Admin Rina Wulandari meminta klarifikasi frekuensi dan saksi (17 Okt, 09:30). Pelapor menanggapi: terjadi dua kali, ada saksi bersedia (17 Okt, 10:05).",
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp,
-                            fontFamily = PlusJakartaFont,
-                            color = SiagaTextSecondary
+                    if (latestPermintaan != null) {
+                        Text(
+                            text = "Pesan admin: ${latestPermintaan.pesanKePelapor}",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                lineHeight = 18.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = SiagaNavyDark
+                            )
                         )
-                    )
+                        if (!latestPermintaan.balasanPelapor.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Balasan pelapor: ${latestPermintaan.balasanPelapor}",
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    lineHeight = 18.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SiagaTealPrimary
+                                )
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = laporan?.catatanPenugasan?.ifBlank { "Tidak ada catatan instruksi khusus dari admin penerima." }
+                                ?: "Tidak ada catatan instruksi khusus dari admin penerima.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                lineHeight = 18.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = SiagaTextSecondary
+                            )
+                        )
+                    }
                 }
             }
 
@@ -170,44 +215,54 @@ fun CatatanTindakanScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    val logs = listOf(
-                        Triple("Diverifikasi dan divalidasi", "17 Okt, 10:15 · Data dinyatakan lengkap", true),
-                        Triple("Dialihkan ke Tim Advokasi", "17 Okt, 10:30 · Pendampingan dijadwalkan", true),
-                        Triple("Koordinasi penanganan", "17 Okt, 13:00 · Pemeriksaan dan tindak lanjut", false)
-                    )
-
-                    logs.forEach { (judul, ket, hasNext) ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (hasNext) R.drawable.ic_timeline_marker else R.drawable.ic_timeline_marker_dot
-                                ),
-                                contentDescription = "Status: $judul",
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(16.dp, if (hasNext) 48.dp else 22.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = judul,
-                                    style = TextStyle(
-                                        fontSize = 13.sp,
-                                        fontFamily = PlusJakartaFont,
-                                        fontWeight = FontWeight.Bold,
-                                        color = SiagaNavyDark
-                                    )
+                    if (logTindakanList.isEmpty()) {
+                        Text(
+                            text = "Belum ada log tindakan yang dicatat untuk laporan ini.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                color = SiagaTextSecondary
+                            ),
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        logTindakanList.forEachIndexed { index, log ->
+                            val hasNext = index < logTindakanList.size - 1
+                            val dateInfo = log.createdAt?.take(10) ?: "Baru saja"
+                            val ket = "$dateInfo · ${log.deskripsi}"
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (hasNext) R.drawable.ic_timeline_marker else R.drawable.ic_timeline_marker_dot
+                                    ),
+                                    contentDescription = "Status: ${log.judulTindakan}",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(16.dp, if (hasNext) 48.dp else 22.dp)
                                 )
-                                Text(
-                                    text = ket,
-                                    style = TextStyle(
-                                        fontSize = 12.sp,
-                                        fontFamily = PlusJakartaFont,
-                                        color = SiagaTextSecondary
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = log.judulTindakan,
+                                        style = TextStyle(
+                                            fontSize = 13.sp,
+                                            fontFamily = PlusJakartaFont,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SiagaNavyDark
+                                        )
                                     )
-                                )
+                                    Text(
+                                        text = ket,
+                                        style = TextStyle(
+                                            fontSize = 12.sp,
+                                            fontFamily = PlusJakartaFont,
+                                            color = SiagaTextSecondary
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
+
 
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = Color(0xFFF1F5F9))
@@ -226,7 +281,16 @@ fun CatatanTindakanScreen(
 
                     OutlinedTextField(
                         value = catatanTindakan,
-                        onValueChange = { catatanTindakan = it },
+                        onValueChange = {
+                            catatanTindakan = it
+                            if (validationError != null) validationError = null
+                        },
+                        placeholder = {
+                            Text(
+                                text = "Tuliskan catatan tindakan penanganan baru...",
+                                style = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaTextMuted)
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(95.dp),
@@ -238,10 +302,33 @@ fun CatatanTindakanScreen(
                         textStyle = TextStyle(fontSize = 13.sp, fontFamily = PlusJakartaFont, color = SiagaNavyDark)
                     )
 
+                    if (!validationError.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = validationError!!,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFB91C1C)
+                            )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
-                        onClick = { onSimpanCatatan(catatanTindakan) },
+                        onClick = {
+                            val trimmed = catatanTindakan.trim()
+                            if (trimmed.isBlank()) {
+                                validationError = "Catatan tindakan tidak boleh kosong."
+                                return@Button
+                            }
+                            validationError = null
+                            catatanTindakan = ""
+                            onSimpanCatatan(trimmed)
+                        },
+                        enabled = !isUpdating && laporan != null,
                         colors = ButtonDefaults.buttonColors(containerColor = SiagaNavyPrimary),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -249,7 +336,7 @@ fun CatatanTindakanScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Simpan Catatan",
+                            text = if (isUpdating) "Menyimpan..." else "Simpan Catatan",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,

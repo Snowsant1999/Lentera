@@ -34,12 +34,21 @@ import com.PPBM.lentera.core.designsystem.theme.*
 
 @Composable
 fun AdminMahasiswaScreen(
+    studentList: List<Triple<String, String, String>> = emptyList(),
     onNavigateToBuatAkun: () -> Unit = {},
-    onNavigateToDetail: () -> Unit = {},
+    onNavigateToDetail: (nim: String) -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("Semua 128") }
+    var selectedFilter by remember { mutableStateOf("Semua") }
+
+    val actualList = studentList
+
+    val totalAll = actualList.size
+    val totalAktif = actualList.count { it.third.equals("Aktif", ignoreCase = true) }
+    val totalBelum = actualList.count { it.third.contains("Belum", ignoreCase = true) }
+    val totalNonaktif = actualList.count { it.third.equals("Nonaktif", ignoreCase = true) }
+    val totalLulus = actualList.count { it.third.equals("Lulus", ignoreCase = true) }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -61,16 +70,146 @@ fun AdminMahasiswaScreen(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it }
             )
-            TabsMahasiswa(
+            TabsMahasiswaDynamic(
+                totalAll = totalAll,
+                totalAktif = totalAktif,
+                totalBelum = totalBelum,
+                totalNonaktif = totalNonaktif,
+                totalLulus = totalLulus,
                 selectedFilter = selectedFilter,
                 onFilterSelected = { selectedFilter = it }
             )
             Spacer(modifier = Modifier.height(14.dp))
-            ListMahasiswa(
+            ListMahasiswaDynamic(
+                students = actualList,
                 searchQuery = searchQuery,
                 selectedFilter = selectedFilter,
                 onItemClick = onNavigateToDetail
             )
+        }
+    }
+}
+
+@Composable
+fun TabsMahasiswaDynamic(
+    totalAll: Int,
+    totalAktif: Int,
+    totalBelum: Int,
+    totalNonaktif: Int,
+    totalLulus: Int,
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit
+) {
+    val filters = listOf(
+        "Semua $totalAll",
+        "Aktif $totalAktif",
+        "Belum Aktivasi $totalBelum",
+        "Nonaktif $totalNonaktif",
+        "Lulus $totalLulus"
+    )
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 14.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(filters.size) { index ->
+            val filterText = filters[index]
+            val filterKey = filterText.split(" ").firstOrNull() ?: ""
+            val isSelected = selectedFilter.startsWith(filterKey)
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        color = if (isSelected) NavyDark else Color.White
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (isSelected) Color.Transparent else CardBorder,
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clickable { onFilterSelected(filterKey) }
+                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = filterText,
+                    style = TextStyle(
+                        color = if (isSelected) Color.White else SlateGray,
+                        fontSize = 12.sp,
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ListMahasiswaDynamic(
+    students: List<Triple<String, String, String>>,
+    searchQuery: String = "",
+    selectedFilter: String = "Semua",
+    onItemClick: (nim: String) -> Unit = {}
+) {
+    val filtered = students.filter { (name, rawNim, status) ->
+        val matchesSearch = searchQuery.isBlank() ||
+                name.contains(searchQuery, ignoreCase = true) ||
+                rawNim.contains(searchQuery, ignoreCase = true)
+        val matchesTab = when {
+            selectedFilter.startsWith("Semua") -> true
+            selectedFilter.startsWith("Aktif") -> status.equals("Aktif", ignoreCase = true)
+            selectedFilter.startsWith("Belum") -> status.contains("Belum", ignoreCase = true)
+            selectedFilter.startsWith("Nonaktif") -> status.equals("Nonaktif", ignoreCase = true)
+            selectedFilter.startsWith("Lulus") -> status.equals("Lulus", ignoreCase = true)
+            else -> true
+        }
+        matchesSearch && matchesTab
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (filtered.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Text(
+                        text = "Tidak ada akun mahasiswa yang sesuai dengan pencarian atau filter.",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = SlateGray
+                        ),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        } else {
+            items(filtered.size) { index ->
+                val (name, rawNim, status) = filtered[index]
+                val formattedNim = if (rawNim.startsWith("NIM:")) rawNim else "NIM: $rawNim"
+                val (statusColor, bgColor) = when {
+                    status.equals("Aktif", ignoreCase = true) -> LenteraGreen to LenteraGreenBg
+                    status.contains("Belum", ignoreCase = true) -> Color(0xFFD97706) to Color(0xFFFEF3EB)
+                    status.equals("Lulus", ignoreCase = true) -> SlateGray to ScreenBackground
+                    else -> ErrorRed to ErrorRedLight
+                }
+                StudentCard(
+                    name = name,
+                    nim = formattedNim,
+                    status = status,
+                    statusColor = statusColor,
+                    bgColor = bgColor,
+                    onClick = { onItemClick(rawNim) }
+                )
+            }
         }
     }
 }
@@ -190,116 +329,6 @@ fun SearchBarMahasiswa(
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-        }
-    }
-}
-
-@Composable
-fun TabsMahasiswa(
-    selectedFilter: String,
-    onFilterSelected: (String) -> Unit
-) {
-    val filters = listOf("Semua 128", "Aktif 124", "Belum Aktivasi 4", "Lulus 0")
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 14.dp),
-        contentPadding = PaddingValues(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(filters.size) { index ->
-            val filterText = filters[index]
-            val isSelected = filterText == selectedFilter
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        color = if (isSelected) NavyDark else Color.White
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (isSelected) Color.Transparent else CardBorder,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .clickable { onFilterSelected(filterText) }
-                    .padding(horizontal = 16.dp, vertical = 7.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = filterText,
-                    style = TextStyle(
-                        color = if (isSelected) Color.White else SlateGray,
-                        fontSize = 12.sp,
-                        fontFamily = PlusJakartaSans,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
-                    )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ListMahasiswa(
-    searchQuery: String = "",
-    selectedFilter: String = "Semua 128",
-    onItemClick: () -> Unit = {}
-) {
-    val allStudents = listOf(
-        Triple("Rina Wulandari", "NIM: 22001011", "Aktif"),
-        Triple("Budi Santoso", "NIM: 22001012", "Belum Aktivasi"),
-        Triple("Siti Aminah", "NIM: 22001013", "Aktif"),
-        Triple("Andi Wijaya", "NIM: 22001014", "Aktif")
-    )
-
-    val filtered = allStudents.filter { (name, nim, status) ->
-        val matchesSearch = searchQuery.isBlank() ||
-                name.contains(searchQuery, ignoreCase = true) ||
-                nim.contains(searchQuery, ignoreCase = true)
-        val matchesTab = when {
-            selectedFilter.startsWith("Semua") -> true
-            selectedFilter.startsWith("Aktif") -> status == "Aktif"
-            selectedFilter.startsWith("Belum") -> status == "Belum Aktivasi"
-            selectedFilter.startsWith("Lulus") -> status == "Lulus"
-            else -> true
-        }
-        matchesSearch && matchesTab
-    }
-
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        if (filtered.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Text(
-                        text = "Tidak ada akun mahasiswa yang sesuai dengan pencarian atau filter.",
-                        style = TextStyle(
-                            fontFamily = PlusJakartaSans,
-                            fontSize = 13.sp,
-                            color = SlateGray
-                        ),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-        } else {
-            items(filtered.size) { index ->
-                val (name, nim, status) = filtered[index]
-                StudentCard(
-                    name = name,
-                    nim = nim,
-                    status = status,
-                    statusColor = if (status == "Aktif") LenteraGreen else ErrorRed,
-                    bgColor = if (status == "Aktif") LenteraGreenBg else ErrorRedLight,
-                    onClick = onItemClick
-                )
-            }
         }
     }
 }

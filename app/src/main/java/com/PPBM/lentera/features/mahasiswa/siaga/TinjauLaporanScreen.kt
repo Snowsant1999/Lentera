@@ -45,13 +45,13 @@ import com.PPBM.lentera.core.designsystem.theme.*
 // ============================================================================
 
 data class TinjauLaporanData(
-    val kategori: String = "Pelecehan Verbal",
-    val judul: String = "Pelecehan Verbal",
-    val tanggalWaktu: String = "12 Oktober 2026, 14.30",
-    val lokasi: String = "Koridor Gedung B, lantai 2",
-    val deskripsi: String = "Saat menunggu kelas, saya menerima ucapan yang merendahkan dari seorang mahasiswa. Kejadian berulang dan membuat saya merasa tidak aman.",
-    val buktiSummary: String = "2 file · foto dan kronologi",
-    val isAnonim: Boolean = true
+    val kategori: String = "",
+    val judul: String = "",
+    val tanggalWaktu: String = "",
+    val lokasi: String = "",
+    val deskripsi: String = "",
+    val buktiSummary: String = "Tidak ada lampiran",
+    val isAnonim: Boolean = false
 )
 
 // ============================================================================
@@ -75,6 +75,8 @@ data class TinjauLaporanData(
 @Composable
 fun TinjauLaporanScreen(
     reportData: TinjauLaporanData = TinjauLaporanData(),
+    isSubmitting: Boolean = false,
+    errorMessage: String? = null,
     onBackClick: () -> Unit = {},
     onUbahKategori: () -> Unit = {},
     onUbahJudul: () -> Unit = {},
@@ -92,7 +94,8 @@ fun TinjauLaporanScreen(
         bottomBar = {
             // Tombol Kirim Laporan di bagian bawah
             BottomSendActionBar(
-                isEnabled = isConfirmed,
+                isEnabled = isConfirmed && !isSubmitting,
+                isSubmitting = isSubmitting,
                 onKirimLaporan = { onKirimLaporan(reportData) },
                 fontFamily = plusJakarta
             )
@@ -126,6 +129,27 @@ fun TinjauLaporanScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
+                if (!errorMessage.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ErrorRedLight)
+                            .border(1.dp, ErrorRed.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ErrorRed
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
                 // Kartu Ringkasan Laporan
                 RingkasanLaporanCard(
                     data = reportData,
@@ -595,6 +619,7 @@ private fun ConfirmationCheckboxRow(
 @Composable
 private fun BottomSendActionBar(
     isEnabled: Boolean,
+    isSubmitting: Boolean = false,
     onKirimLaporan: () -> Unit,
     fontFamily: FontFamily
 ) {
@@ -629,7 +654,7 @@ private fun BottomSendActionBar(
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Text(
-                    text = "Kirim Laporan",
+                    text = if (isSubmitting) "Mengirim laporan..." else "Kirim Laporan",
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 15.sp,

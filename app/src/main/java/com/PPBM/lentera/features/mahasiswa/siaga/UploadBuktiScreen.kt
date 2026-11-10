@@ -50,30 +50,6 @@ data class BuktiFileItem(
     val isExcluded: Boolean = false
 )
 
-val sampleBuktiList = listOf(
-    BuktiFileItem(
-        id = "1",
-        fileName = "foto_koridor.jpg",
-        fileType = "JPG",
-        fileSize = "2,4 MB",
-        isExcluded = false
-    ),
-    BuktiFileItem(
-        id = "2",
-        fileName = "kronologi_kejadian.pdf",
-        fileType = "PDF",
-        fileSize = "480 KB",
-        isExcluded = false
-    ),
-    BuktiFileItem(
-        id = "3",
-        fileName = "rekaman_lama.mp4",
-        fileType = "MP4",
-        fileSize = "Dihapus · tidak disertakan",
-        isExcluded = true
-    )
-)
-
 // ============================================================================
 // Main Screen: UploadBuktiScreen
 // ============================================================================
@@ -92,7 +68,8 @@ val sampleBuktiList = listOf(
  */
 @Composable
 fun UploadBuktiScreen(
-    initialFiles: List<BuktiFileItem> = sampleBuktiList,
+    initialFiles: List<BuktiFileItem> = emptyList(),
+    errorMessage: String? = null,
     onBackClick: () -> Unit = {},
     onUploadBoxClick: () -> Unit = {},
     onDeleteFile: (BuktiFileItem) -> Unit = {},
@@ -102,6 +79,16 @@ fun UploadBuktiScreen(
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     var filesList by remember { mutableStateOf(initialFiles) }
+    val originalSizes = remember { mutableStateMapOf<String, String>() }
+
+    LaunchedEffect(initialFiles) {
+        initialFiles.forEach { item ->
+            if (!item.isExcluded && !item.fileSize.startsWith("Dihapus")) {
+                originalSizes[item.id] = item.fileSize
+            }
+        }
+        filesList = initialFiles
+    }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -141,6 +128,28 @@ fun UploadBuktiScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
+                if (!errorMessage.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ErrorRedLight)
+                            .border(1.dp, ErrorRed.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ErrorRed
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
                 UploadDropzoneBox(
                     onClick = onUploadBoxClick,
                     fontFamily = plusJakarta
@@ -162,30 +171,46 @@ fun UploadBuktiScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Daftar File Bukti
-                filesList.forEach { fileItem ->
-                    BuktiFileCard(
-                        item = fileItem,
-                        onDeleteClick = {
-                            filesList = filesList.map {
-                                if (it.id == fileItem.id) it.copy(
-                                    isExcluded = true,
-                                    fileSize = "Dihapus · tidak disertakan"
-                                ) else it
-                            }
-                            onDeleteFile(fileItem)
-                        },
-                        onRestoreClick = {
-                            filesList = filesList.map {
-                                if (it.id == fileItem.id) it.copy(
-                                    isExcluded = false,
-                                    fileSize = if (it.fileType == "MP4") "3,2 MB" else "2,4 MB"
-                                ) else it
-                            }
-                            onRestoreFile(fileItem)
-                        },
-                        fontFamily = plusJakarta
+                if (filesList.isEmpty()) {
+                    Text(
+                        text = "Belum ada berkas bukti yang dipilih. Langkah ini bersifat opsional.",
+                        style = TextStyle(
+                            fontFamily = plusJakarta,
+                            fontSize = 13.sp,
+                            color = SlateGray
+                        ),
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    filesList.forEach { fileItem ->
+                        BuktiFileCard(
+                            item = fileItem,
+                            onDeleteClick = {
+                                if (!fileItem.isExcluded) {
+                                    originalSizes[fileItem.id] = fileItem.fileSize
+                                }
+                                filesList = filesList.map {
+                                    if (it.id == fileItem.id) it.copy(
+                                        isExcluded = true,
+                                        fileSize = "Dihapus · tidak disertakan"
+                                    ) else it
+                                }
+                                onDeleteFile(fileItem)
+                            },
+                            onRestoreClick = {
+                                val restoredSize = originalSizes[fileItem.id] ?: fileItem.fileSize
+                                filesList = filesList.map {
+                                    if (it.id == fileItem.id) it.copy(
+                                        isExcluded = false,
+                                        fileSize = restoredSize
+                                    ) else it
+                                }
+                                onRestoreFile(fileItem)
+                            },
+                            fontFamily = plusJakarta
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

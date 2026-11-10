@@ -47,11 +47,16 @@ import com.PPBM.lentera.core.designsystem.theme.*
 @Composable
 fun LupaPasswordScreen(
     onBackToLogin: () -> Unit = {},
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    onClearError: () -> Unit = {},
     onSendReset: (String) -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     val focusManager = LocalFocusManager.current
     var email by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
+    val activeError = localError ?: errorMessage
 
     Column(
         modifier = Modifier
@@ -230,7 +235,11 @@ fun LupaPasswordScreen(
 
                     BasicTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            localError = null
+                            onClearError()
+                        },
                         singleLine = true,
                         textStyle = TextStyle(
                             fontSize = 14.sp,
@@ -269,6 +278,19 @@ fun LupaPasswordScreen(
                     )
                 }
 
+                if (!activeError.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = activeError,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontFamily = plusJakarta,
+                            fontWeight = FontWeight.Normal,
+                            color = ErrorRed
+                        )
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Button Kirim Petunjuk Reset
@@ -277,18 +299,25 @@ fun LupaPasswordScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(NavyMedium, RoundedCornerShape(16.dp))
+                        .background(if (isLoading) NavyMedium.copy(alpha = 0.7f) else NavyMedium, RoundedCornerShape(16.dp))
                         .clickable(
+                            enabled = !isLoading,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
-                            if (email.isNotBlank()) {
-                                onSendReset(email)
+                            val clean = email.trim()
+                            when {
+                                clean.isEmpty() -> localError = "Email wajib diisi."
+                                !clean.contains("@") || !clean.contains(".") -> localError = "Format email tidak valid."
+                                else -> {
+                                    localError = null
+                                    onSendReset(clean)
+                                }
                             }
                         }
                 ) {
                     Text(
-                        text = "Kirim Petunjuk Reset",
+                        text = if (isLoading) "Mengirim..." else "Kirim Petunjuk Reset",
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontFamily = plusJakarta,

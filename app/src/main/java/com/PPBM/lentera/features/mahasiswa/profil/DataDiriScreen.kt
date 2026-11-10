@@ -64,21 +64,39 @@ import com.PPBM.lentera.core.designsystem.theme.LenteraTextSecondary
 import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
 import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
 
+import com.PPBM.lentera.backend.auth.model.UserProfile
+
 @Composable
 fun DataDiriScreen(
     onBackClick: () -> Unit = {},
     onTabSelected: (LenteraTab) -> Unit = {},
+    userProfile: UserProfile? = null,
     initialPhotoUri: Uri? = null,
     onPhotoUpdated: (Uri?) -> Unit = {},
-    initialNama: String = "Budi Santoso",
-    onNamaUpdated: (String) -> Unit = {}
+    initialNama: String = "",
+    onNamaUpdated: (String) -> Unit = {},
+    onSimpanDataDiri: (nama: String, noTelepon: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, onSuccess, _ -> onSuccess() }
 ) {
     val scrollState = rememberScrollState()
 
     var photoUri by remember { mutableStateOf(initialPhotoUri) }
-    var namaLengkap by remember { mutableStateOf(initialNama) }
-    var email by remember { mutableStateOf("budi.santoso@lentera.ac.id") }
-    var nomorTelepon by remember { mutableStateOf("081234567890") }
+    var namaLengkap by remember(userProfile, initialNama) {
+        mutableStateOf(userProfile?.namaLengkap?.ifBlank { null } ?: initialNama.ifBlank { "-" })
+    }
+    val email = userProfile?.email?.ifBlank { null } ?: "Belum ditambahkan"
+    var nomorTelepon by remember(userProfile) {
+        mutableStateOf(userProfile?.noTelepon?.ifBlank { null } ?: "")
+    }
+    val nim = userProfile?.nim?.ifBlank { null } ?: "-"
+    val perguruanTinggi = userProfile?.perguruanTinggi?.ifBlank { null } ?: "-"
+    val programStudi = userProfile?.programStudi?.ifBlank { null } ?: "-"
+    val statusBadgeText = when (userProfile?.statusAkun?.lowercase()) {
+        "aktif" -> "Mahasiswa aktif"
+        "belum_aktivasi" -> "Belum aktivasi"
+        "lulus" -> "Lulus"
+        "nonaktif" -> "Nonaktif"
+        else -> "Mahasiswa"
+    }
     var showEditDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var feedbackIsSuccess by remember { mutableStateOf(true) }
@@ -173,7 +191,7 @@ fun DataDiriScreen(
                             .padding(horizontal = 12.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Mahasiswa aktif",
+                            text = statusBadgeText,
                             fontFamily = PlusJakartaSans,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 11.sp,
@@ -288,11 +306,11 @@ fun DataDiriScreen(
                     modifier = Modifier.padding(vertical = 14.dp)
                 )
 
-                FieldItem(label = "Nomor Induk Mahasiswa (NIM)", value = "2023110045", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Nomor Induk Mahasiswa (NIM)", value = nim, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Perguruan tinggi", value = "Universitas Contoh", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Perguruan tinggi", value = perguruanTinggi, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(14.dp))
-                FieldItem(label = "Program studi", value = "Teknik Informatika", modifier = Modifier.fillMaxWidth())
+                FieldItem(label = "Program studi", value = programStudi, modifier = Modifier.fillMaxWidth())
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -331,24 +349,37 @@ fun DataDiriScreen(
 
     if (showEditDialog) {
         UbahDataDiriDialog(
-            currentNama = namaLengkap,
+            currentNama = if (namaLengkap == "-") "" else namaLengkap,
             currentEmail = email,
             currentTelepon = nomorTelepon,
             currentPhotoUri = photoUri,
             onDismiss = { showEditDialog = false },
-            onSave = { newNama, newEmail, newTelepon, newPhotoUri ->
-                namaLengkap = newNama
-                onNamaUpdated(newNama)
-                email = newEmail
-                nomorTelepon = newTelepon
-                photoUri = newPhotoUri
-                onPhotoUpdated(newPhotoUri)
-                showEditDialog = false
+            onSave = { newNama, _, newTelepon, newPhotoUri ->
+                val cleanedPhone = if (newTelepon == "Belum ditambahkan") "" else newTelepon
+                onSimpanDataDiri(
+                    newNama,
+                    cleanedPhone,
+                    {
+                        namaLengkap = newNama
+                        onNamaUpdated(newNama)
+                        nomorTelepon = cleanedPhone
+                        photoUri = newPhotoUri
+                        onPhotoUpdated(newPhotoUri)
+                        showEditDialog = false
 
-                feedbackIsSuccess = true
-                feedbackTitle = "Data Berhasil Disimpan"
-                feedbackMessage = "Informasi data diri dan foto profil kamu berhasil diperbarui."
-                showFeedbackDialog = true
+                        feedbackIsSuccess = true
+                        feedbackTitle = "Data Berhasil Disimpan"
+                        feedbackMessage = "Informasi data diri berhasil diperbarui."
+                        showFeedbackDialog = true
+                    },
+                    { err ->
+                        showEditDialog = false
+                        feedbackIsSuccess = false
+                        feedbackTitle = "Gagal Menyimpan Data"
+                        feedbackMessage = err
+                        showFeedbackDialog = true
+                    }
+                )
             }
         )
     }
@@ -510,24 +541,21 @@ private fun UbahDataDiriDialog(
                 )
             }
 
-            // Input Email
+            // Informasi Email (Read-only, dikelola admin kampus)
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "Email",
+                    text = "Email Kampus (Dikelola Admin)",
                     fontFamily = PlusJakartaSans,
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.sp,
                     color = LenteraTextSecondary
                 )
-                BasicTextField(
-                    value = tempEmail,
-                    onValueChange = { tempEmail = it },
-                    textStyle = TextStyle(
-                        fontFamily = PlusJakartaSans,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = LenteraNavy
-                    ),
+                Text(
+                    text = if (tempEmail.isBlank()) "Belum ditambahkan" else tempEmail,
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = LenteraTextSecondary,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))

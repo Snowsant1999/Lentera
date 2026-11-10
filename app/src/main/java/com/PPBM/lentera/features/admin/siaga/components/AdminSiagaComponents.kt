@@ -63,7 +63,8 @@ data class AdminLaporanItem(
     val tanggal: String,
     val status: String,
     val statusBgColor: Color,
-    val statusTextColor: Color
+    val statusTextColor: Color,
+    val uuid: String = ""
 )
 
 enum class AdminSiagaRoute {

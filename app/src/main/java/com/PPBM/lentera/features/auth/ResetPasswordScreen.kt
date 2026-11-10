@@ -47,8 +47,12 @@ import com.PPBM.lentera.core.designsystem.theme.*
  */
 @Composable
 fun ResetPasswordScreen(
+    isLoading: Boolean = false,
+    serverErrorMessage: String? = null,
+    backLabel: String = "Verifikasi Pemulihan",
+    onClearError: () -> Unit = {},
     onBackToVerifikasi: () -> Unit = {},
-    onPasswordSaved: () -> Unit = {},
+    onPasswordSaved: (String) -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
@@ -59,8 +63,10 @@ fun ResetPasswordScreen(
     var newPasswordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val activeError = errorMessage ?: serverErrorMessage
 
     fun handleSave() {
+        if (isLoading) return
         if (newPassword.length < 8) {
             errorMessage = "Password minimal harus 8 karakter."
             return
@@ -70,7 +76,8 @@ fun ResetPasswordScreen(
             return
         }
         errorMessage = null
-        onPasswordSaved()
+        onClearError()
+        onPasswordSaved(newPassword)
     }
 
     Column(
@@ -102,7 +109,7 @@ fun ResetPasswordScreen(
                 )
             }
             Text(
-                text = "Verifikasi Pemulihan",
+                text = backLabel,
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontFamily = plusJakarta,
@@ -233,6 +240,7 @@ fun ResetPasswordScreen(
                         onValueChange = {
                             newPassword = it
                             if (errorMessage != null) errorMessage = null
+                            onClearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -347,6 +355,7 @@ fun ResetPasswordScreen(
                         onValueChange = {
                             confirmPassword = it
                             if (errorMessage != null) errorMessage = null
+                            onClearError()
                         },
                         singleLine = true,
                         textStyle = TextStyle(
@@ -407,10 +416,10 @@ fun ResetPasswordScreen(
                     }
                 }
 
-                if (errorMessage != null) {
+                if (!activeError.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = errorMessage ?: "",
+                        text = activeError,
                         style = TextStyle(
                             fontSize = 12.sp,
                             fontFamily = plusJakarta,
@@ -428,14 +437,15 @@ fun ResetPasswordScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        .background(NavyMedium, RoundedCornerShape(14.dp))
+                        .background(if (isLoading) NavyMedium.copy(alpha = 0.7f) else NavyMedium, RoundedCornerShape(14.dp))
                         .clickable(
+                            enabled = !isLoading,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) { handleSave() }
                 ) {
                     Text(
-                        text = "Simpan Password Baru",
+                        text = if (isLoading) "Menyimpan..." else "Simpan Password Baru",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontFamily = plusJakarta,

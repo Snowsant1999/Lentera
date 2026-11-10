@@ -83,13 +83,15 @@ data class LowonganCardData(
  */
 @Composable
 fun MagangScreen(
-    userName: String = "Budi Santoso",
+    userName: String = "",
     userRole: String = "Mahasiswa",
     profilCompletion: Int = 70,
-    totalLamaran: Int = 3,
-    jumlahDiterima: Int = 1,
-    jumlahDitolak: Int = 1,
-    jumlahDireview: Int = 1,
+    totalLamaran: Int = 0,
+    jumlahDiterima: Int = 0,
+    jumlahDitolak: Int = 0,
+    jumlahDireview: Int = 0,
+    lamaranList: List<LamaranItemData> = emptyList(),
+    lowonganList: List<LowonganCardData> = emptyList(),
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
@@ -104,54 +106,6 @@ fun MagangScreen(
     onNavTabClick: (MagangNavTab) -> Unit = {}
 ) {
     val plusJakarta = remember { FontFamily(Font(R.font.plus_jakarta_sans)) }
-
-    val sampleLamaranList = remember {
-        listOf(
-            LamaranItemData(
-                id = "1",
-                posisi = "UI/UX Design",
-                perusahaan = "PT. Maju Mundur",
-                status = "Seleksi",
-                statusBg = MagangPillGreenBg,
-                statusText = MagangPillGreenText
-            ),
-            LamaranItemData(
-                id = "2",
-                posisi = "UI/UX Design",
-                perusahaan = "PT. Maju Mundur",
-                status = "Direview",
-                statusBg = MagangPillOrangeBg,
-                statusText = MagangPillOrangeText
-            )
-        )
-    }
-
-    val sampleLowonganList = remember {
-        listOf(
-            LowonganCardData(
-                id = "1",
-                posisi = "UI/UX DESIGN",
-                perusahaan = "PT. Maju Mundur",
-                lokasi = "Bontang",
-                durasi = "3 Bulan",
-                tipe = "Penuh Waktu",
-                persentaseCocok = 92,
-                batasHari = 5,
-                logoDrawable = R.drawable.ic_avatar_2
-            ),
-            LowonganCardData(
-                id = "2",
-                posisi = "WEB DEV",
-                perusahaan = "PT. Maju Mundur",
-                lokasi = "Bontang",
-                durasi = "3 Bulan",
-                tipe = "Penuh Waktu",
-                persentaseCocok = 92,
-                batasHari = 5,
-                logoDrawable = R.drawable.ic_avatar_2
-            )
-        )
-    }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -233,7 +187,7 @@ fun MagangScreen(
 
                 // 6. Section "Lamaran"
                 LamaranSection(
-                    lamaranList = sampleLamaranList,
+                    lamaranList = lamaranList,
                     onItemClick = onLamaranItemClick,
                     onViewAllClick = onLihatLamaranClick,
                     fontFamily = plusJakarta
@@ -275,18 +229,30 @@ fun MagangScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Horizontal Row Kartu Lowongan
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(bottom = 20.dp)
-                ) {
-                    items(sampleLowonganList) { item ->
-                        val isBookmarked = bookmarkedIds.contains(item.id)
-                        LowonganHorizontalCard(
-                            data = item.copy(isBookmarked = isBookmarked),
-                            onClick = { onLowonganClick(item) },
-                            onBookmarkClick = { onBookmarkClick(item) },
-                            fontFamily = plusJakarta
-                        )
+                if (lowonganList.isEmpty()) {
+                    Text(
+                        text = "Belum ada lowongan magang yang tersedia.",
+                        style = TextStyle(
+                            fontFamily = plusJakarta,
+                            fontSize = 13.sp,
+                            color = SlateGray
+                        ),
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp)
+                    ) {
+                        items(lowonganList) { item ->
+                            val isBookmarked = bookmarkedIds.contains(item.id)
+                            LowonganHorizontalCard(
+                                data = item.copy(isBookmarked = isBookmarked),
+                                onClick = { onLowonganClick(item) },
+                                onBookmarkClick = { onBookmarkClick(item) },
+                                fontFamily = plusJakarta
+                            )
+                        }
                     }
                 }
             }
@@ -670,7 +636,18 @@ private fun LamaranSection(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            lamaranList.take(2).forEachIndexed { index, item ->
+            if (lamaranList.isEmpty()) {
+                Text(
+                    text = "Belum ada lamaran yang diajukan.",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        color = SlateGray
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                lamaranList.take(2).forEachIndexed { index, item ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -739,6 +716,7 @@ private fun LamaranSection(
                 if (index < lamaranList.lastIndex) {
                     Spacer(modifier = Modifier.height(10.dp))
                 }
+            }
             }
         }
     }
@@ -917,7 +895,7 @@ private fun LowonganHorizontalCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Tutup ${data.batasHari} hari lagi",
+                    text = if (data.batasHari <= 0) "Berakhir hari ini" else "Tutup ${data.batasHari} hari lagi",
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 11.5.sp,

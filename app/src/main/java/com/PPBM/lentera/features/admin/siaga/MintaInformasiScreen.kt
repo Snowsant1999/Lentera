@@ -1,6 +1,7 @@
 package com.PPBM.lentera.features.admin.siaga
 import com.PPBM.lentera.features.admin.siaga.components.*
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.backend.admin.model.AdminLaporan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,11 +42,18 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun MintaInformasiScreen(
+    laporan: AdminLaporan? = null,
+    isUpdating: Boolean = false,
     onKirimPermintaan: (String) -> Unit = {},
     onBackToDetail: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var pesanText by remember { mutableStateOf("Tulis permintaan informasi tambahan untuk pelapor") }
+    val nomorLaporan = laporan?.nomorLaporan ?: "-"
+    val judulLaporan = laporan?.judul ?: "Memuat laporan..."
+    val isAnonim = laporan?.isAnonim ?: true
+
+    var pesanText by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -68,12 +76,12 @@ fun MintaInformasiScreen(
         ) {
             // Ringkasan Laporan
             LaporanSummaryHeaderCard(
-                id = "LTR-2026-00123",
+                id = nomorLaporan,
                 statusText = "Diperiksa",
                 statusBg = Color(0xFFFFEDD5),
                 statusColor = Color(0xFFC2410C),
-                title = "Pelecehan Verbal",
-                subtitle = "Dikirim 15 Oktober 2026, 15:00 WITA · Anonim"
+                title = judulLaporan,
+                subtitle = "Pelapor: ${if (isAnonim) "Anonim" else (laporan?.pelaporNama ?: "Mahasiswa")}"
             )
 
             // Card Konteks Anonim
@@ -139,7 +147,20 @@ fun MintaInformasiScreen(
 
                     OutlinedTextField(
                         value = pesanText,
-                        onValueChange = { pesanText = it },
+                        onValueChange = {
+                            pesanText = it
+                            if (validationError != null) validationError = null
+                        },
+                        placeholder = {
+                            Text(
+                                text = "Tulis permintaan informasi tambahan untuk pelapor...",
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    fontFamily = PlusJakartaFont,
+                                    color = SiagaTextSecondary
+                                )
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(110.dp),
@@ -155,6 +176,19 @@ fun MintaInformasiScreen(
                         )
                     )
 
+                    if (!validationError.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = validationError!!,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = PlusJakartaFont,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFB91C1C)
+                            )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Pesan akan dikirim melalui notifikasi dan nomor laporan.",
@@ -168,7 +202,16 @@ fun MintaInformasiScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { onKirimPermintaan(pesanText) },
+                        onClick = {
+                            val trimmed = pesanText.trim()
+                            if (trimmed.isBlank()) {
+                                validationError = "Pesan permintaan informasi wajib diisi."
+                                return@Button
+                            }
+                            validationError = null
+                            onKirimPermintaan(trimmed)
+                        },
+                        enabled = !isUpdating && laporan != null,
                         colors = ButtonDefaults.buttonColors(containerColor = SiagaTealPrimary),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -176,7 +219,7 @@ fun MintaInformasiScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Kirim Permintaan",
+                            text = if (isUpdating) "Mengirim..." else "Kirim Permintaan",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = PlusJakartaFont,

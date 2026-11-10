@@ -56,7 +56,7 @@ import com.PPBM.lentera.core.designsystem.theme.*
  */
 @Composable
 fun InformasiTerkirimScreen(
-    nomorLaporan: String = "LTR-2026-00123",
+    nomorLaporan: String = "-",
     onBackClick: () -> Unit = {},
     onLihatStatusClick: () -> Unit = {},
     onKembaliKeLaporanClick: () -> Unit = {}
@@ -260,7 +260,7 @@ fun InformasiTerkirimScreen(
 // Alias composable
 @Composable
 fun InformasiBerhasilDikirim(
-    nomorLaporan: String = "LTR-2026-00123",
+    nomorLaporan: String = "-",
     onBackClick: () -> Unit = {},
     onLihatStatusClick: () -> Unit = {},
     onKembaliKeLaporanClick: () -> Unit = {}
@@ -333,6 +333,6 @@ private fun TopBarInformasiTambahan(
 @Composable
 fun InformasiTerkirimScreenPreview() {
     LenteraTheme {
-        InformasiTerkirimScreen()
+        InformasiTerkirimScreen(nomorLaporan = "LTR-2026-00123")
     }
 }

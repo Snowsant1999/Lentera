@@ -2,7 +2,6 @@ package com.PPBM.lentera.features.mahasiswa.notifikasi
 
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -42,7 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
-import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.backend.mahasiswa.model.NotifikasiItem
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBlueDark
@@ -59,12 +56,25 @@ enum class NotifikasiFilter {
 
 @Composable
 fun MahasiswaNotifikasiScreen(
+    notifikasiList: List<NotifikasiItem> = emptyList(),
+    onMarkRead: (String) -> Unit = {},
+    onMarkAllRead: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onTabSelected: (LenteraTab) -> Unit = {}
 ) {
     var selectedFilter by remember { mutableStateOf(NotifikasiFilter.SEMUA) }
-    var unreadCount by remember { mutableStateOf(2) }
 
+    val filteredList = when (selectedFilter) {
+        NotifikasiFilter.SEMUA -> notifikasiList
+        NotifikasiFilter.LAPORAN -> notifikasiList.filter {
+            it.kategori.equals("laporan", ignoreCase = true) || it.kategori.equals("siaga", ignoreCase = true)
+        }
+        NotifikasiFilter.MAGANG -> notifikasiList.filter {
+            it.kategori.equals("magang", ignoreCase = true)
+        }
+    }
+
+    val unreadCount = filteredList.count { !it.isDibaca }
     val scrollState = rememberScrollState()
 
     Column(
@@ -114,7 +124,7 @@ fun MahasiswaNotifikasiScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
             )
 
-            // Baris Sub-header: "2 belum dibaca" & "Tandai semua dibaca"
+            // Baris Sub-header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -128,21 +138,21 @@ fun MahasiswaNotifikasiScreen(
                     color = LenteraNavy
                 )
 
-                Text(
-                    text = "Tandai semua dibaca",
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    color = LenteraNavy,
-                    modifier = Modifier.clickable {
-                        unreadCount = 0
-                    }
-                )
+                if (unreadCount > 0) {
+                    Text(
+                        text = "Tandai semua dibaca",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = LenteraNavy,
+                        modifier = Modifier.clickable { onMarkAllRead() }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Filter Chips: Semua, Laporan, Magang
+            // Filter Chips
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -169,90 +179,65 @@ fun MahasiswaNotifikasiScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Section 1: Hari ini
-            if (selectedFilter != NotifikasiFilter.MAGANG) {
-                Text(
-                    text = "Hari ini",
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = LenteraNavy
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Item 1: Laporan sedang diperiksa
-                NotifikasiCard(
-                    iconRes = R.drawable.ic_category,
-                    title = "Laporan sedang diperiksa",
-                    description = "Laporan Keracunan Makanan sedang ditinjau oleh tim LENTERA Siaga.",
-                    timeInfo = "LENTERA Siaga · 10 menit lalu",
-                    isUnread = unreadCount > 0
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            if (selectedFilter != NotifikasiFilter.LAPORAN) {
-                if (selectedFilter == NotifikasiFilter.MAGANG) {
-                    Text(
-                        text = "Hari ini",
-                        fontFamily = PlusJakartaSans,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = LenteraNavy
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+            if (filteredList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 4.dp,
+                            spotColor = Color(0x09173B57),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .background(Color.White, shape = RoundedCornerShape(16.dp))
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Belum Ada Notifikasi",
+                            fontFamily = PlusJakartaSans,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = LenteraNavy
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Pembaruan terkait laporan siaga dan lamaran magang akan muncul di sini.",
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = LenteraTextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    filteredList.forEach { notif ->
+                        val iconRes = if (notif.kategori.equals("magang", ignoreCase = true)) {
+                            R.drawable.ic_category_2
+                        } else {
+                            R.drawable.ic_category
+                        }
+                        val formattedTime = if (notif.createdAt.length >= 10) {
+                            notif.createdAt.substring(0, 10)
+                        } else {
+                            notif.createdAt
+                        }
 
-                // Item 2: Rekomendasi magang baru
-                NotifikasiCard(
-                    iconRes = R.drawable.ic_category_2,
-                    title = "Rekomendasi magang baru",
-                    description = "Posisi UI/UX Design di PT. Maju Mundur tersedia. Yuk, lihat detailnya!",
-                    timeInfo = "Portal Magang · 1 jam lalu",
-                    isUnread = unreadCount > 1
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
+                        NotifikasiCard(
+                            iconRes = iconRes,
+                            title = notif.judul,
+                            description = notif.isi,
+                            timeInfo = "LENTERA · $formattedTime",
+                            isUnread = !notif.isDibaca,
+                            onClick = { onMarkRead(notif.id) }
+                        )
+                    }
+                }
             }
 
-            // Section 2: Sebelumnya
-            if (selectedFilter != NotifikasiFilter.MAGANG) {
-                Text(
-                    text = "Sebelumnya",
-                    fontFamily = PlusJakartaSans,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = LenteraNavy
-                )
+            Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Item 3: Laporan telah diselesaikan
-                NotifikasiCard(
-                    iconRes = R.drawable.ic_category_3,
-                    title = "Laporan telah diselesaikan",
-                    description = "Laporan Pintu Mau Roboh telah ditangani. Terima kasih atas kepedulianmu.",
-                    timeInfo = "LENTERA Siaga · 12 Okt 2026",
-                    isUnread = false
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Item 4: Tindak lanjut laporan selesai
-                NotifikasiCard(
-                    iconRes = R.drawable.ic_category_3,
-                    title = "Tindak lanjut laporan selesai",
-                    description = "Penanganan laporan Pelecehan Verbal selesai. Lihat tanggapan tim kami.",
-                    timeInfo = "LENTERA Siaga · 10 Okt 2026",
-                    isUnread = false
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            // Footer info
             Text(
                 text = "Kamu sudah melihat semua notifikasi.",
                 fontFamily = PlusJakartaSans,
@@ -265,8 +250,6 @@ fun MahasiswaNotifikasiScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
         }
-
-
     }
 }
 
@@ -301,7 +284,8 @@ private fun NotifikasiCard(
     title: String,
     description: String,
     timeInfo: String,
-    isUnread: Boolean
+    isUnread: Boolean,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -313,6 +297,7 @@ private fun NotifikasiCard(
                 shape = RoundedCornerShape(20.dp)
             )
             .background(Color.White, shape = RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
