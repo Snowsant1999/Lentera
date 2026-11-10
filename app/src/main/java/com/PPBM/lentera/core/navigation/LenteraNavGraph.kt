@@ -600,6 +600,7 @@ fun LenteraNavGraph(
                 lamaranStatusText = dashboardState.lamaranStatusSummary,
                 aktivitasList = dashboardState.aktivitasTerbaru,
                 lowonganList = dashboardState.rekomendasiLowongan,
+                hasUnreadNotification = dashboardState.hasUnreadNotification,
                 onTabSelected = { tab -> navigateMahasiswaTab(tab, LenteraTab.BERANDA) },
                 onProfileClick = { navigateMahasiswaTab(LenteraTab.PROFIL, LenteraTab.BERANDA) },
                 onNotificationClick = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
@@ -2596,6 +2597,7 @@ fun LenteraNavGraph(
             }
 
             MahasiswaSettings().mhsProfilScreen(
+                photoUrl = user?.fotoProfilUrl,
                 namaLengkap = nama,
                 nim = nim,
                 kampusProdi = kampusProdi,

@@ -7,6 +7,7 @@ import com.PPBM.lentera.backend.core.normalizeLaporanStatus
 import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
 import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.backend.mahasiswa.repository.MagangRepository
+import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
 import com.PPBM.lentera.backend.mahasiswa.repository.SiagaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,12 +23,14 @@ data class MahasiswaDashboardUiState(
     val lamaranStatusSummary: String = "Tidak ada update",
     val aktivitasTerbaru: List<LaporanSaya> = emptyList(),
     val rekomendasiLowongan: List<LowonganTerbit> = emptyList(),
+    val hasUnreadNotification: Boolean = false,
     val errorMessage: String? = null
 )
 
 class MahasiswaDashboardViewModel(
     private val siagaRepo: SiagaRepository = SiagaRepository(),
-    private val magangRepo: MagangRepository = MagangRepository()
+    private val magangRepo: MagangRepository = MagangRepository(),
+    private val mahasiswaRepo: MahasiswaRepository = MahasiswaRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MahasiswaDashboardUiState())
@@ -70,6 +73,10 @@ class MahasiswaDashboardViewModel(
             val lowonganResult = magangRepo.getLowonganTerbit()
             val lowonganList = lowonganResult.getOrDefault(emptyList()).take(5)
 
+            // 4. Periksa Notifikasi Baru (Unread)
+            val notifResult = mahasiswaRepo.getNotifikasi()
+            val hasUnread = notifResult.getOrDefault(emptyList()).any { !it.isDibaca }
+
             _uiState.value = MahasiswaDashboardUiState(
                 isLoading = false,
                 totalLaporan = totalLap,
@@ -79,6 +86,7 @@ class MahasiswaDashboardViewModel(
                 lamaranStatusSummary = lamaranSummary,
                 aktivitasTerbaru = laporanList.take(3),
                 rekomendasiLowongan = lowonganList,
+                hasUnreadNotification = hasUnread,
                 errorMessage = null
             )
         }

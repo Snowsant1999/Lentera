@@ -78,7 +78,7 @@ class MahasiswaDashboard {
         lamaranStatusText: String = "Tidak ada update",
         aktivitasList: List<LaporanSaya> = emptyList(),
         lowonganList: List<LowonganTerbit> = emptyList(),
-        hasUnreadNotification: Boolean = true,
+        hasUnreadNotification: Boolean = false,
         onNotificationClick: () -> Unit = {},
         onTabSelected: (LenteraTab) -> Unit = {},
         onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
@@ -433,14 +433,16 @@ class MahasiswaDashboard {
                                 MagangCard(
                                     title = "EXPLORE MAGANG",
                                     company = "Mitra Kampus",
-                                    location = "Indonesia"
+                                    location = "Indonesia",
+                                    onClick = { onLowonganLihatSemuaClick() }
                                 )
                             } else {
                                 lowonganList.forEach { lowongan ->
                                     MagangCard(
                                         title = lowongan.posisi.uppercase(),
                                         company = lowongan.namaPerusahaan,
-                                        location = lowongan.kota
+                                        location = lowongan.kota,
+                                        onClick = { onLowonganItemClick(lowongan.id) }
                                     )
                                 }
                             }

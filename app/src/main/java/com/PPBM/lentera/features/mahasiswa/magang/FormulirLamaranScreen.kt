@@ -176,10 +176,20 @@ fun FormulirLamaranScreen(
         activeDocForUpload = null
     }
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ScreenBackground),
+    MaterialTheme(
+        colorScheme = MaterialTheme.colorScheme.copy(
+            background = Color.White,
+            surface = Color.White,
+            surfaceVariant = Color.White,
+            onBackground = NavyDark,
+            onSurface = NavyDark
+        )
+    ) {
+        Scaffold(
+            containerColor = Color.White,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White),
         topBar = {
             if (currentStep < 4) {
                 FormulirTopBar(
@@ -293,6 +303,7 @@ fun FormulirLamaranScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -413,6 +424,7 @@ fun FormulirLamaranScreen(
         message = feedbackMessage,
         onDismiss = { showFeedback = false }
     )
+    }
 }
 
 @Composable
@@ -425,6 +437,7 @@ private fun FormulirTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Color.White)
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -472,6 +485,7 @@ private fun StepperHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Color.White)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
