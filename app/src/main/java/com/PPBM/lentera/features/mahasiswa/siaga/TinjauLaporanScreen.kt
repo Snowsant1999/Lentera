@@ -87,7 +87,7 @@ fun TinjauLaporanScreen(
     onKirimLaporan: (TinjauLaporanData) -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
-    var isConfirmed by remember { mutableStateOf(true) }
+    var isConfirmed by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = ScreenBackground,

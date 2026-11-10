@@ -143,7 +143,25 @@ class AdminMagangRepository {
                 status = normalizeTempatStatus(entity.status),
                 catatanInternal = entity.catatanInternal?.trim()?.ifBlank { null }
             )
-            val inserted = client.from("tempat_magang").insert(sanitized) {
+            val payload = buildJsonObject {
+                if (!sanitized.id.isNullOrBlank()) put("id", sanitized.id)
+                put("nama_perusahaan", sanitized.namaPerusahaan)
+                put("bidang_usaha", sanitized.bidangUsaha)
+                put("nama_cabang", sanitized.namaCabang)
+                put("deskripsi", sanitized.deskripsi)
+                put("alamat_lengkap", sanitized.alamatLengkap)
+                put("kota", sanitized.kota)
+                put("provinsi", sanitized.provinsi)
+                put("sistem_kerja", sanitized.sistemKerja)
+                put("nama_kontak", sanitized.namaKontak)
+                put("email_kontak", sanitized.emailKontak)
+                put("telepon_kontak", sanitized.teleponKontak)
+                sanitized.situsWeb?.let { put("situs_web", it) }
+                sanitized.logoPath?.let { put("logo_path", it) }
+                put("status", sanitized.status)
+                sanitized.catatanInternal?.let { put("catatan_internal", it) }
+            }
+            val inserted = client.from("tempat_magang").insert(payload) {
                 select()
             }.decodeSingle<TempatMagangEntity>()
             Result.success(inserted)
@@ -199,7 +217,22 @@ class AdminMagangRepository {
     suspend fun createLowongan(entity: LowonganEntity): Result<LowonganEntity> {
         return try {
             val sanitized = sanitizeLowonganEntity(entity).getOrThrow()
-            val inserted = client.from("lowongan").insert(sanitized) {
+            val payload = buildJsonObject {
+                if (!sanitized.id.isNullOrBlank()) put("id", sanitized.id)
+                put("tempat_magang_id", sanitized.tempatMagangId)
+                put("posisi", sanitized.posisi)
+                sanitized.kategori?.let { put("kategori", it) }
+                put("lokasi", sanitized.lokasi)
+                put("sistem_kerja", sanitized.sistemKerja)
+                put("deskripsi_pekerjaan", sanitized.deskripsiPekerjaan)
+                put("persyaratan", sanitized.persyaratan)
+                put("periode_magang", sanitized.periodeMagang)
+                put("batas_pendaftaran", sanitized.batasPendaftaran)
+                put("kuota", sanitized.kuota)
+                put("status", sanitized.status)
+                sanitized.catatanInternal?.let { put("catatan_internal", it) }
+            }
+            val inserted = client.from("lowongan").insert(payload) {
                 select()
             }.decodeSingle<LowonganEntity>()
             Result.success(inserted)

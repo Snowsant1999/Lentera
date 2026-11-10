@@ -44,10 +44,11 @@ class MahasiswaRepository {
     suspend fun updateProfil(
         namaLengkap: String,
         noTelepon: String?,
-        perguruanTinggi: String?,
-        jurusan: String?,
-        programStudi: String?,
-        angkatan: String?
+        perguruanTinggi: String? = null,
+        jurusan: String? = null,
+        programStudi: String? = null,
+        angkatan: String? = null,
+        fotoProfilUrl: String? = null
     ): Result<UserProfile> {
         return try {
             val currentUserId = client.auth.currentUserOrNull()?.id
@@ -60,6 +61,7 @@ class MahasiswaRepository {
                 if (jurusan != null) put("jurusan", jurusan.trim())
                 if (programStudi != null) put("program_studi", programStudi.trim())
                 if (angkatan != null) put("angkatan", angkatan.trim())
+                if (fotoProfilUrl != null) put("foto_profil_url", fotoProfilUrl.trim())
             }
 
             val updated = client.from("profiles").update(updatePayload) {
@@ -72,6 +74,46 @@ class MahasiswaRepository {
             Result.success(updated)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Mengunggah foto profil mahasiswa ke storage bucket `foto-profil` dan memperbarui `profiles.foto_profil_url`.
+     */
+    suspend fun uploadFotoProfil(
+        fileBytes: ByteArray,
+        extension: String = "jpg"
+    ): Result<String> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            if (fileBytes.isEmpty()) {
+                return Result.failure(Exception("Berkas foto profil kosong."))
+            }
+
+            val cleanExt = extension.removePrefix(".").trim().lowercase().ifBlank { "jpg" }
+            val storagePath = "$currentUserId/avatar_${System.currentTimeMillis()}.$cleanExt"
+
+            val bucket = storage.from("foto-profil")
+            bucket.upload(storagePath, fileBytes) {
+                upsert = true
+            }
+
+            val publicUrl = "${SupabaseConfig.SUPABASE_URL}/storage/v1/object/public/foto-profil/$storagePath"
+
+            val updatePayload = buildJsonObject {
+                put("foto_profil_url", publicUrl)
+            }
+            client.from("profiles").update(updatePayload) {
+                filter {
+                    eq("id", currentUserId)
+                }
+            }
+
+            Result.success(publicUrl)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah foto profil.")))
         }
     }
 

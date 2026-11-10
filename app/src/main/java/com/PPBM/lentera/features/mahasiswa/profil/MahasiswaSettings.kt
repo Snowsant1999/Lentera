@@ -62,6 +62,7 @@ class MahasiswaSettings {
     fun mhsProfilScreen(
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
+        photoUrl: String? = null,
         namaLengkap: String = "Mahasiswa Lentera",
         nim: String = "2024010001",
         kampusProdi: String = "Universitas Lentera - Teknik Informatika",
@@ -126,6 +127,7 @@ class MahasiswaSettings {
                     ) {
                         ProfileAvatarImage(
                             photoUri = photoUri,
+                            photoUrl = photoUrl,
                             modifier = Modifier.size(88.dp)
                         )
                     }

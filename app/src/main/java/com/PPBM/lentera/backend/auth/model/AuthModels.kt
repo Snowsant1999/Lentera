@@ -23,7 +23,9 @@ data class UserProfile(
     val programStudi: String? = null,
     val angkatan: String? = null,
     @SerialName("status_akun")
-    val statusAkun: String = "aktif"
+    val statusAkun: String = "aktif",
+    @SerialName("foto_profil_url")
+    val fotoProfilUrl: String? = null
 )
 
 sealed class AuthState {

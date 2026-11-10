@@ -19,11 +19,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 
 @Composable
 fun ProfileAvatarImage(
-    photoUri: Uri?,
+    photoUri: Uri? = null,
+    photoUrl: String? = null,
     modifier: Modifier = Modifier,
     placeholderRes: Int = R.drawable.ic_avatar_2,
     contentDescription: String? = "Foto Profil"
@@ -51,6 +53,15 @@ fun ProfileAvatarImage(
     if (bitmap != null) {
         Image(
             bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(CircleShape)
+        )
+    } else if (!photoUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = photoUrl,
+            placeholder = painterResource(id = placeholderRes),
+            error = painterResource(id = placeholderRes),
             contentDescription = contentDescription,
             contentScale = ContentScale.Crop,
             modifier = modifier.clip(CircleShape)

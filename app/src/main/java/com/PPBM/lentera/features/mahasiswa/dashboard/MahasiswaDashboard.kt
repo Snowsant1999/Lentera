@@ -42,7 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.net.Uri
+import com.PPBM.lentera.backend.core.formatTanggalKejadian
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
+import com.PPBM.lentera.core.designsystem.components.LenteraNotificationBell
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
 import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
@@ -68,6 +70,7 @@ class MahasiswaDashboard {
     fun mhsDashboard(
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
+        photoUrl: String? = null,
         userName: String = "Mahasiswa Lentera",
         totalLaporan: Int = 0,
         laporanDiperiksa: Int = 0,
@@ -76,6 +79,7 @@ class MahasiswaDashboard {
         lamaranStatusText: String = "Tidak ada update",
         aktivitasList: List<LaporanSaya> = emptyList(),
         lowonganList: List<LowonganTerbit> = emptyList(),
+        hasUnreadNotification: Boolean = false,
         onNotificationClick: () -> Unit = {},
         onTabSelected: (LenteraTab) -> Unit = {},
         onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
@@ -130,6 +134,7 @@ class MahasiswaDashboard {
                         ) {
                             ProfileAvatarImage(
                                 photoUri = photoUri,
+                                photoUrl = photoUrl,
                                 modifier = Modifier.size(40.dp)
                             )
                         }
@@ -163,20 +168,11 @@ class MahasiswaDashboard {
                     }
 
                     // 3. Bagian Lonceng Notifikasi
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onNotificationClick)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_bell_outline),
-                            contentDescription = "Notifikasi",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    LenteraNotificationBell(
+                        hasUnread = hasUnreadNotification,
+                        onClick = onNotificationClick,
+                        tint = Color.White
+                    )
                 }
 
                 // --- BAGIAN 2: KONTEN UTAMA (BODY) ---
@@ -386,7 +382,7 @@ class MahasiswaDashboard {
                                 }
                                 AktivitasItem(
                                     title = item.judul,
-                                    date = item.tanggalKejadian,
+                                    date = formatTanggalKejadian(item.tanggalKejadian),
                                     status = item.status.replaceFirstChar { it.uppercase() },
                                     statusBg = statusBg,
                                     statusColor = statusColor,
@@ -438,14 +434,16 @@ class MahasiswaDashboard {
                                 MagangCard(
                                     title = "EXPLORE MAGANG",
                                     company = "Mitra Kampus",
-                                    location = "Indonesia"
+                                    location = "Indonesia",
+                                    onClick = { onLowonganLihatSemuaClick() }
                                 )
                             } else {
                                 lowonganList.forEach { lowongan ->
                                     MagangCard(
                                         title = lowongan.posisi.uppercase(),
                                         company = lowongan.namaPerusahaan,
-                                        location = lowongan.kota
+                                        location = lowongan.kota,
+                                        onClick = { onLowonganItemClick(lowongan.id) }
                                     )
                                 }
                             }

@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,12 +28,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
@@ -55,17 +59,54 @@ fun ProfilAdminScreen(
     peran: String = "NIP. 198803152015042001 · Admin Kampus",
     badge: String = "Admin aktif",
     versi: String = "1.0.0",
+    photoUrl: String? = null,
     menu: List<MenuProfilItem> = SampleMenuProfil,
     onMenuClick: (MenuProfilItem) -> Unit = {},
     onAvatarClick: () -> Unit = {},
+    onUploadFoto: (ByteArray) -> Unit = {},
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val context = LocalContext.current
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUri = uri
+        if (uri != null) {
+            rawUriToCrop = uri
+        }
+    }
+
+    if (rawUriToCrop != null) {
+        ProfilePhotoCropDialog(
+            sourceUri = rawUriToCrop!!,
+            onDismiss = { rawUriToCrop = null },
+            onCropSuccess = { croppedUri, _ ->
+                imageUri = croppedUri
+                rawUriToCrop = null
+                runCatching {
+                    context.contentResolver.openInputStream(croppedUri)?.use { stream ->
+                        val bytes = stream.readBytes()
+                        if (bytes.isNotEmpty()) {
+                            onUploadFoto(bytes)
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        KonfirmasiLogoutAdminDialog(
+            onDismiss = { showLogoutDialog = false },
+            onConfirm = {
+                showLogoutDialog = false
+                onKeluarClick()
+            }
+        )
     }
 
     Scaffold(
@@ -107,6 +148,7 @@ fun ProfilAdminScreen(
                 peran = peran,
                 badge = badge,
                 imageUri = imageUri,
+                photoUrl = photoUrl,
                 onAvatarClick = {
                     imagePickerLauncher.launch("image/*")
                     onAvatarClick()
@@ -121,7 +163,7 @@ fun ProfilAdminScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
-            KeluarCard(onClick = onKeluarClick)
+            KeluarCard(onClick = { showLogoutDialog = true })
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -145,6 +187,7 @@ private fun RingkasanProfil(
     peran: String,
     badge: String,
     imageUri: Uri? = null,
+    photoUrl: String? = null,
     onAvatarClick: () -> Unit = {}
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -165,7 +208,7 @@ private fun RingkasanProfil(
                     .background(Color.White, CircleShape)
             ) {
                 AsyncImage(
-                    model = imageUri ?: R.drawable.ic_avatar_2,
+                    model = imageUri ?: photoUrl ?: R.drawable.ic_avatar_2,
                     contentDescription = "Foto Profil",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -338,6 +381,95 @@ private fun KeluarCard(onClick: () -> Unit) {
             tint = LenteraRedMuted,
             modifier = Modifier.size(16.dp)
         )
+    }
+}
+
+@Composable
+private fun KonfirmasiLogoutAdminDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_simbol_keluar),
+                contentDescription = "Keluar",
+                modifier = Modifier.size(56.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Keluar dari akun?",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                color = LenteraNavy
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Apakah Anda yakin ingin keluar?",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = LenteraTextSecondary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEFF5FD),
+                        contentColor = LenteraNavy
+                    )
+                ) {
+                    Text(
+                        text = "Batal",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraRedMuted,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Ya, Keluar",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
     }
 }
 

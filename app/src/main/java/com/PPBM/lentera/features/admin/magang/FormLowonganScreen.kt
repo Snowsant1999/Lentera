@@ -100,6 +100,10 @@ fun FormLowonganScreen(
 
     var posisi by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.posisi.orEmpty()) }
     var kategori by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.kategori.orEmpty()) }
+    val kategoriOptions = remember {
+        listOf("Teknologi", "Desain", "Bisnis", "Pemasaran", "Keuangan", "Pendidikan", "Kesehatan", "Lainnya")
+    }
+    var showKategoriMenu by remember { mutableStateOf(false) }
     var lokasi by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.lokasi.orEmpty()) }
     var sistemKerja by remember(existingLowongan?.id) {
         mutableStateOf(normalizeSistemKerja(existingLowongan?.sistemKerja ?: "On-site"))
@@ -370,11 +374,27 @@ fun FormLowonganScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        FormInputField(
-                            label = "Kategori (opsional)",
-                            value = kategori,
-                            onValueChange = { kategori = it }
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            FormDropdownField(
+                                label = "Kategori (opsional)",
+                                value = if (kategori.isBlank()) "Pilih Kategori" else kategori,
+                                onClick = { showKategoriMenu = true }
+                            )
+                            DropdownMenu(
+                                expanded = showKategoriMenu,
+                                onDismissRequest = { showKategoriMenu = false }
+                            ) {
+                                kategoriOptions.forEach { opt ->
+                                    DropdownMenuItem(
+                                        text = { Text(opt) },
+                                        onClick = {
+                                            kategori = opt
+                                            showKategoriMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 

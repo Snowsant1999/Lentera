@@ -9,12 +9,14 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 class AdminMahasiswaRepository {
     private val client = SupabaseConfig.client
+    private val storage = client.storage
 
     /**
      * Mengambil seluruh daftar mahasiswa terdaftar.
@@ -251,6 +253,46 @@ class AdminMahasiswaRepository {
             Result.success(updatedProfile)
         } catch (e: Exception) {
             Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui profil admin.")))
+        }
+    }
+
+    /**
+     * Mengunggah foto profil admin ke storage bucket `foto-profil` dan memperbarui `profiles.foto_profil_url`.
+     */
+    suspend fun uploadFotoProfilAdmin(
+        fileBytes: ByteArray,
+        extension: String = "jpg"
+    ): Result<String> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            if (fileBytes.isEmpty()) {
+                return Result.failure(Exception("Berkas foto profil kosong."))
+            }
+
+            val cleanExt = extension.removePrefix(".").trim().lowercase().ifBlank { "jpg" }
+            val storagePath = "$currentUserId/avatar_${System.currentTimeMillis()}.$cleanExt"
+
+            val bucket = storage.from("foto-profil")
+            bucket.upload(storagePath, fileBytes) {
+                upsert = true
+            }
+
+            val publicUrl = "${SupabaseConfig.SUPABASE_URL}/storage/v1/object/public/foto-profil/$storagePath"
+
+            val updatePayload = buildJsonObject {
+                put("foto_profil_url", publicUrl)
+            }
+            client.from("profiles").update(updatePayload) {
+                filter {
+                    eq("id", currentUserId)
+                }
+            }
+
+            Result.success(publicUrl)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah foto profil admin.")))
         }
     }
 }

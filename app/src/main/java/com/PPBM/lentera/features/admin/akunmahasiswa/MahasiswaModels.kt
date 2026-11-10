@@ -11,5 +11,6 @@ data class Mahasiswa(
     val nama: String,
     val nim: String,
     val prodi: String,
-    val status: StatusAkun
+    val status: StatusAkun,
+    val fotoProfilUrl: String? = null
 )

@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.core.formatTanggalKejadian
 
 /**
  * FRAME 2: Detail Laporan
@@ -66,7 +67,7 @@ fun AdminDetailLaporanScreen(
     val nomorLaporan = laporan?.nomorLaporan ?: "-"
     val judulLaporan = laporan?.judul ?: "Memuat detail laporan..."
     val kategori = laporan?.kategori ?: "Pengaduan"
-    val tanggalKejadian = laporan?.tanggalKejadian ?: "-"
+    val tanggalKejadian = formatTanggalKejadian(laporan?.tanggalKejadian ?: "-")
     val lokasiKejadian = laporan?.lokasiKejadian ?: "-"
     val kronologi = laporan?.kronologi ?: "-"
     val isAnonim = laporan?.isAnonim ?: true
