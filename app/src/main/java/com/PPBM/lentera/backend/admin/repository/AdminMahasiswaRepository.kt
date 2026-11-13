@@ -132,6 +132,7 @@ class AdminMahasiswaRepository {
         perguruanTinggi: String?,
         programStudi: String?,
         angkatan: String?,
+        noTelepon: String? = null,
         emailChanged: Boolean = true
     ): Result<Unit> {
         val cleanNama = namaLengkap.trim()
@@ -140,6 +141,7 @@ class AdminMahasiswaRepository {
         val cleanPt = perguruanTinggi?.trim()?.takeIf { it.isNotBlank() }
         val cleanProdi = programStudi?.trim()?.takeIf { it.isNotBlank() }
         val cleanAngkatan = angkatan?.trim()?.takeIf { it.isNotBlank() }
+        val cleanNoTelepon = noTelepon?.trim()?.takeIf { it.isNotBlank() }
 
         return try {
             val rpcParams = buildJsonObject {
@@ -150,6 +152,7 @@ class AdminMahasiswaRepository {
                 if (cleanPt != null) put("p_perguruan_tinggi", cleanPt) else put("p_perguruan_tinggi", JsonNull)
                 if (cleanProdi != null) put("p_program_studi", cleanProdi) else put("p_program_studi", JsonNull)
                 if (cleanAngkatan != null) put("p_angkatan", cleanAngkatan) else put("p_angkatan", JsonNull)
+                if (cleanNoTelepon != null) put("p_no_telepon", cleanNoTelepon) else put("p_no_telepon", JsonNull)
             }
             client.postgrest.rpc("admin_update_mahasiswa", rpcParams)
             Result.success(Unit)
@@ -173,6 +176,7 @@ class AdminMahasiswaRepository {
                         if (cleanPt != null) put("perguruan_tinggi", cleanPt) else put("perguruan_tinggi", JsonNull)
                         if (cleanProdi != null) put("program_studi", cleanProdi) else put("program_studi", JsonNull)
                         if (cleanAngkatan != null) put("angkatan", cleanAngkatan) else put("angkatan", JsonNull)
+                        if (cleanNoTelepon != null) put("no_telepon", cleanNoTelepon) else put("no_telepon", JsonNull)
                     }
                     client.from("profiles").update(payload) {
                         filter {
@@ -295,5 +299,37 @@ class AdminMahasiswaRepository {
             Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah foto profil admin.")))
         }
     }
-}
 
+    /**
+     * Menghapus foto profil admin (B3): mengosongkan `profiles.foto_profil_url` dan membersihkan berkas di storage bucket `foto-profil`.
+     */
+    suspend fun deleteFotoProfilAdmin(): Result<Unit> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            val updatePayload = buildJsonObject {
+                put("foto_profil_url", JsonNull)
+            }
+            client.from("profiles").update(updatePayload) {
+                filter {
+                    eq("id", currentUserId)
+                }
+            }
+
+            // Bersihkan file avatar di storage jika ada
+            runCatching {
+                val bucket = storage.from("foto-profil")
+                val files = bucket.list(currentUserId)
+                val pathsToDelete = files.map { "$currentUserId/${it.name}" }
+                if (pathsToDelete.isNotEmpty()) {
+                    bucket.delete(pathsToDelete)
+                }
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal menghapus foto profil admin.")))
+        }
+    }
+}

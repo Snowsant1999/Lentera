@@ -125,6 +125,15 @@ fun LenteraNavGraph(
         ).show()
     }
 
+    var photoViewerUrl by remember { mutableStateOf<String?>(null) }
+    var photoViewerTitle by remember { mutableStateOf("Lampiran Foto") }
+
+    fun isImageFilePath(path: String): Boolean {
+        val lower = path.lowercase()
+        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") ||
+               lower.endsWith(".webp") || lower.endsWith(".gif") || lower.endsWith(".bmp")
+    }
+
     fun openSignedUrl(getUrl: suspend () -> Result<String>) {
         coroutineScope.launch {
             getUrl().onSuccess { url ->
@@ -137,6 +146,21 @@ fun LenteraNavGraph(
             }.onFailure { err ->
                 showToast(err.message ?: "Gagal membuka dokumen.")
             }
+        }
+    }
+
+    fun openFile(filePath: String, displayName: String = "Lampiran", getUrl: suspend () -> Result<String>) {
+        if (isImageFilePath(filePath)) {
+            coroutineScope.launch {
+                getUrl().onSuccess { url ->
+                    photoViewerTitle = displayName.ifBlank { "Lampiran Foto" }
+                    photoViewerUrl = url
+                }.onFailure { err ->
+                    showToast(err.message ?: "Gagal memuat foto.")
+                }
+            }
+        } else {
+            openSignedUrl(getUrl)
         }
     }
 
@@ -762,7 +786,7 @@ fun LenteraNavGraph(
                 isSubmitting = adminState.isCreatingMahasiswa,
                 onBackClick = { navController.popBackStack() },
                 onSimpanSuccess = { navController.popBackStack() },
-                onSimpanAkun = { nama, nim, email, jurusan, prodi, angkatan, onSuccess, onError ->
+                onSimpanAkun = { nama, nim, email, jurusan, prodi, noTelepon, angkatan, onSuccess, onError ->
                     adminViewModel.buatAkunMahasiswa(
                         namaLengkap = nama,
                         nim = nim,
@@ -770,6 +794,7 @@ fun LenteraNavGraph(
                         jurusan = jurusan,
                         programStudi = prodi,
                         angkatan = angkatan,
+                        noTelepon = noTelepon,
                         onError = onError,
                         onSuccess = { _, tempPass, emailSent, emailError ->
                             onSuccess(tempPass, emailSent, emailError)
@@ -833,11 +858,15 @@ fun LenteraNavGraph(
                 )
             }
 
+            val derivedAngkatan = mhs?.angkatan?.takeIf { it.isNotBlank() }
+                ?: com.PPBM.lentera.core.util.LenteraFormatUtils.deriveAngkatanFromNim(mhs?.nim.orEmpty()).ifBlank { "-" }
+
             DetailAkunMahasiswaScreen(
                 mahasiswa = mahasiswaObj,
                 perguruanTinggi = mhs?.perguruanTinggi?.ifBlank { "-" } ?: "-",
                 programStudi = mhs?.programStudi?.ifBlank { "-" } ?: "-",
-                angkatan = mhs?.angkatan?.ifBlank { "-" } ?: "-",
+                angkatan = derivedAngkatan,
+                noTelepon = mhs?.noTelepon?.ifBlank { "-" } ?: "-",
                 emailKampus = mhs?.email?.ifBlank { "-" } ?: "-",
                 metodeAkses = "Kirim tautan aktivasi ke email",
                 isProcessing = adminState.isLoading,
@@ -850,7 +879,7 @@ fun LenteraNavGraph(
                         onError("Email mahasiswa belum terdaftar.")
                     }
                 },
-                onEditSave = { nama, nim, email, pt, prodi, angk, onSuccess, onError ->
+                onEditSave = { nama, nim, email, pt, prodi, angk, noTelp, onSuccess, onError ->
                     val uid = mhs?.id
                     if (!uid.isNullOrBlank()) {
                         adminViewModel.editMahasiswa(
@@ -861,6 +890,7 @@ fun LenteraNavGraph(
                             perguruanTinggi = pt,
                             programStudi = prodi,
                             angkatan = angk,
+                            noTelepon = noTelp,
                             onError = onError,
                             onSuccess = onSuccess
                         )
@@ -922,10 +952,20 @@ fun LenteraNavGraph(
                         }
                     )
                 },
+                onHapusFoto = {
+                    adminViewModel.hapusFotoProfilAdmin(
+                        context = context,
+                        onError = { showToast(it) },
+                        onSuccess = {
+                            currentProfile = currentProfile?.copy(fotoProfilUrl = null)
+                            showToast("Foto profil berhasil dihapus.", isLong = false)
+                        }
+                    )
+                },
                 onMenuClick = { menu ->
                     when (menu.judul) {
                         "Data Akun" -> navController.navigate(Routes.ADMIN_DATA_AKUN)
-                        "Notifikasi" -> navController.navigate(Routes.ADMIN_NOTIFIKASI)
+                        "Notifikasi" -> navController.navigate(Routes.PENGATURAN_NOTIFIKASI)
                         "Bantuan Admin" -> navController.navigate(Routes.ADMIN_BANTUAN)
                         "Tentang Aplikasi" -> navController.navigate(Routes.MAHASISWA_TENTANG)
                     }
@@ -952,6 +992,28 @@ fun LenteraNavGraph(
                 peran = "Admin Kampus",
                 email = currentProfile?.email,
                 nomorTelepon = currentProfile?.noTelepon,
+                photoUrl = currentProfile?.fotoProfilUrl,
+                onUploadFoto = { bytes ->
+                    adminViewModel.uploadFotoProfilAdmin(
+                        context = context,
+                        fileBytes = bytes,
+                        onError = { showToast(it) },
+                        onSuccess = { newUrl ->
+                            currentProfile = currentProfile?.copy(fotoProfilUrl = newUrl)
+                            showToast("Foto profil berhasil diperbarui.", isLong = false)
+                        }
+                    )
+                },
+                onHapusFoto = {
+                    adminViewModel.hapusFotoProfilAdmin(
+                        context = context,
+                        onError = { showToast(it) },
+                        onSuccess = {
+                            currentProfile = currentProfile?.copy(fotoProfilUrl = null)
+                            showToast("Foto profil berhasil dihapus.", isLong = false)
+                        }
+                    )
+                },
                 isSaving = adminState.isLoading,
                 onBackClick = { navController.popBackStack() },
                 onDataUpdated = { newNama, newEmail, newTelepon, onSuccess, onError ->
@@ -1068,6 +1130,7 @@ fun LenteraNavGraph(
                 hariIni = hariIniItems,
                 sebelumnya = sebelumnyaItems,
                 onBackClick = { navController.popBackStack() },
+                onPengaturanClick = { navController.navigate(Routes.PENGATURAN_NOTIFIKASI) },
                 onAvatarClick = { navController.navigate(Routes.ADMIN_PROFIL) },
                 onTandaiSemuaDibacaClick = { adminViewModel.markAllNotificationsAsRead() },
                 onNotifikasiClick = { notif ->
@@ -1180,10 +1243,10 @@ fun LenteraNavGraph(
                     )
                 },
                 onOpenBukti = { item ->
-                    openSignedUrl { adminViewModel.getSignedUrl("bukti-laporan", item.filePath) }
+                    openFile(item.filePath, item.namaFile) { adminViewModel.getSignedUrl("bukti-laporan", item.filePath) }
                 },
                 onOpenDokumen = { item ->
-                    openSignedUrl { adminViewModel.getSignedUrl("dokumen-hasil", item.filePath) }
+                    openFile(item.filePath, item.namaFile) { adminViewModel.getSignedUrl("dokumen-hasil", item.filePath) }
                 },
                 onBackToDashboard = { navController.navigate(Routes.ADMIN_DASHBOARD) },
                 onNavClick = { item -> navigateAdminTab(item, LenteraNavItem.LAPORAN) }
@@ -1211,7 +1274,7 @@ fun LenteraNavGraph(
                 logList = adminState.selectedLaporanLogs,
                 permintaanList = adminState.selectedLaporanPermintaan,
                 onOpenBukti = { item ->
-                    openSignedUrl { adminViewModel.getSignedUrl("bukti-laporan", item.filePath) }
+                    openFile(item.filePath, item.namaFile) { adminViewModel.getSignedUrl("bukti-laporan", item.filePath) }
                 },
                 onNavigateToVerifikasi = { navController.navigate(Routes.ADMIN_SIAGA) },
                 onNavigateToMintaInformasi = { navController.navigate(Routes.ADMIN_MINTA_INFORMASI) },
@@ -2064,7 +2127,7 @@ fun LenteraNavGraph(
                 dokumenList = siagaState.dokumenHasilList,
                 onBackClick = { navController.popBackStack() },
                 onOpenDokumenClick = { doc ->
-                    openSignedUrl { siagaViewModel.getDokumenHasilSignedUrl(doc.filePath) }
+                    openFile(doc.filePath, doc.namaFile) { siagaViewModel.getDokumenHasilSignedUrl(doc.filePath) }
                 }
             )
         }
@@ -2202,7 +2265,7 @@ fun LenteraNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onAttachmentClick = { item ->
                     if (item.filePath.isNotBlank()) {
-                        openSignedUrl { siagaViewModel.getBuktiSignedUrl(item.filePath) }
+                        openFile(item.filePath, item.nama) { siagaViewModel.getBuktiSignedUrl(item.filePath) }
                     }
                 },
                 onLihatHasilPenangananClick = {
@@ -2276,6 +2339,11 @@ fun LenteraNavGraph(
                 )
             }
 
+            // Saring item berstatus akhir (100% progres: Diterima / Ditolak) agar tidak menumpuk di dashboard Magang Hub (M2)
+            val activeMappedLamaran = mappedLamaran.filter { item ->
+                item.status != "Diterima" && item.status != "Ditolak"
+            }
+
             MagangScreen(
                 userName = profile?.namaLengkap?.ifBlank { "Mahasiswa" } ?: "Mahasiswa",
                 profilCompletion = profilCompletionPct,
@@ -2283,7 +2351,7 @@ fun LenteraNavGraph(
                 jumlahDiterima = dtr,
                 jumlahDitolak = dtl,
                 jumlahDireview = drv,
-                lamaranList = mappedLamaran,
+                lamaranList = activeMappedLamaran,
                 lowonganList = mappedLowongan,
                 bookmarkedIds = magangState.bookmarkedIds,
                 onBookmarkClick = { lowongan ->
@@ -2639,7 +2707,7 @@ fun LenteraNavGraph(
                 statusAkun = statusLabel,
                 onNavigateToDataDiri = { navController.navigate(Routes.MAHASISWA_DATA_DIRI) },
                 onNavigateToDokumen = { navController.navigate(Routes.MAHASISWA_DOKUMEN_SAYA) },
-                onNavigateToNotifikasi = { navController.navigate(Routes.MAHASISWA_NOTIFIKASI) },
+                onNavigateToNotifikasi = { navController.navigate(Routes.PENGATURAN_NOTIFIKASI) },
                 onNavigateToBantuan = { navController.navigate(Routes.MAHASISWA_BANTUAN) },
                 onNavigateToTentang = { navController.navigate(Routes.MAHASISWA_TENTANG) },
                 onLogoutConfirmed = {
@@ -2729,6 +2797,7 @@ fun LenteraNavGraph(
                 onMarkRead = { notifId -> profilViewModel.markNotifikasiRead(notifId) },
                 onMarkAllRead = { profilViewModel.markAllNotifikasiRead() },
                 onBackClick = { navController.popBackStack() },
+                onPengaturanClick = { navController.navigate(Routes.PENGATURAN_NOTIFIKASI) },
                 onTabSelected = { tab -> navigateMahasiswaTab(tab) }
             )
         }
@@ -2748,6 +2817,13 @@ fun LenteraNavGraph(
                 onTabSelected = { tab -> navigateMahasiswaTab(tab) }
             )
         }
+
+        // Halaman Pengaturan Notifikasi Khusus Lentera (N1.8)
+        composable(Routes.PENGATURAN_NOTIFIKASI) {
+            com.PPBM.lentera.core.designsystem.components.PengaturanNotifikasiScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
     }
 
     val deepLinkError = loginState.deepLinkErrorMessage
@@ -2759,6 +2835,14 @@ fun LenteraNavGraph(
         onDismiss = { loginViewModel.clearDeepLinkError() },
         buttonText = "Mengerti"
     )
+
+    if (!photoViewerUrl.isNullOrBlank()) {
+        com.PPBM.lentera.core.designsystem.components.LenteraPhotoViewerDialog(
+            imageUrl = photoViewerUrl!!,
+            title = photoViewerTitle,
+            onDismiss = { photoViewerUrl = null }
+        )
+    }
 }
 
 @Composable
