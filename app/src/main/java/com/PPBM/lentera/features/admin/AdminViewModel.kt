@@ -581,6 +581,7 @@ class AdminViewModel(
         perguruanTinggi: String?,
         programStudi: String?,
         angkatan: String?,
+        noTelepon: String? = null,
         onError: (String) -> Unit = {},
         onSuccess: () -> Unit = {}
     ) {
@@ -599,6 +600,7 @@ class AdminViewModel(
                 perguruanTinggi = perguruanTinggi,
                 programStudi = programStudi,
                 angkatan = angkatan,
+                noTelepon = noTelepon,
                 emailChanged = emailChanged
             )
             res.onSuccess {
@@ -1142,6 +1144,39 @@ class AdminViewModel(
                 onSuccess(newUrl)
             }.onFailure { err ->
                 val msg = err.message ?: "Gagal mengunggah foto profil admin"
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = msg
+                )
+                onError(msg)
+            }
+        }
+    }
+
+    /**
+     * Menghapus foto profil admin (B3) dan mereset sesi lokal.
+     */
+    fun hapusFotoProfilAdmin(
+        context: Context,
+        onError: (String) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile() ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val res = adminMhsRepo.deleteFotoProfilAdmin()
+            res.onSuccess {
+                val updatedProfile = profile.copy(fotoProfilUrl = null)
+                session.saveSession(updatedProfile)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    actionSuccessMessage = "Foto profil admin berhasil dihapus"
+                )
+                onSuccess()
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal menghapus foto profil admin"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = msg

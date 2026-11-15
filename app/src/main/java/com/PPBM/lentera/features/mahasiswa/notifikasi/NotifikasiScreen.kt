@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -22,6 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +65,7 @@ fun MahasiswaNotifikasiScreen(
     onMarkRead: (String) -> Unit = {},
     onMarkAllRead: () -> Unit = {},
     onBackClick: () -> Unit = {},
+    onPengaturanClick: () -> Unit = {},
     onTabSelected: (LenteraTab) -> Unit = {}
 ) {
     var selectedFilter by remember { mutableStateOf(NotifikasiFilter.SEMUA) }
@@ -90,18 +96,49 @@ fun MahasiswaNotifikasiScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tombol Kembali
+            // Tombol Kembali & Pengaturan Notifikasi
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onBackClick)
-                    .padding(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                BackArrowIcon(
-                    modifier = Modifier.size(20.dp),
-                    tint = LenteraNavy
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onBackClick)
+                        .padding(vertical = 8.dp)
+                ) {
+                    BackArrowIcon(
+                        modifier = Modifier.size(20.dp),
+                        tint = LenteraNavy
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onPengaturanClick)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Pengaturan Notifikasi",
+                        tint = LenteraNavy,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Pengaturan",
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = LenteraNavy,
+                            fontFamily = PlusJakartaSans
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))

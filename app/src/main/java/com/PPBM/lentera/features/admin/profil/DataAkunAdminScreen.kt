@@ -1,4 +1,9 @@
 package com.PPBM.lentera.features.admin.profil
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.border
 import com.PPBM.lentera.core.designsystem.components.*
 
 import androidx.compose.foundation.background
@@ -17,6 +22,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
@@ -39,12 +45,73 @@ fun DataAkunAdminScreen(
     nomorTelepon: String? = null,
     unitKerja: String = "LENTERA",
     aksesPengelolaan: String = "Mahasiswa, laporan, dan magang",
+    photoUrl: String? = null,
+    onUploadFoto: (ByteArray) -> Unit = {},
+    onHapusFoto: () -> Unit = {},
     isSaving: Boolean = false,
     onBackClick: () -> Unit = {},
     onUbahClick: () -> Unit = {},
     onDataUpdated: (nama: String, email: String, telepon: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _, _, onSuccess, _ -> onSuccess() },
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+    var showConfirmHapusFotoDialog by remember { mutableStateOf(false) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            rawUriToCrop = uri
+        }
+    }
+
+    if (rawUriToCrop != null) {
+        ProfilePhotoCropDialog(
+            sourceUri = rawUriToCrop!!,
+            onDismiss = { rawUriToCrop = null },
+            onCropSuccess = { croppedUri, _ ->
+                imageUri = croppedUri
+                rawUriToCrop = null
+                runCatching {
+                    context.contentResolver.openInputStream(croppedUri)?.use { stream ->
+                        val bytes = stream.readBytes()
+                        if (bytes.isNotEmpty()) {
+                            onUploadFoto(bytes)
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    if (showPhotoOptionsDialog) {
+        OpsiFotoProfilDialog(
+            onDismiss = { showPhotoOptionsDialog = false },
+            onGantiFoto = {
+                showPhotoOptionsDialog = false
+                imagePickerLauncher.launch("image/*")
+            },
+            onHapusFoto = {
+                showPhotoOptionsDialog = false
+                showConfirmHapusFotoDialog = true
+            }
+        )
+    }
+
+    if (showConfirmHapusFotoDialog) {
+        KonfirmasiHapusFotoDialog(
+            onDismiss = { showConfirmHapusFotoDialog = false },
+            onConfirm = {
+                showConfirmHapusFotoDialog = false
+                imageUri = null
+                onHapusFoto()
+            }
+        )
+    }
+
     val belumDitambahkan = "Belum ditambahkan"
     var currentNama by remember(nama) { mutableStateOf(nama.ifBlank { belumDitambahkan }) }
     var currentEmail by remember(email) { mutableStateOf(email.orEmpty().ifBlank { belumDitambahkan }) }
@@ -79,7 +146,19 @@ fun DataAkunAdminScreen(
                 description = "Informasi akun, peran, dan akses pengelolaan.",
                 onBackClick = onBackClick
             )
-            RingkasanAdminCard(nama = currentNama, peran = peran)
+            RingkasanAdminCard(
+                nama = currentNama,
+                peran = peran,
+                photoUrl = photoUrl,
+                imageUri = imageUri,
+                onAvatarClick = {
+                    if (!photoUrl.isNullOrBlank() || imageUri != null) {
+                        showPhotoOptionsDialog = true
+                    } else {
+                        imagePickerLauncher.launch("image/*")
+                    }
+                }
+            )
             InformasiPribadiCard(
                 nama = currentNama,
                 email = if (currentEmail.isBlank()) belumDitambahkan else currentEmail,
@@ -293,12 +372,48 @@ private fun UbahDataAkunDialog(
 }
 
 @Composable
-private fun RingkasanAdminCard(nama: String, peran: String) {
+private fun RingkasanAdminCard(
+    nama: String,
+    peran: String,
+    photoUrl: String? = null,
+    imageUri: Uri? = null,
+    onAvatarClick: () -> Unit = {}
+) {
     LenteraCard(containerColor = LenteraColors.BlueGray) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ProfileAvatar(size = 58.dp, containerColor = Color.White)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(62.dp)
+                    .clickable(onClick = onAvatarClick)
+            ) {
+                ProfileAvatarImage(
+                    photoUri = imageUri,
+                    photoUrl = photoUrl,
+                    modifier = Modifier
+                        .size(58.dp)
+                        .align(Alignment.Center)
+                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .align(Alignment.BottomEnd)
+                        .background(LenteraNavy, CircleShape)
+                        .border(1.5.dp, Color.White, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Ubah Foto",
+                        tint = Color.White,
+                        modifier = Modifier.size(10.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = nama,
                     color = LenteraColors.NavyDark,

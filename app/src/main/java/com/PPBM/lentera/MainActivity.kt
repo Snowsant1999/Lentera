@@ -14,8 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkParser
+import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
 import com.PPBM.lentera.core.navigation.LenteraNavGraph
 import com.PPBM.lentera.core.notification.LenteraNotificationHelper
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
         // Menyerahkan null agar Android tidak memulihkan bundle navigasi lama saat dibuka kembali dari Recent Apps
         super.onCreate(null)
         enableEdgeToEdge()
+        // N1.1: Pastikan channel tetap lentera_alerts_v1 dibuat saat aplikasi dibuka & channel usang dibersihkan
         LenteraNotificationHelper.createNotificationChannel(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -60,6 +64,24 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // C1: Jalankan detak sesi aktif (heartbeat) tiap 60 detik selama aplikasi aktif
+        val sessionManager = SessionManager.getInstance(this)
+        if (sessionManager.isLoggedIn()) {
+            val authRepo = AuthRepository(this)
+            sessionManager.startHeartbeat(lifecycleScope) {
+                authRepo.sendHeartbeat()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // C1: Hentikan detak saat aplikasi masuk ke background
+        SessionManager.getInstance(this).stopHeartbeat()
     }
 
     override fun onNewIntent(intent: Intent) {

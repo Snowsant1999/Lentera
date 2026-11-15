@@ -16,6 +16,10 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
 
 class AuthRepository(context: Context) {
     private val client = SupabaseConfig.client
@@ -71,6 +75,29 @@ class AuthRepository(context: Context) {
                 return Result.failure(Exception("Akun dinonaktifkan oleh admin kampus."))
             }
 
+            // Validasi dan klaim satu sesi aktif per akun (C1)
+            val deviceId = sessionManager.getDeviceId()
+            val deviceInfo = sessionManager.getDeviceInfo()
+            val klaimResult = runCatching {
+                val rpcParams = buildJsonObject {
+                    put("p_device_id", deviceId)
+                    put("p_device_info", deviceInfo)
+                }
+                client.postgrest.rpc("klaim_sesi", rpcParams).decodeAs<JsonObject>()
+            }.getOrNull()
+
+            if (klaimResult != null) {
+                val isSuccess = klaimResult["success"]?.jsonPrimitive?.booleanOrNull ?: true
+                val pesan = klaimResult["message"]?.jsonPrimitive?.contentOrNull.orEmpty()
+                if (!isSuccess) {
+                    try {
+                        client.auth.signOut()
+                    } catch (_: Exception) {}
+                    sessionManager.clearSession()
+                    return Result.failure(Exception(if (pesan.isNotBlank()) pesan else "Akun sedang aktif digunakan di perangkat lain."))
+                }
+            }
+
             // Simpan sesi lokal
             sessionManager.saveSession(profile)
             Result.success(profile)
@@ -104,10 +131,34 @@ class AuthRepository(context: Context) {
      * Logout dan bersihkan sesi lokal.
      */
     suspend fun logout() {
+        val deviceId = sessionManager.getDeviceId()
+        try {
+            val rpcParams = buildJsonObject {
+                put("p_device_id", deviceId)
+            }
+            client.postgrest.rpc("lepas_sesi", rpcParams)
+        } catch (_: Exception) {}
         try {
             client.auth.signOut()
         } catch (_: Exception) {}
         sessionManager.clearSession()
+    }
+
+    /**
+     * Mengirim detak sesi (heartbeat) aktif ke server setiap 60 detik (C1).
+     */
+    suspend fun sendHeartbeat(): Boolean {
+        if (!isLoggedIn()) return false
+        val deviceId = sessionManager.getDeviceId()
+        return try {
+            val rpcParams = buildJsonObject {
+                put("p_device_id", deviceId)
+            }
+            val res = client.postgrest.rpc("detak_sesi", rpcParams).decodeAs<JsonObject>()
+            res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+        } catch (_: Exception) {
+            true // Jangan putus sesi hanya karena fluktuasi jaringan sementara
+        }
     }
 
     /**

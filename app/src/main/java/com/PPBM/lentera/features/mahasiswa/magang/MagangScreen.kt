@@ -143,13 +143,14 @@ fun MagangScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 3. Pill Bar "Lengkapi profil 70%"
-                LengkapiProfilCard(
-                    completionPercentage = profilCompletion,
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
+                // 3. Pill Bar "Lengkapi profil" (Sembunyikan jika progres sudah 100% sesuai M2)
+                if (profilCompletion < 100) {
+                    LengkapiProfilCard(
+                        completionPercentage = profilCompletion,
+                        fontFamily = plusJakarta
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 // 4. Search Bar
                 MagangSearchBar(

@@ -1,4 +1,5 @@
 package com.PPBM.lentera.features.admin.akunmahasiswa
+
 import androidx.compose.foundation.Image
 import com.PPBM.lentera.core.designsystem.components.*
 
@@ -7,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,27 +16,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.core.designsystem.theme.*
+import com.PPBM.lentera.core.util.LenteraFormatUtils
 
 @Composable
 fun BuatAkunMahasiswaScreen(
     isSubmitting: Boolean = false,
     onBackClick: () -> Unit = {},
     onSimpanSuccess: () -> Unit = onBackClick,
-    onSimpanAkun: ((nama: String, nim: String, email: String, jurusan: String, prodi: String, angkatan: String, onSuccess: (tempPassword: String, emailSent: Boolean, emailError: String?) -> Unit, onError: (String) -> Unit) -> Unit)? = null,
+    onSimpanAkun: ((
+        nama: String,
+        nim: String,
+        email: String,
+        jurusan: String,
+        prodi: String,
+        noTelepon: String,
+        angkatan: String,
+        onSuccess: (tempPassword: String, emailSent: Boolean, emailError: String?) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit)? = null,
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
     var namaLengkap by remember { mutableStateOf("") }
     var nim by remember { mutableStateOf("") }
     var jurusan by remember { mutableStateOf("") }
     var programStudi by remember { mutableStateOf("") }
-    var angkatan by remember { mutableStateOf("") }
+    var noTelepon by remember { mutableStateOf("") }
     var emailKampus by remember { mutableStateOf("") }
 
     var showFeedback by remember { mutableStateOf(false) }
@@ -74,15 +86,15 @@ fun BuatAkunMahasiswaScreen(
                 )
             }
 
-            // Card 2: Informasi Akademik (Jurusan, Prodi, Angkatan, Email)
+            // Card 2: Informasi Akademik (Jurusan, Prodi, No HP/WhatsApp, Email)
             item {
                 CardInformasiAkademik(
                     jurusan = jurusan,
                     onJurusanChange = { jurusan = it },
                     programStudi = programStudi,
                     onProgramStudiChange = { programStudi = it },
-                    angkatan = angkatan,
-                    onAngkatanChange = { angkatan = it },
+                    noTelepon = noTelepon,
+                    onNoTeleponChange = { noTelepon = it },
                     emailKampus = emailKampus,
                     onEmailKampusChange = { emailKampus = it }
                 )
@@ -99,18 +111,26 @@ fun BuatAkunMahasiswaScreen(
                         val cleanEmail = emailKampus.trim()
                         val cleanJurusan = jurusan.trim()
                         val cleanProdi = programStudi.trim()
-                        val cleanAngkatan = angkatan.trim()
+                        val cleanPhone = noTelepon.trim()
+                        val derivedAngkatan = LenteraFormatUtils.deriveAngkatanFromNim(cleanNim)
+
                         when {
                             cleanNama.isBlank() || cleanNim.isBlank() || cleanJurusan.isBlank() ||
-                                cleanProdi.isBlank() || cleanAngkatan.isBlank() || cleanEmail.isBlank() -> {
+                                cleanProdi.isBlank() || cleanPhone.isBlank() || cleanEmail.isBlank() -> {
                                 feedbackTitle = "Data Belum Lengkap"
-                                feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, Jurusan, Program Studi, Angkatan, dan Email Kampus."
+                                feedbackMessage = "Mohon lengkapi semua kolom wajib bertanda (*) seperti Nama Lengkap, NIM, Jurusan, Program Studi, No. HP/WhatsApp, dan Email Kampus."
                                 feedbackIsSuccess = false
                                 showFeedback = true
                             }
-                            cleanAngkatan.length != 4 || !cleanAngkatan.all { it.isDigit() } -> {
-                                feedbackTitle = "Angkatan Tidak Valid"
-                                feedbackMessage = "Angkatan harus berupa 4 digit tahun masuk (contoh: 2024)."
+                            cleanNim.length < 5 -> {
+                                feedbackTitle = "NIM Tidak Valid"
+                                feedbackMessage = "NIM harus memiliki minimal 5 karakter numerik."
+                                feedbackIsSuccess = false
+                                showFeedback = true
+                            }
+                            !LenteraFormatUtils.isValidIndonesianPhone(cleanPhone) -> {
+                                feedbackTitle = "No. HP / WhatsApp Tidak Valid"
+                                feedbackMessage = "Nomor harus diawali 08, +62, atau 62 dengan panjang 10-14 digit (contoh: 081234567890)."
                                 feedbackIsSuccess = false
                                 showFeedback = true
                             }
@@ -127,7 +147,8 @@ fun BuatAkunMahasiswaScreen(
                                     cleanEmail,
                                     cleanJurusan,
                                     cleanProdi,
-                                    cleanAngkatan,
+                                    cleanPhone,
+                                    derivedAngkatan,
                                     { tempPass, emailSent, emailError ->
                                         feedbackTitle = "Akun Mahasiswa Berhasil Dibuat"
                                         val emailNotice = if (emailSent) {
@@ -136,7 +157,7 @@ fun BuatAkunMahasiswaScreen(
                                             val reason = emailError?.takeIf { it.isNotBlank() } ?: "layanan email sedang bermasalah"
                                             "Tautan aktivasi belum berhasil dikirim ke email ($reason). Kirim ulang dari menu Detail Akun."
                                         }
-                                        feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dengan status Belum Aktivasi.\n\n$emailNotice\n\nPassword Sementara (cadangan):\n$tempPass"
+                                        feedbackMessage = "Akun mahasiswa $cleanNama ($cleanNim) berhasil disimpan dengan status Belum Aktivasi (Angkatan $derivedAngkatan).\n\n$emailNotice\n\nPassword Sementara (cadangan):\n$tempPass"
                                         feedbackIsSuccess = true
                                         showFeedback = true
                                     },
@@ -305,7 +326,7 @@ fun CardIdentitasMahasiswa(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "NIM harus unik dan sesuai dengan data akademik mahasiswa.",
+                    text = "NIM harus unik dan sesuai dengan data akademik mahasiswa. Tahun angkatan diturunkan otomatis dari 2 digit awal NIM.",
                     fontSize = 11.sp,
                     fontFamily = PlusJakartaSans,
                     color = Color(0xFF7A8B9B)
@@ -321,8 +342,8 @@ fun CardInformasiAkademik(
     onJurusanChange: (String) -> Unit,
     programStudi: String,
     onProgramStudiChange: (String) -> Unit,
-    angkatan: String,
-    onAngkatanChange: (String) -> Unit,
+    noTelepon: String,
+    onNoTeleponChange: (String) -> Unit,
     emailKampus: String,
     onEmailKampusChange: (String) -> Unit
 ) {
@@ -337,14 +358,14 @@ fun CardInformasiAkademik(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Informasi akademik",
+                text = "Informasi akademik & kontak",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = PlusJakartaSans,
                 color = Color(0xFF1E3A5F)
             )
 
-            // Jurusan * (Menggantikan Perguruan Tinggi)
+            // Jurusan *
             Column {
                 Text(
                     text = "Jurusan *",
@@ -374,70 +395,73 @@ fun CardInformasiAkademik(
                 )
             }
 
-            // Program studi * & Angkatan *
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Program studi *
-                Column(modifier = Modifier.weight(1.3f)) {
-                    Text(
-                        text = "Program studi *",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+            // Program studi *
+            Column {
+                Text(
+                    text = "Program studi *",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = PlusJakartaSans,
+                    color = Color(0xFF1E3A5F)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = programStudi,
+                    onValueChange = onProgramStudiChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = TextStyle(
                         fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
                         color = Color(0xFF1E3A5F)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = programStudi,
-                        onValueChange = onProgramStudiChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        textStyle = TextStyle(
-                            fontFamily = PlusJakartaSans,
-                            fontSize = 14.sp,
-                            color = Color(0xFF1E3A5F)
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF1E3A5F),
-                            unfocusedBorderColor = Color(0xFFE0E0E0),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        ),
-                        singleLine = true
-                    )
-                }
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF1E3A5F),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    singleLine = true
+                )
+            }
 
-                // Angkatan *
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Angkatan *",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PlusJakartaSans,
-                        color = Color(0xFF1E3A5F)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = angkatan,
-                        onValueChange = onAngkatanChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        textStyle = TextStyle(
+            // No. HP / WhatsApp * (B4: Menggantikan field Angkatan)
+            Column {
+                Text(
+                    text = "No. HP / WhatsApp *",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = PlusJakartaSans,
+                    color = Color(0xFF1E3A5F)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = noTelepon,
+                    onValueChange = onNoTeleponChange,
+                    placeholder = {
+                        Text(
+                            text = "Contoh: 081234567890",
+                            fontSize = 13.sp,
                             fontFamily = PlusJakartaSans,
-                            fontSize = 14.sp,
-                            color = Color(0xFF1E3A5F)
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF1E3A5F),
-                            unfocusedBorderColor = Color(0xFFE0E0E0),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        ),
-                        singleLine = true
-                    )
-                }
+                            color = Color(0xFF9E9E9E)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    textStyle = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        color = Color(0xFF1E3A5F)
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF1E3A5F),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    singleLine = true
+                )
             }
 
             // Email kampus *

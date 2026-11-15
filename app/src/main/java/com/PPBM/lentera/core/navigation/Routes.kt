@@ -75,6 +75,7 @@ object Routes {
     const val ADMIN_DATA_AKUN = "admin_data_akun"
     const val ADMIN_BANTUAN = "admin_bantuan"
     const val ADMIN_NOTIFIKASI = "admin_notifikasi"
+    const val PENGATURAN_NOTIFIKASI = "pengaturan_notifikasi"
 
     // Helper untuk route dengan argumen
     fun verifikasiPemulihan(email: String) = "verifikasi_pemulihan/$email"

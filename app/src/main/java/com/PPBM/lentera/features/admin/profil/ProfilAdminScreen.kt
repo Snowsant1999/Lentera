@@ -64,6 +64,7 @@ fun ProfilAdminScreen(
     onMenuClick: (MenuProfilItem) -> Unit = {},
     onAvatarClick: () -> Unit = {},
     onUploadFoto: (ByteArray) -> Unit = {},
+    onHapusFoto: () -> Unit = {},
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
@@ -71,6 +72,8 @@ fun ProfilAdminScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+    var showConfirmHapusFotoDialog by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -95,6 +98,31 @@ fun ProfilAdminScreen(
                         }
                     }
                 }
+            }
+        )
+    }
+
+    if (showPhotoOptionsDialog) {
+        OpsiFotoProfilDialog(
+            onDismiss = { showPhotoOptionsDialog = false },
+            onGantiFoto = {
+                showPhotoOptionsDialog = false
+                imagePickerLauncher.launch("image/*")
+            },
+            onHapusFoto = {
+                showPhotoOptionsDialog = false
+                showConfirmHapusFotoDialog = true
+            }
+        )
+    }
+
+    if (showConfirmHapusFotoDialog) {
+        KonfirmasiHapusFotoDialog(
+            onDismiss = { showConfirmHapusFotoDialog = false },
+            onConfirm = {
+                showConfirmHapusFotoDialog = false
+                imageUri = null
+                onHapusFoto()
             }
         )
     }
@@ -150,7 +178,11 @@ fun ProfilAdminScreen(
                 imageUri = imageUri,
                 photoUrl = photoUrl,
                 onAvatarClick = {
-                    imagePickerLauncher.launch("image/*")
+                    if (!photoUrl.isNullOrBlank() || imageUri != null) {
+                        showPhotoOptionsDialog = true
+                    } else {
+                        imagePickerLauncher.launch("image/*")
+                    }
                     onAvatarClick()
                 }
             )
