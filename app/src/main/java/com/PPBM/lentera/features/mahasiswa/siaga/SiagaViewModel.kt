@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 data class SelectedBukti(
+    val id: String? = null,
+    val storagePath: String? = null,
     val uri: Uri? = null,
     val fileName: String,
     val fileType: String,
@@ -205,6 +207,46 @@ class SiagaViewModel(
             val item = current[index]
             current[index] = item.copy(isExcluded = !item.isExcluded)
             _uiState.value = _uiState.value.copy(uploadedBuktiList = current)
+        }
+    }
+
+    /**
+     * Menghapus bukti secara fisik dari draf dan database/storage jika sudah tersimpan
+     */
+    fun removeBukti(
+        index: Int,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        val current = _uiState.value.uploadedBuktiList.toMutableList()
+        if (index !in current.indices) return
+        val target = current[index]
+
+        if (!target.id.isNullOrBlank() || !target.storagePath.isNullOrBlank()) {
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                val result = siagaRepo.deleteBuktiLaporan(target.id.orEmpty(), target.storagePath)
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                result.onSuccess {
+                    val updated = _uiState.value.uploadedBuktiList.toMutableList()
+                    if (index in updated.indices && updated[index] == target) {
+                        updated.removeAt(index)
+                    } else {
+                        updated.removeAll { it.fileName == target.fileName }
+                    }
+                    _uiState.value = _uiState.value.copy(uploadedBuktiList = updated)
+                    onSuccess("Berkas bukti '${target.fileName}' berhasil dihapus.")
+                }.onFailure { err ->
+                    val msg = err.message ?: "Gagal menghapus berkas bukti."
+                    _uiState.value = _uiState.value.copy(errorMessage = msg)
+                    onError(msg)
+                }
+            }
+        } else {
+            // Berkas lokal di form draf: langsung hapus dari memori
+            current.removeAt(index)
+            _uiState.value = _uiState.value.copy(uploadedBuktiList = current)
+            onSuccess("Berkas bukti '${target.fileName}' dihapus dari draf.")
         }
     }
 

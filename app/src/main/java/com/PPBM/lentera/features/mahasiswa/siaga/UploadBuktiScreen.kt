@@ -79,14 +79,8 @@ fun UploadBuktiScreen(
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     var filesList by remember { mutableStateOf(initialFiles) }
-    val originalSizes = remember { mutableStateMapOf<String, String>() }
 
     LaunchedEffect(initialFiles) {
-        initialFiles.forEach { item ->
-            if (!item.isExcluded && !item.fileSize.startsWith("Dihapus")) {
-                originalSizes[item.id] = item.fileSize
-            }
-        }
         filesList = initialFiles
     }
 
@@ -186,25 +180,10 @@ fun UploadBuktiScreen(
                         BuktiFileCard(
                             item = fileItem,
                             onDeleteClick = {
-                                if (!fileItem.isExcluded) {
-                                    originalSizes[fileItem.id] = fileItem.fileSize
-                                }
-                                filesList = filesList.map {
-                                    if (it.id == fileItem.id) it.copy(
-                                        isExcluded = true,
-                                        fileSize = "Dihapus · tidak disertakan"
-                                    ) else it
-                                }
+                                filesList = filesList.filter { it.id != fileItem.id }
                                 onDeleteFile(fileItem)
                             },
                             onRestoreClick = {
-                                val restoredSize = originalSizes[fileItem.id] ?: fileItem.fileSize
-                                filesList = filesList.map {
-                                    if (it.id == fileItem.id) it.copy(
-                                        isExcluded = false,
-                                        fileSize = restoredSize
-                                    ) else it
-                                }
                                 onRestoreFile(fileItem)
                             },
                             fontFamily = plusJakarta

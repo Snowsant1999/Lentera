@@ -1312,7 +1312,12 @@ fun LenteraNavGraph(
                             jalurTindakLanjut = jalur.ifBlank { "Pemeriksaan dan Pendampingan Tim Advokasi" },
                             catatanPenugasan = catatan.ifBlank { null },
                             onError = { showToast(it) },
-                            onSuccess = { navController.navigate(Routes.ADMIN_CATATAN_TINDAKAN) }
+                            onSuccess = {
+                                showToast("Penugasan laporan berhasil disimpan.", isLong = false)
+                                adminViewModel.selectLaporan(lapId)
+                                adminViewModel.loadDashboardData()
+                                navController.popBackStack()
+                            }
                         )
                     } else {
                         showToast("Data laporan tidak ditemukan.", isLong = false)
@@ -1402,6 +1407,7 @@ fun LenteraNavGraph(
                 mitraList = adminState.tempatMagangList,
                 lowonganList = adminState.lowonganAdminList,
                 lamaranCount = adminState.lamaranMasukList.size,
+                logoUrlMap = adminState.logoUrlMap,
                 onNavigateToDetailTempat = { tempat ->
                     adminViewModel.selectTempatMagang(tempat)
                     navController.navigate(Routes.ADMIN_DETAIL_TEMPAT_MAGANG)
@@ -1454,9 +1460,26 @@ fun LenteraNavGraph(
 
         // Detail Tempat Magang
         composable(Routes.ADMIN_DETAIL_TEMPAT_MAGANG) {
+            val selectedTempat = adminState.selectedTempatMagang
             DetailTempatMagangScreen(
-                tempat = adminState.selectedTempatMagang,
+                tempat = selectedTempat,
                 dokumenList = adminState.selectedTempatDokumenList,
+                logoUrl = selectedTempat?.logoPath?.let { adminState.logoUrlMap[it] },
+                onDeleteLogo = {
+                    val tid = selectedTempat?.id
+                    if (!tid.isNullOrBlank()) {
+                        adminViewModel.deleteLogoTempatMagang(
+                            tempatId = tid,
+                            storagePath = selectedTempat.logoPath,
+                            onSuccess = {
+                                showToast("Logo tempat magang berhasil dihapus.", isLong = false)
+                            },
+                            onError = { err ->
+                                showToast(err, isLong = false)
+                            }
+                        )
+                    }
+                },
                 onOpenDokumen = { doc ->
                     openSignedUrl { adminViewModel.getSignedUrl("dokumen-mitra", doc.filePath) }
                 },
@@ -1859,7 +1882,17 @@ fun LenteraNavGraph(
                 },
                 onKembaliClick = { navController.popBackStack() },
                 onDeleteFile = { item ->
-                    item.id.toIntOrNull()?.let { siagaViewModel.toggleExcludeBukti(it) }
+                    item.id.toIntOrNull()?.let { idx ->
+                        siagaViewModel.removeBukti(
+                            index = idx,
+                            onSuccess = { msg ->
+                                android.widget.Toast.makeText(navContext, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            onError = { errMsg ->
+                                android.widget.Toast.makeText(navContext, errMsg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
                 },
                 onRestoreFile = { item ->
                     item.id.toIntOrNull()?.let { siagaViewModel.toggleExcludeBukti(it) }

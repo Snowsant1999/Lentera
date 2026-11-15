@@ -68,6 +68,34 @@ class AdminMagangRepository {
     }
 
     /**
+     * Menghapus berkas logo dari bucket `logo-perusahaan` dan mengosongkan `logo_path` pada tabel `tempat_magang`.
+     */
+    suspend fun deleteLogoTempatMagang(tempatId: String, storagePath: String? = null): Result<Unit> {
+        return try {
+            if (!storagePath.isNullOrBlank()) {
+                try {
+                    storage.from("logo-perusahaan").delete(storagePath)
+                } catch (_: Exception) {
+                    // Abaikan jika berkas di storage sudah tidak ada
+                }
+            }
+            if (tempatId.isNotBlank()) {
+                val payload = buildJsonObject {
+                    put("logo_path", null as String?)
+                }
+                client.from("tempat_magang").update(payload) {
+                    filter {
+                        eq("id", tempatId)
+                    }
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal menghapus logo tempat magang.")))
+        }
+    }
+
+    /**
      * Mengunggah dokumen MOU / legalitas mitra ke bucket `dokumen-mitra`
      * dan mencatatnya ke tabel `dokumen_tempat_magang`.
      */

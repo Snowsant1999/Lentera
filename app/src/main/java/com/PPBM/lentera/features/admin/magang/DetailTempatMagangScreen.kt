@@ -35,23 +35,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 
 @Composable
 fun DetailTempatMagangScreen(
     tempat: TempatMagangEntity? = null,
     dokumenList: List<DokumenTempatMagangItem> = emptyList(),
+    logoUrl: String? = null,
+    onDeleteLogo: () -> Unit = {},
     onOpenDokumen: (DokumenTempatMagangItem) -> Unit = {},
     onNavigateToKelolaStatus: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    var showDeleteLogoDialog by remember { mutableStateOf(false) }
     val namaPerusahaan = tempat?.namaPerusahaan ?: "Tempat Magang"
     val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
     val statusText = (tempat?.status ?: "Draf").replaceFirstChar { it.uppercase() }
@@ -61,6 +72,53 @@ fun DetailTempatMagangScreen(
     val kontakNama = tempat?.namaKontak ?: "-"
     val kontakEmail = tempat?.emailKontak ?: "-"
     val kontakTelepon = tempat?.teleponKontak ?: "-"
+
+    if (showDeleteLogoDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteLogoDialog = false },
+            title = {
+                Text(
+                    text = "Hapus Logo Perusahaan",
+                    fontFamily = PlusJakartaFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "Apakah Anda yakin ingin menghapus logo tempat magang ini? Logo akan dihapus dari server dan kembali ke logo default.",
+                    fontFamily = PlusJakartaFont,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteLogoDialog = false
+                        onDeleteLogo()
+                    }
+                ) {
+                    Text(
+                        text = "Hapus",
+                        color = Color(0xFFD32F2F),
+                        fontFamily = PlusJakartaFont,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteLogoDialog = false }
+                ) {
+                    Text(
+                        text = "Batal",
+                        color = MagangNavyDark,
+                        fontFamily = PlusJakartaFont
+                    )
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -102,12 +160,23 @@ fun DetailTempatMagangScreen(
                                     .background(Color(0xFFEAF2F8)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_building_2),
-                                    contentDescription = "Building",
-                                    tint = MagangNavyDark,
-                                    modifier = Modifier.size(26.dp)
-                                )
+                                if (!logoUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = logoUrl,
+                                        contentDescription = "Logo $namaPerusahaan",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(12.dp))
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_building_2),
+                                        contentDescription = "Building",
+                                        tint = MagangNavyDark,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.width(14.dp))
@@ -132,6 +201,21 @@ fun DetailTempatMagangScreen(
                                         color = MagangTextSecondary
                                     )
                                 )
+                                if (!tempat?.logoPath.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Hapus Logo",
+                                        style = TextStyle(
+                                            fontSize = 12.sp,
+                                            fontFamily = PlusJakartaFont,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFFD32F2F)
+                                        ),
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .clickable { showDeleteLogoDialog = true }
+                                    )
+                                }
                             }
                         }
 

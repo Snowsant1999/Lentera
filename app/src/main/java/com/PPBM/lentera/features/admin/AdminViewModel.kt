@@ -52,6 +52,7 @@ data class AdminUiState(
     val selectedPelamarDokumenList: List<DokumenLamaranItem> = emptyList(),
     val selectedTempatMagang: TempatMagangEntity? = null,
     val selectedLowonganAdmin: LowonganEntity? = null,
+    val logoUrlMap: Map<String, String> = emptyMap(),
     val isCreatingMahasiswa: Boolean = false,
     val isUpdatingLaporan: Boolean = false,
     val isSubmittingMagang: Boolean = false,
@@ -685,14 +686,25 @@ class AdminViewModel(
     // ========================================================================
 
     /**
-     * Memuat seluruh daftar tempat magang / mitra
+     * Memuat seluruh daftar tempat magang / mitra beserta signed URL logo
      */
     fun loadTempatMagangList() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val res = adminMagangRepo.getTempatMagangList()
             res.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, tempatMagangList = list)
+                val currentLogoMap = _uiState.value.logoUrlMap.toMutableMap()
+                val pathsToFetch = list.mapNotNull { it.logoPath }.filter { it.isNotBlank() && !currentLogoMap.containsKey(it) }
+                for (path in pathsToFetch) {
+                    adminMagangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                        currentLogoMap[path] = url
+                    }
+                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    tempatMagangList = list,
+                    logoUrlMap = currentLogoMap
+                )
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -761,6 +773,52 @@ class AdminViewModel(
         viewModelScope.launch {
             val doks = adminMagangRepo.getDokumenTempatMagang(tempatId).getOrDefault(emptyList())
             _uiState.value = _uiState.value.copy(selectedTempatDokumenList = doks)
+
+            // Resolve signed URL untuk logo jika ada
+            val path = tempat.logoPath
+            if (!path.isNullOrBlank() && !_uiState.value.logoUrlMap.containsKey(path)) {
+                adminMagangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                    val map = _uiState.value.logoUrlMap.toMutableMap()
+                    map[path] = url
+                    _uiState.value = _uiState.value.copy(logoUrlMap = map)
+                }
+            }
+        }
+    }
+
+    /**
+     * Menghapus logo tempat magang dari storage dan database
+     */
+    fun deleteLogoTempatMagang(
+        tempatId: String,
+        storagePath: String?,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true, errorMessage = null)
+            val res = adminMagangRepo.deleteLogoTempatMagang(tempatId, storagePath)
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+            res.onSuccess {
+                val updatedTempat = _uiState.value.selectedTempatMagang?.takeIf { it.id == tempatId }?.copy(logoPath = null)
+                val updatedList = _uiState.value.tempatMagangList.map {
+                    if (it.id == tempatId) it.copy(logoPath = null) else it
+                }
+                val updatedLogoMap = _uiState.value.logoUrlMap.toMutableMap()
+                if (!storagePath.isNullOrBlank()) {
+                    updatedLogoMap.remove(storagePath)
+                }
+                _uiState.value = _uiState.value.copy(
+                    selectedTempatMagang = updatedTempat ?: _uiState.value.selectedTempatMagang,
+                    tempatMagangList = updatedList,
+                    logoUrlMap = updatedLogoMap
+                )
+                onSuccess()
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal menghapus logo tempat magang"
+                _uiState.value = _uiState.value.copy(errorMessage = msg)
+                onError(msg)
+            }
         }
     }
 
