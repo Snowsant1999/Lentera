@@ -180,7 +180,6 @@ fun UploadBuktiScreen(
                         BuktiFileCard(
                             item = fileItem,
                             onDeleteClick = {
-                                filesList = filesList.filter { it.id != fileItem.id }
                                 onDeleteFile(fileItem)
                             },
                             onRestoreClick = {

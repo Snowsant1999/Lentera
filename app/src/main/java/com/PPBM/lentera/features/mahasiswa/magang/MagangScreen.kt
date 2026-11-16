@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
 
@@ -70,6 +71,7 @@ data class LowonganCardData(
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
     val logoDrawable: Int = R.drawable.ic_avatar_2,
+    val logoUrl: String? = null,
     val isBookmarked: Boolean = false
 )
 
@@ -768,11 +770,22 @@ private fun LowonganHorizontalCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     // Logo perusahaan
-                    Image(
-                        painter = painterResource(id = data.logoDrawable),
-                        contentDescription = "Logo Perusahaan",
-                        modifier = Modifier.size(42.dp)
-                    )
+                    if (!data.logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = data.logoUrl,
+                            contentDescription = "Logo Perusahaan",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = data.logoDrawable),
+                            contentDescription = "Logo Perusahaan",
+                            modifier = Modifier.size(42.dp)
+                        )
+                    }
 
                     // Bookmark icon
                     Box(

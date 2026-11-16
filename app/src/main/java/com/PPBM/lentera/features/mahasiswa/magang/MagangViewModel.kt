@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 data class MagangUiState(
     val isLoading: Boolean = false,
     val lowonganList: List<LowonganTerbit> = emptyList(),
+    val logoUrlMap: Map<String, String> = emptyMap(),
     val lamaranSayaList: List<LamaranSaya> = emptyList(),
     val bookmarkedIds: Set<String> = emptySet(),
     val selectedLowongan: LowonganTerbit? = null,
@@ -54,9 +55,21 @@ class MagangViewModel(
             val firstError = lowonganRes.exceptionOrNull()?.message
                 ?: lamaranRes.exceptionOrNull()?.message
 
+            val loadedLowongan = lowonganRes.getOrDefault(_uiState.value.lowonganList)
+            val currentLogoMap = _uiState.value.logoUrlMap.toMutableMap()
+            val pathsToFetch = loadedLowongan.mapNotNull { it.logoPath }
+                .filter { it.isNotBlank() && !currentLogoMap.containsKey(it) }
+                .distinct()
+            for (path in pathsToFetch) {
+                magangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                    currentLogoMap[path] = url
+                }
+            }
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                lowonganList = lowonganRes.getOrDefault(_uiState.value.lowonganList),
+                lowonganList = loadedLowongan,
+                logoUrlMap = currentLogoMap,
                 lamaranSayaList = lamaranRes.getOrDefault(_uiState.value.lamaranSayaList),
                 bookmarkedIds = bookmarkRes.getOrDefault(_uiState.value.bookmarkedIds),
                 errorMessage = firstError

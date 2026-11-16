@@ -214,22 +214,23 @@ class SiagaRepository {
     }
 
     /**
-     * Menghapus berkas bukti dari Supabase Storage dan tabel `bukti_laporan`.
+     * Menghapus berkas bukti dari tabel `bukti_laporan` terlebih dahulu,
+     * lalu membersihkan berkas fisik dari Supabase Storage (`bukti-laporan`).
      */
     suspend fun deleteBuktiLaporan(buktiId: String, storagePath: String? = null): Result<Unit> {
         return try {
-            if (!storagePath.isNullOrBlank()) {
-                try {
-                    storage.from("bukti-laporan").delete(storagePath)
-                } catch (_: Exception) {
-                    // Berkas mungkin sudah dihapus atau tidak ditemukan di storage, lanjutkan ke record DB
-                }
-            }
             if (buktiId.isNotBlank()) {
                 client.from("bukti_laporan").delete {
                     filter {
                         eq("id", buktiId)
                     }
+                }
+            }
+            if (!storagePath.isNullOrBlank()) {
+                try {
+                    storage.from("bukti-laporan").delete(storagePath)
+                } catch (_: Exception) {
+                    // Berkas mungkin sudah dihapus atau tidak ditemukan di storage
                 }
             }
             Result.success(Unit)

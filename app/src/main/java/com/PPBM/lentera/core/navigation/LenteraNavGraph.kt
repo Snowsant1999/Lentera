@@ -401,7 +401,7 @@ fun LenteraNavGraph(
             riwayatList = magangState.riwayatStatusList,
             dokumenList = magangState.dokumenLamaranList,
             onOpenDokumen = { doc ->
-                openSignedUrl { magangViewModel.getSignedUrl("dokumen-lamaran", doc.filePath) }
+                openFile(doc.filePath, doc.namaFile) { magangViewModel.getSignedUrl("dokumen-lamaran", doc.filePath) }
             },
             onBackClick = { navController.popBackStack() },
             onPerbaikiDokumenClick = { navController.navigate(Routes.PERBAIKAN_DOKUMEN) },
@@ -928,6 +928,9 @@ fun LenteraNavGraph(
             val context = LocalContext.current
             val session = SessionManager.getInstance(context)
             var currentProfile by remember { mutableStateOf(session.getProfile()) }
+            LaunchedEffect(Unit) {
+                currentProfile = session.getProfile()
+            }
             val identifier = currentProfile?.nim?.takeIf { it.isNotBlank() }
                 ?: currentProfile?.email?.takeIf { it.isNotBlank() }
                 ?: "-"
@@ -1406,7 +1409,7 @@ fun LenteraNavGraph(
                 dokumenHasilList = adminState.selectedLaporanDokumenHasil,
                 isUpdating = adminState.isUpdatingLaporan,
                 onOpenDokumen = { doc ->
-                    openSignedUrl { adminViewModel.getSignedUrl("dokumen-hasil", doc.filePath) }
+                    openFile(doc.filePath, doc.namaFile) { adminViewModel.getSignedUrl("dokumen-hasil", doc.filePath) }
                 },
                 onSimpanDanSelesaikan = { ringkasan, isBagikan ->
                     val lapId = selectedLaporan.id
@@ -1544,7 +1547,7 @@ fun LenteraNavGraph(
                     }
                 },
                 onOpenDokumen = { doc ->
-                    openSignedUrl { adminViewModel.getSignedUrl("dokumen-mitra", doc.filePath) }
+                    openFile(doc.filePath, doc.namaFile) { adminViewModel.getSignedUrl("dokumen-mitra", doc.filePath) }
                 },
                 onNavigateToKelolaStatus = { navController.navigate(Routes.ADMIN_KELOLA_STATUS_TEMPAT) },
                 onBackToTempatMagang = { navController.popBackStack() },
@@ -1776,7 +1779,7 @@ fun LenteraNavGraph(
                 dokumenList = adminState.selectedPelamarDokumenList,
                 isUpdating = adminState.isSubmittingMagang,
                 onOpenDokumen = { doc ->
-                    openSignedUrl { adminViewModel.getSignedUrl("dokumen-lamaran", doc.filePath) }
+                    openFile(doc.filePath, doc.namaFile) { adminViewModel.getSignedUrl("dokumen-lamaran", doc.filePath) }
                 },
                 onBackClick = { navController.popBackStack() },
                 onStatusUpdated = { newStatus, newCatatan, onError, onSuccess ->
@@ -2204,7 +2207,7 @@ fun LenteraNavGraph(
                 },
                 onItemClick = { item ->
                     if (item.filePath.isNotBlank()) {
-                        openSignedUrl { siagaViewModel.getDokumenHasilSignedUrl(item.filePath) }
+                        openFile(item.filePath, item.judul) { siagaViewModel.getDokumenHasilSignedUrl(item.filePath) }
                     } else {
                         navController.navigate(Routes.DOKUMENTASI)
                     }
@@ -2368,6 +2371,7 @@ fun LenteraNavGraph(
                     tipe = item.sistemKerja.uppercase(),
                     batasHari = daysUntilDeadline(item.batasPendaftaran),
                     logoDrawable = R.drawable.ic_avatar_2,
+                    logoUrl = item.logoPath?.let { magangState.logoUrlMap[it] },
                     isBookmarked = magangState.bookmarkedIds.contains(item.id)
                 )
             }
@@ -2439,6 +2443,7 @@ fun LenteraNavGraph(
                     status = if (isOpen) "Available" else "Tutup",
                     batasHari = daysUntilDeadline(lw.batasPendaftaran),
                     logoDrawable = R.drawable.ic_avatar_2,
+                    logoUrl = lw.logoPath?.let { magangState.logoUrlMap[it] },
                     isBookmarked = magangState.bookmarkedIds.contains(lw.id)
                 )
             }

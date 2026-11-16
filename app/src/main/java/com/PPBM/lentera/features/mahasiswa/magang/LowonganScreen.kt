@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.theme.*
 
@@ -53,6 +54,7 @@ data class LowonganItem(
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
     val logoDrawable: Int = R.drawable.ic_avatar_2,
+    val logoUrl: String? = null,
     val isBookmarked: Boolean = false
 )
 
@@ -400,14 +402,25 @@ private fun LowonganItemCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     // Logo/Avatar Perusahaan Bulat
-                    Image(
-                        painter = painterResource(id = item.logoDrawable),
-                        contentDescription = "Logo Perusahaan",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(CircleShape)
-                    )
+                    if (!item.logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = item.logoUrl,
+                            contentDescription = "Logo Perusahaan",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = item.logoDrawable),
+                            contentDescription = "Logo Perusahaan",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.width(12.dp))
 

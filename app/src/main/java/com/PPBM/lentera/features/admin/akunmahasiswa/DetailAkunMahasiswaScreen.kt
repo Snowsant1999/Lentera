@@ -266,6 +266,7 @@ fun DetailAkunMahasiswaScreen(
                             editPt = cleanEditableValue(perguruanTinggi)
                             editProdi = cleanEditableValue(programStudi)
                             editAngkatan = cleanEditableValue(angkatan)
+                            editNoTelepon = cleanEditableValue(noTelepon)
                             editError = null
                             isSavingEdit = false
                             showEditDialog = true
