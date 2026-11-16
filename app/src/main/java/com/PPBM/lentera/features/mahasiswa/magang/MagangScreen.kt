@@ -1,4 +1,7 @@
 package com.PPBM.lentera.features.mahasiswa.magang
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.layout.ContentScale
 
 import com.PPBM.lentera.core.designsystem.components.MahasiswaBottomBar
@@ -315,6 +318,13 @@ private fun LengkapiProfilCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Progress Bar Baris
+            var startProgressAnim by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { startProgressAnim = true }
+            val animatedFraction by animateFloatAsState(
+                targetValue = if (startProgressAnim) (completionPercentage.coerceIn(0, 100) / 100f) else 0f,
+                animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+                label = "magangProgress"
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -324,7 +334,7 @@ private fun LengkapiProfilCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(fraction = (completionPercentage.coerceIn(0, 100) / 100f))
+                        .fillMaxWidth(fraction = animatedFraction)
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(MagangAmberPrimary)

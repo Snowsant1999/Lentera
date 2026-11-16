@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.pressScale
 import com.PPBM.lentera.core.designsystem.theme.*
 
 /**
@@ -435,18 +436,20 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Button Masuk
+                val loginInteraction = remember { MutableInteractionSource() }
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
+                        .pressScale(loginInteraction)
                         .background(
                             if (uiState.isLoading) NavyMedium.copy(alpha = 0.7f) else NavyMedium,
                             RoundedCornerShape(16.dp)
                         )
                         .clickable(
                             enabled = !uiState.isLoading,
-                            interactionSource = remember { MutableInteractionSource() },
+                            interactionSource = loginInteraction,
                             indication = null
                         ) { doLogin() }
                 ) {

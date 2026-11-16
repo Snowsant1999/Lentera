@@ -1,4 +1,12 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import com.PPBM.lentera.core.designsystem.components.LenteraShimmerBox
+import com.PPBM.lentera.core.designsystem.components.bounceClick
 import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
@@ -81,6 +89,7 @@ data class RiwayatLaporanItem(
 @Composable
 fun RiwayatLaporanScreen(
     reportList: List<RiwayatLaporanItem> = emptyList(),
+    isLoading: Boolean = false,
     onBackClick: () -> Unit = {},
     onReportClick: (RiwayatLaporanItem) -> Unit = {},
     onKembaliKeDashboard: () -> Unit = {}
@@ -179,57 +188,90 @@ fun RiwayatLaporanScreen(
             }
 
             // 4. Daftar Kartu Laporan (LazyColumn)
-            if (filteredList.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_shield),
-                            contentDescription = null,
-                            tint = Color(0xFF94A3B8),
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Belum Ada Riwayat Laporan",
-                            style = TextStyle(
-                                fontFamily = plusJakarta,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDark
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Laporan yang Anda buat akan muncul di sini.",
-                            style = TextStyle(
-                                fontFamily = plusJakarta,
-                                fontSize = 13.sp,
-                                color = SlateGray
-                            )
-                        )
+            val listStateKey = when {
+                isLoading && reportList.isEmpty() -> "loading"
+                filteredList.isEmpty() -> "empty_${selectedFilter.name}"
+                else -> "content_${selectedFilter.name}"
+            }
+            AnimatedContent(
+                targetState = listStateKey,
+                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
+                label = "riwayatListState",
+                modifier = Modifier.fillMaxSize()
+            ) { stateKey ->
+                when {
+                    stateKey == "loading" -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            repeat(4) {
+                                LenteraShimmerBox(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(92.dp),
+                                    shape = RoundedCornerShape(18.dp)
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(filteredList, key = { it.id }) { item ->
-                        RiwayatLaporanCard(
-                            item = item,
-                            onClick = { onReportClick(item) },
-                            fontFamily = plusJakarta
-                        )
+                    stateKey.startsWith("empty_") -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp, vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_shield),
+                                    contentDescription = null,
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Belum Ada Riwayat Laporan",
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NavyDark
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Laporan yang Anda buat akan muncul di sini.",
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 13.sp,
+                                        color = SlateGray
+                                    )
+                                )
+                            }
+                        }
                     }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            items(filteredList, key = { it.id }) { item ->
+                                RiwayatLaporanCard(
+                                    item = item,
+                                    onClick = { onReportClick(item) },
+                                    fontFamily = plusJakarta,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
 
-                    item {
-                        Spacer(modifier = Modifier.height(20.dp))
+                            item {
+                                Spacer(modifier = Modifier.height(20.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -412,13 +454,14 @@ private fun FilterTabsRow(
 private fun RiwayatLaporanCard(
     item: RiwayatLaporanItem,
     onClick: () -> Unit,
-    fontFamily: FontFamily
+    fontFamily: FontFamily,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick),
+            .bounceClick(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = CardWhite),
         border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),

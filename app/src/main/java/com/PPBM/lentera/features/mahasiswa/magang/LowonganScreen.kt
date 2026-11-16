@@ -1,5 +1,10 @@
 package com.PPBM.lentera.features.mahasiswa.magang
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.LenteraShimmerBox
+import com.PPBM.lentera.core.designsystem.components.bounceClick
 import com.PPBM.lentera.core.designsystem.theme.*
 
 // ============================================================================
@@ -69,6 +76,7 @@ data class LowonganItem(
 @Composable
 fun LowonganScreen(
     lowonganList: List<LowonganItem> = emptyList(),
+    isLoading: Boolean = false,
     onBackClick: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onLowonganClick: (LowonganItem) -> Unit = {},
@@ -173,61 +181,93 @@ fun LowonganScreen(
             }
 
             // 5. Daftar Kartu Lowongan Vertikal
-            if (filteredList.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = if (selectedCategory == "Tersimpan") R.drawable.ic_bookmark else R.drawable.ic_search_alt),
-                            contentDescription = null,
-                            tint = SlateGray,
-                            modifier = Modifier.size(44.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = if (selectedCategory == "Tersimpan") "Belum ada lowongan tersimpan" else "Lowongan tidak ditemukan",
-                            style = TextStyle(
-                                fontFamily = plusJakarta,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDark
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (selectedCategory == "Tersimpan") "Klik ikon bookmark pada lowongan untuk menyimpannya di sini" else "Coba cari dengan kata kunci lain",
-                            style = TextStyle(
-                                fontFamily = plusJakarta,
-                                fontSize = 12.5.sp,
-                                color = SlateGray,
-                                textAlign = TextAlign.Center
-                            )
-                        )
+            val listStateKey = when {
+                isLoading && lowonganList.isEmpty() -> "loading"
+                filteredList.isEmpty() -> "empty_$selectedCategory"
+                else -> "content_$selectedCategory"
+            }
+            AnimatedContent(
+                targetState = listStateKey,
+                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
+                label = "lowonganListState",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) { stateKey ->
+                when {
+                    stateKey == "loading" -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp, vertical = 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            repeat(4) {
+                                LenteraShimmerBox(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(132.dp),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(filteredList) { item ->
-                        LowonganItemCard(
-                            item = item,
-                            onClick = { onLowonganClick(item) },
-                            onBookmarkClick = { onBookmarkToggle(item) },
-                            fontFamily = plusJakarta
-                        )
+                    stateKey.startsWith("empty_") -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = if (selectedCategory == "Tersimpan") R.drawable.ic_bookmark else R.drawable.ic_search_alt),
+                                    contentDescription = null,
+                                    tint = SlateGray,
+                                    modifier = Modifier.size(44.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = if (selectedCategory == "Tersimpan") "Belum ada lowongan tersimpan" else "Lowongan tidak ditemukan",
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NavyDark
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (selectedCategory == "Tersimpan") "Klik ikon bookmark pada lowongan untuk menyimpannya di sini" else "Coba cari dengan kata kunci lain",
+                                    style = TextStyle(
+                                        fontFamily = plusJakarta,
+                                        fontSize = 12.5.sp,
+                                        color = SlateGray,
+                                        textAlign = TextAlign.Center
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            items(filteredList, key = { it.id }) { item ->
+                                LowonganItemCard(
+                                    item = item,
+                                    onClick = { onLowonganClick(item) },
+                                    onBookmarkClick = { onBookmarkToggle(item) },
+                                    fontFamily = plusJakarta,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -374,13 +414,14 @@ private fun LowonganItemCard(
     item: LowonganItem,
     onClick: () -> Unit,
     onBookmarkClick: () -> Unit,
-    fontFamily: FontFamily
+    fontFamily: FontFamily,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .bounceClick(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
