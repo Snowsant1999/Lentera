@@ -19,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.PPBM.lentera.MainActivity
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.mahasiswa.model.NotifikasiItem
 
 /**
  * Pengelola Notifikasi Khusus LENTERA (N1).
@@ -32,6 +33,8 @@ import com.PPBM.lentera.R
 object LenteraNotificationHelper {
     const val CHANNEL_ID = "lentera_alerts_v1"
     const val CHANNEL_NAME = "Notifikasi LENTERA"
+    const val EXTRA_NOTIF_KATEGORI = "extra_notif_kategori"
+    const val EXTRA_NOTIF_REFERENSI_ID = "extra_notif_referensi_id"
     private const val PREFS_NAME = "lentera_notif_prefs"
     private const val KEY_ALERTED_IDS = "alerted_notification_ids"
 
@@ -98,40 +101,77 @@ object LenteraNotificationHelper {
     }
 
     /**
+     * Menampilkan semua notifikasi baru dari tabel `notifikasi` yang belum pernah dikirim (N1.4, N1.5, N1.6).
+     * Mengembalikan daftar ID notifikasi yang berhasil ditampilkan agar dapat ditandai di server.
+     */
+    fun showPendingServerNotifications(
+        context: Context,
+        notifications: List<NotifikasiItem>
+    ): List<String> {
+        val appContext = context.applicationContext
+        createNotificationChannel(appContext)
+        if (!isNotificationPermissionGranted(appContext)) {
+            return emptyList()
+        }
+        val pending = notifications.filter { !it.isDibaca && it.pushTerkirimAt == null }
+        val sentIds = mutableListOf<String>()
+        pending.forEach { notif ->
+            val shown = showSystemNotification(
+                context = appContext,
+                title = notif.judul,
+                message = notif.isi,
+                notificationKey = notif.id,
+                kategori = notif.kategori,
+                referensiId = notif.referensiId
+            )
+            if (shown) {
+                sentIds.add(notif.id)
+            }
+        }
+        return sentIds
+    }
+
+    /**
      * Menampilkan notifikasi sistem dengan suara dan getar khas Lentera.
+     * Mengembalikan true jika notifikasi berhasil dikirim ke sistem.
      */
     fun showSystemNotification(
         context: Context,
         title: String,
         message: String,
-        notificationKey: String? = null
-    ) {
+        notificationKey: String? = null,
+        kategori: String? = null,
+        referensiId: String? = null
+    ): Boolean {
         val appContext = context.applicationContext
         createNotificationChannel(appContext)
 
         // 1. Cek izin notifikasi TERLEBIH DAHULU (N1.5)
         // Jika izin belum diberikan, jangan tandai kunci sebagai terkirim!
         if (!isNotificationPermissionGranted(appContext)) {
-            return
+            return false
         }
 
-        // 2. Cegah notifikasi duplikat jika kunci sudah pernah ditampilkan
+        // 2. Cegah notifikasi duplikat lokal jika kunci sudah pernah ditampilkan
         if (!notificationKey.isNullOrBlank()) {
             val prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val alerted = prefs.getStringSet(KEY_ALERTED_IDS, emptySet()) ?: emptySet()
             if (alerted.contains(notificationKey)) {
-                return
+                return false
             }
             prefs.edit().putStringSet(KEY_ALERTED_IDS, alerted + notificationKey).apply()
         }
 
+        val notificationId = (notificationKey?.hashCode() ?: System.currentTimeMillis().toInt())
         val soundUri = resolveSoundUri(appContext)
         val intent = Intent(appContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (!kategori.isNullOrBlank()) putExtra(EXTRA_NOTIF_KATEGORI, kategori)
+            if (!referensiId.isNullOrBlank()) putExtra(EXTRA_NOTIF_REFERENSI_ID, referensiId)
         }
         val pendingIntent = PendingIntent.getActivity(
             appContext,
-            0,
+            notificationId,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -148,10 +188,10 @@ object LenteraNotificationHelper {
             .setContentIntent(pendingIntent)
             .build()
 
-        runCatching {
-            val notificationId = (notificationKey?.hashCode() ?: System.currentTimeMillis().toInt())
+        return runCatching {
             NotificationManagerCompat.from(appContext).notify(notificationId, notification)
-        }
+            true
+        }.getOrDefault(false)
     }
 
     /**

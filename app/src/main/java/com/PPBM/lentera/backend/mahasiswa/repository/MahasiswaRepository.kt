@@ -8,6 +8,7 @@ import com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem
 import com.PPBM.lentera.backend.mahasiswa.model.NotifikasiItem
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.buildJsonObject
@@ -249,6 +250,24 @@ class MahasiswaRepository {
                     eq("id", notifId)
                 }
             }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Menandai daftar notifikasi telah dikirim sebagai notifikasi sistem di HP pengguna (N1.4).
+     */
+    suspend fun tandaiNotifikasiTerkirim(notifIds: List<String>): Result<Unit> {
+        if (notifIds.isEmpty()) return Result.success(Unit)
+        return try {
+            val payload = buildJsonObject {
+                put("p_notif_ids", kotlinx.serialization.json.JsonArray(
+                    notifIds.map { kotlinx.serialization.json.JsonPrimitive(it) }
+                ))
+            }
+            client.postgrest.rpc("tandai_notifikasi_terkirim", payload)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

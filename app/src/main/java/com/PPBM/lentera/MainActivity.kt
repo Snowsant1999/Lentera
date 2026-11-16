@@ -21,10 +21,12 @@ import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkParser
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
 import com.PPBM.lentera.core.navigation.LenteraNavGraph
+import com.PPBM.lentera.core.notification.LenteraNotifWorker
 import com.PPBM.lentera.core.notification.LenteraNotificationHelper
 
 class MainActivity : ComponentActivity() {
     private var pendingRecoveryUri by mutableStateOf<Uri?>(null)
+    private var pendingNotifCategory by mutableStateOf<String?>(null)
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -36,6 +38,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // N1.1: Pastikan channel tetap lentera_alerts_v1 dibuat saat aplikasi dibuka & channel usang dibersihkan
         LenteraNotificationHelper.createNotificationChannel(this)
+        LenteraNotifWorker.schedule(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
         }
 
         pendingRecoveryUri = extractRecoveryUri(intent)
+        pendingNotifCategory = extractNotifCategory(intent)
         setContent {
             LenteraTheme {
                 val navController = rememberNavController()
@@ -60,6 +64,12 @@ class MainActivity : ComponentActivity() {
                         if (currentIntent != null) {
                             setIntent(Intent(currentIntent).apply { data = null })
                         }
+                    },
+                    pendingNotifCategory = pendingNotifCategory,
+                    onNotifTapConsumed = {
+                        pendingNotifCategory = null
+                        intent?.removeExtra(LenteraNotificationHelper.EXTRA_NOTIF_KATEGORI)
+                        intent?.removeExtra(LenteraNotificationHelper.EXTRA_NOTIF_REFERENSI_ID)
                     }
                 )
             }
@@ -90,6 +100,14 @@ class MainActivity : ComponentActivity() {
         extractRecoveryUri(intent)?.let { uri ->
             pendingRecoveryUri = uri
         }
+        extractNotifCategory(intent)?.let { category ->
+            pendingNotifCategory = category
+        }
+    }
+
+    private fun extractNotifCategory(intent: Intent?): String? {
+        return intent?.getStringExtra(LenteraNotificationHelper.EXTRA_NOTIF_KATEGORI)
+            ?.takeIf { it.isNotBlank() }
     }
 
     private fun extractRecoveryUri(intent: Intent?): Uri? {

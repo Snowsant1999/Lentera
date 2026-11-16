@@ -81,7 +81,9 @@ import java.util.Locale
 fun LenteraNavGraph(
     navController: NavHostController,
     pendingRecoveryUri: Uri? = null,
-    onRecoveryUriConsumed: () -> Unit = {}
+    onRecoveryUriConsumed: () -> Unit = {},
+    pendingNotifCategory: String? = null,
+    onNotifTapConsumed: () -> Unit = {}
 ) {
     val siagaViewModel: SiagaViewModel = viewModel()
     val siagaState by siagaViewModel.uiState.collectAsState()
@@ -123,6 +125,27 @@ fun LenteraNavGraph(
             }
         }
         onRecoveryUriConsumed()
+    }
+
+    LaunchedEffect(pendingNotifCategory, currentRoute) {
+        if (pendingNotifCategory != null &&
+            sessionManager.isLoggedIn() &&
+            currentRoute != null &&
+            currentRoute != Routes.SPLASH &&
+            currentRoute != Routes.LOGIN
+        ) {
+            val targetRoute = if (sessionManager.getRole().equals("admin", ignoreCase = true)) {
+                Routes.ADMIN_NOTIFIKASI
+            } else {
+                Routes.MAHASISWA_NOTIFIKASI
+            }
+            if (currentRoute != targetRoute) {
+                navController.navigate(targetRoute) {
+                    launchSingleTop = true
+                }
+            }
+            onNotifTapConsumed()
+        }
     }
 
     LaunchedEffect(currentRoute, loginState.deepLinkErrorMessage) {

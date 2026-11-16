@@ -26,6 +26,7 @@ import com.PPBM.lentera.backend.mahasiswa.model.DokumenHasilItem
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenLamaranItem
 import com.PPBM.lentera.backend.mahasiswa.model.LamaranSaya
 import com.PPBM.lentera.backend.mahasiswa.model.PermintaanInformasiItem
+import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
 import com.PPBM.lentera.features.admin.magang.PelamarLamaranItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -100,6 +101,11 @@ class AdminViewModel(
             val lamaranResult = adminMagangRepo.getAllLamaranMasuk()
             val lamaranList = lamaranResult.getOrDefault(_uiState.value.lamaranMasukList)
 
+            val notifRepo = MahasiswaRepository()
+            val notifResult = notifRepo.getNotifikasi()
+            val adminNotifs = notifResult.getOrDefault(emptyList())
+            val unreadNotifs = adminNotifs.filter { !it.isDibaca }
+
             val hasPendingLaporan = laporanList.any { normalizeLaporanStatus(it.status) == "baru" }
             val hasPendingLamaran = lamaranList.any {
                 val norm = normalizeLamaranStatus(it.status)
@@ -107,29 +113,12 @@ class AdminViewModel(
             }
             val hasDraftLowongan = lowonganList.any { normalizeLowonganStatus(it.status) == "draf" }
             val unreadCount = (if (hasPendingLaporan) 1 else 0) + (if (hasPendingLamaran) 1 else 0) + (if (hasDraftLowongan) 1 else 0)
-            val shouldShowUnread = !_uiState.value.allNotificationsMarkedRead && unreadCount > 0
+            val shouldShowUnread = !_uiState.value.allNotificationsMarkedRead && (unreadNotifs.isNotEmpty() || unreadCount > 0)
 
-            if (context != null && shouldShowUnread) {
-                if (hasPendingLaporan) {
-                    val count = laporanList.count { normalizeLaporanStatus(it.status) == "baru" }
-                    LenteraNotificationHelper.showSystemNotification(
-                        context = context,
-                        title = "Laporan Baru Perlu Verifikasi",
-                        message = "$count laporan baru menunggu verifikasi tim LENTERA Siaga.",
-                        notificationKey = "admin_laporan_baru_${count}"
-                    )
-                }
-                if (hasPendingLamaran) {
-                    val count = lamaranList.count {
-                        val norm = normalizeLamaranStatus(it.status)
-                        norm == "terkirim" || norm == "pemeriksaan"
-                    }
-                    LenteraNotificationHelper.showSystemNotification(
-                        context = context,
-                        title = "Lamaran Magang Masuk",
-                        message = "$count berkas lamaran mahasiswa menunggu verifikasi admin.",
-                        notificationKey = "admin_lamaran_baru_${count}"
-                    )
+            if (context != null && unreadNotifs.isNotEmpty()) {
+                val sentIds = LenteraNotificationHelper.showPendingServerNotifications(context, unreadNotifs)
+                if (sentIds.isNotEmpty()) {
+                    notifRepo.tandaiNotifikasiTerkirim(sentIds)
                 }
             }
 

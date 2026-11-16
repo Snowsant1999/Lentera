@@ -82,13 +82,9 @@ class MahasiswaDashboardViewModel(
             val hasUnread = unreadNotifs.isNotEmpty()
 
             if (context != null && unreadNotifs.isNotEmpty()) {
-                unreadNotifs.take(3).forEach { notif ->
-                    LenteraNotificationHelper.showSystemNotification(
-                        context = context,
-                        title = notif.judul,
-                        message = notif.isi,
-                        notificationKey = "mhs_notif_${notif.id}"
-                    )
+                val sentIds = LenteraNotificationHelper.showPendingServerNotifications(context, unreadNotifs)
+                if (sentIds.isNotEmpty()) {
+                    mahasiswaRepo.tandaiNotifikasiTerkirim(sentIds)
                 }
             }
 
