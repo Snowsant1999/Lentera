@@ -21,6 +21,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 
+class SessionConflictException(message: String) : Exception(message)
+
 class AuthRepository(context: Context) {
     private val client = SupabaseConfig.client
     private val sessionManager = SessionManager.getInstance(context)
@@ -94,7 +96,11 @@ class AuthRepository(context: Context) {
                         client.auth.signOut()
                     } catch (_: Exception) {}
                     sessionManager.clearSession()
-                    return Result.failure(Exception(if (pesan.isNotBlank()) pesan else "Akun sedang aktif digunakan di perangkat lain."))
+                    return Result.failure(
+                        SessionConflictException(
+                            if (pesan.isNotBlank()) pesan else "Akun sedang aktif digunakan di perangkat lain."
+                        )
+                    )
                 }
             }
 
@@ -147,17 +153,50 @@ class AuthRepository(context: Context) {
     /**
      * Mengirim detak sesi (heartbeat) aktif ke server setiap 60 detik (C1).
      */
-    suspend fun sendHeartbeat(): Boolean {
-        if (!isLoggedIn()) return false
+    suspend fun sendHeartbeat(): Boolean = sendHeartbeatWithDetail().first
+
+    suspend fun sendHeartbeatWithDetail(): Pair<Boolean, String?> {
+        if (!isLoggedIn()) return true to null
         val deviceId = sessionManager.getDeviceId()
         return try {
             val rpcParams = buildJsonObject {
                 put("p_device_id", deviceId)
             }
             val res = client.postgrest.rpc("detak_sesi", rpcParams).decodeAs<JsonObject>()
-            res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+            val isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+            val message = res["message"]?.jsonPrimitive?.contentOrNull
+            isSuccess to message
         } catch (_: Exception) {
-            true // Jangan putus sesi hanya karena fluktuasi jaringan sementara
+            true to null // Jangan putus sesi hanya karena fluktuasi jaringan sementara
+        }
+    }
+
+    /**
+     * Memvalidasi atau mengklaim ulang sesi pada cold start aplikasi (C1).
+     */
+    suspend fun validateOrClaimSessionOnStartup(): Pair<Boolean, String?> {
+        if (!isLoggedIn()) return false to null
+        val deviceId = sessionManager.getDeviceId()
+        val deviceInfo = sessionManager.getDeviceInfo()
+        return try {
+            val rpcParams = buildJsonObject {
+                put("p_device_id", deviceId)
+                put("p_device_info", deviceInfo)
+            }
+            val res = client.postgrest.rpc("klaim_sesi", rpcParams).decodeAs<JsonObject>()
+            val isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+            val message = res["message"]?.jsonPrimitive?.contentOrNull
+            if (!isSuccess) {
+                try {
+                    client.auth.signOut()
+                } catch (_: Exception) {}
+                sessionManager.clearSession()
+                false to (message?.takeIf { it.isNotBlank() } ?: "Akun sedang aktif digunakan di perangkat lain.")
+            } else {
+                true to null
+            }
+        } catch (_: Exception) {
+            true to null // Jangan memblokir akses jika offline sementara
         }
     }
 

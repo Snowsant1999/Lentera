@@ -14,8 +14,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import com.PPBM.lentera.core.designsystem.icons.InfoIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -495,6 +497,73 @@ fun LoginScreen(
                 .padding(bottom = 32.dp)
         )
     }
+
+    uiState.sessionConflictMessage?.let { conflictMsg ->
+        AkunSedangDigunakanDialog(
+            message = conflictMsg,
+            onDismiss = { viewModel.clearSessionConflict() }
+        )
+    }
+}
+
+/**
+ * Dialog popup peringatan ketika akun sedang digunakan di perangkat lain (C1).
+ */
+@Composable
+fun AkunSedangDigunakanDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardWhite,
+        shape = RoundedCornerShape(20.dp),
+        icon = {
+            InfoIcon(
+                tint = ErrorRed,
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Akun Sedang Digunakan",
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontFamily = plusJakarta,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark,
+                    textAlign = TextAlign.Center
+                )
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    fontFamily = plusJakarta,
+                    fontWeight = FontWeight.Normal,
+                    color = SlateGray,
+                    textAlign = TextAlign.Center
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Mengerti",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = plusJakarta,
+                        fontWeight = FontWeight.Bold,
+                        color = NavyMedium
+                    )
+                )
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)

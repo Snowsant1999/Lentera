@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
+import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.backend.core.SupabaseConfig
 import com.PPBM.lentera.core.designsystem.theme.*
@@ -78,10 +79,20 @@ fun SplashScreen(
                 session.clearSession()
                 Routes.LOGIN
             }
-            profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
-            profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
-                Routes.resetPassword(profile.email)
-            else -> Routes.MAHASISWA_DASHBOARD
+            else -> {
+                val (isSessionValid, conflictMsg) = AuthRepository(context).validateOrClaimSessionOnStartup()
+                if (!isSessionValid) {
+                    if (!conflictMsg.isNullOrBlank()) {
+                        session.notifySessionConflict(conflictMsg)
+                    }
+                    Routes.LOGIN
+                } else when {
+                    profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
+                    profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
+                        Routes.resetPassword(profile.email)
+                    else -> Routes.MAHASISWA_DASHBOARD
+                }
+            }
         }
         onSplashFinished(destination)
     }

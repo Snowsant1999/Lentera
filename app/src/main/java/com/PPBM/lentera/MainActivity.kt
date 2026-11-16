@@ -72,8 +72,8 @@ class MainActivity : ComponentActivity() {
         val sessionManager = SessionManager.getInstance(this)
         if (sessionManager.isLoggedIn()) {
             val authRepo = AuthRepository(this)
-            sessionManager.startHeartbeat(lifecycleScope) {
-                authRepo.sendHeartbeat()
+            sessionManager.startHeartbeat(lifecycleScope, immediateCheck = true) {
+                authRepo.sendHeartbeatWithDetail()
             }
         }
     }

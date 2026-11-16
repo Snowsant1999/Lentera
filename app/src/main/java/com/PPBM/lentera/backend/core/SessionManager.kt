@@ -7,6 +7,9 @@ import com.PPBM.lentera.backend.auth.model.UserProfile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -21,6 +24,8 @@ class SessionManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     private val json = Json { ignoreUnknownKeys = true }
     private var heartbeatJob: Job? = null
+    private val _sessionConflictMessage = MutableStateFlow<String?>(null)
+    val sessionConflictMessage: StateFlow<String?> = _sessionConflictMessage.asStateFlow()
 
     companion object {
         private const val PREF_NAME = "lentera_session_prefs"
@@ -57,6 +62,7 @@ class SessionManager(context: Context) {
     }
 
     fun saveSession(profile: UserProfile) {
+        clearSessionConflict()
         val profileJson = json.encodeToString(profile)
         prefs.edit()
             .putBoolean(KEY_IS_LOGGED_IN, true)
@@ -81,20 +87,37 @@ class SessionManager(context: Context) {
         return getProfile()?.role
     }
 
+    fun notifySessionConflict(message: String) {
+        _sessionConflictMessage.value = message
+    }
+
+    fun clearSessionConflict() {
+        _sessionConflictMessage.value = null
+    }
+
     /**
      * Memulai pengiriman detak jantung sesi (heartbeat) setiap 60 detik (C1).
      */
-    fun startHeartbeat(scope: CoroutineScope, onDetak: suspend (deviceId: String) -> Boolean) {
+    fun startHeartbeat(
+        scope: CoroutineScope,
+        immediateCheck: Boolean = true,
+        onDetak: suspend (deviceId: String) -> Pair<Boolean, String?>
+    ) {
         stopHeartbeat()
         heartbeatJob = scope.launch {
+            if (!immediateCheck) delay(60_000L)
             while (isActive) {
-                delay(60_000L) // 60 detik
                 val deviceId = getDeviceId()
-                val isStillValid = onDetak(deviceId)
+                val (isStillValid, conflictMessage) = onDetak(deviceId)
                 if (!isStillValid) {
                     clearSession()
+                    notifySessionConflict(
+                        conflictMessage?.takeIf { it.isNotBlank() }
+                            ?: "Akun Anda sedang digunakan di perangkat lain. Anda telah dikeluarkan dari sesi ini."
+                    )
                     break
                 }
+                delay(60_000L) // 60 detik
             }
         }
     }

@@ -37,7 +37,9 @@ import androidx.navigation.navArgument
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.admin.model.LowonganEntity
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
+import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.core.*
+import io.github.jan.supabase.auth.auth
 import com.PPBM.lentera.backend.mahasiswa.model.SubmitLamaranPayload
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -94,9 +96,23 @@ fun LenteraNavGraph(
 
     val navContext = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val sessionManager = remember(navContext) { SessionManager.getInstance(navContext) }
+    val sessionConflictMsg by sessionManager.sessionConflictMessage.collectAsState()
     var lastPerbaikanMeta by remember { mutableStateOf(Triple("", "", "")) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(sessionConflictMsg) {
+        if (sessionConflictMsg != null) {
+            runCatching { SupabaseConfig.client.auth.signOut() }
+            if (currentRoute != Routes.LOGIN) {
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     LaunchedEffect(pendingRecoveryUri) {
         val uri = pendingRecoveryUri ?: return@LaunchedEffect
@@ -509,6 +525,9 @@ fun LenteraNavGraph(
             LoginScreen(
                 onLoginSuccess = { role, statusAkun ->
                     val session = SessionManager.getInstance(navController.context)
+                    session.startHeartbeat(coroutineScope, immediateCheck = false) {
+                        AuthRepository(navController.context).sendHeartbeatWithDetail()
+                    }
                     val destination = if (role.equals("admin", ignoreCase = true)) {
                         Routes.ADMIN_DASHBOARD
                     } else if (normalizeStatusAkun(statusAkun) == "belum_aktivasi") {
@@ -2879,6 +2898,13 @@ fun LenteraNavGraph(
             imageUrl = photoViewerUrl!!,
             title = photoViewerTitle,
             onDismiss = { photoViewerUrl = null }
+        )
+    }
+
+    sessionConflictMsg?.let { conflictMsg ->
+        AkunSedangDigunakanDialog(
+            message = conflictMsg,
+            onDismiss = { sessionManager.clearSessionConflict() }
         )
     }
 }
