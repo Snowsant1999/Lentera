@@ -69,6 +69,7 @@ class MahasiswaSettings {
         statusAkun: String = "Mahasiswa aktif",
         onNavigateToDataDiri: () -> Unit = {},
         onNavigateToDokumen: () -> Unit = {},
+        onNavigateToLowonganTersimpan: () -> Unit = {},
         onNavigateToNotifikasi: () -> Unit = {},
         onNavigateToBantuan: () -> Unit = {},
         onNavigateToTentang: () -> Unit = {},
@@ -208,6 +209,13 @@ class MahasiswaSettings {
                             title = "Dokumen Saya",
                             subtitle = "CV, transkrip, dan portofolio",
                             onClick = onNavigateToDokumen
+                        )
+
+                        ProfilMenuItem(
+                            iconRes = R.drawable.ic_menu_symbol_bookmark,
+                            title = "Lowongan Tersimpan",
+                            subtitle = "Peluang magang yang kamu bookmark",
+                            onClick = onNavigateToLowonganTersimpan
                         )
 
                         ProfilMenuItem(

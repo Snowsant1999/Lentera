@@ -31,6 +31,7 @@ object Routes {
     const val MAHASISWA_PROFIL = "mahasiswa_profil"
     const val MAHASISWA_DATA_DIRI = "mahasiswa_data_diri"
     const val MAHASISWA_DOKUMEN_SAYA = "mahasiswa_dokumen_saya"
+    const val MAHASISWA_LOWONGAN_TERSIMPAN = "mahasiswa_lowongan_tersimpan"
     const val MAHASISWA_NOTIFIKASI = "mahasiswa_notifikasi"
     const val MAHASISWA_BANTUAN = "mahasiswa_bantuan"
     const val MAHASISWA_TENTANG = "mahasiswa_tentang"

@@ -410,7 +410,7 @@ private fun FilterChipButton(
 // ============================================================================
 
 @Composable
-private fun LowonganItemCard(
+fun LowonganItemCard(
     item: LowonganItem,
     onClick: () -> Unit,
     onBookmarkClick: () -> Unit,
