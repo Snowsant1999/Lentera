@@ -3,6 +3,11 @@ import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -575,7 +580,11 @@ private fun HasilPenangananCard(
                 )
             }
 
-            AnimatedVisibility(visible = isExpanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(animationSpec = tween(250)) + fadeIn(animationSpec = tween(250)),
+                exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(180))
+            ) {
                 Column(modifier = Modifier.padding(top = 12.dp, start = 38.dp)) {
                     Text(
                         text = if (!hasilPenanganan.isNullOrBlank()) {

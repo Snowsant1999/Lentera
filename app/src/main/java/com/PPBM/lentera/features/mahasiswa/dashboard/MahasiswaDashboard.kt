@@ -1,5 +1,10 @@
 package com.PPBM.lentera.features.mahasiswa.dashboard
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,7 +54,9 @@ import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.mahasiswa.model.LaporanSaya
 import com.PPBM.lentera.backend.mahasiswa.model.LowonganTerbit
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraShimmerBox
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.components.bounceClick
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBlueDark
 import com.PPBM.lentera.core.designsystem.theme.LenteraBlueLight
@@ -80,6 +87,7 @@ class MahasiswaDashboard {
         aktivitasList: List<LaporanSaya> = emptyList(),
         lowonganList: List<LowonganTerbit> = emptyList(),
         hasUnreadNotification: Boolean = false,
+        isLoading: Boolean = false,
         onNotificationClick: () -> Unit = {},
         onTabSelected: (LenteraTab) -> Unit = {},
         onProfileClick: () -> Unit = { onTabSelected(LenteraTab.PROFIL) },
@@ -217,7 +225,7 @@ class MahasiswaDashboard {
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
-                                .clickable { onSiagaClick() }
+                                .bounceClick { onSiagaClick() }
                                 .background(
                                     color = LenteraTealBg,
                                     shape = RoundedCornerShape(20.dp)
@@ -271,7 +279,7 @@ class MahasiswaDashboard {
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(20.dp))
-                                .clickable { onMagangClick() }
+                                .bounceClick { onMagangClick() }
                                 .background(
                                     color = LenteraYellowBg,
                                     shape = RoundedCornerShape(20.dp)
@@ -363,31 +371,50 @@ class MahasiswaDashboard {
                             )
                         }
 
-                        if (aktivitasList.isEmpty()) {
-                            Text(
-                                text = "Belum ada aktivitas laporan.",
-                                style = TextStyle(
-                                    fontSize = 13.sp,
-                                    fontFamily = PlusJakartaSans,
-                                    color = LenteraTextSecondary
-                                ),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        } else {
-                            aktivitasList.forEach { item ->
-                                val (statusBg, statusColor) = when (item.status) {
-                                    "selesai" -> Pair(LenteraGreenBg, LenteraGreen)
-                                    "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
-                                    else -> Pair(LenteraYellowBg, LenteraNavy)
+                        AnimatedContent(
+                            targetState = isLoading,
+                            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
+                            label = "aktivitasLoading"
+                        ) { loading ->
+                            if (loading && aktivitasList.isEmpty()) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    repeat(2) {
+                                        LenteraShimmerBox(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(64.dp),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                    }
                                 }
-                                AktivitasItem(
-                                    title = item.judul,
-                                    date = formatTanggalKejadian(item.tanggalKejadian),
-                                    status = item.status.replaceFirstChar { it.uppercase() },
-                                    statusBg = statusBg,
-                                    statusColor = statusColor,
-                                    onClick = { onAktivitasItemClick(item.id) }
+                            } else if (aktivitasList.isEmpty()) {
+                                Text(
+                                    text = "Belum ada aktivitas laporan.",
+                                    style = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = PlusJakartaSans,
+                                        color = LenteraTextSecondary
+                                    ),
+                                    modifier = Modifier.padding(vertical = 8.dp)
                                 )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    aktivitasList.forEach { item ->
+                                        val (statusBg, statusColor) = when (item.status) {
+                                            "selesai" -> Pair(LenteraGreenBg, LenteraGreen)
+                                            "ditolak" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
+                                            else -> Pair(LenteraYellowBg, LenteraNavy)
+                                        }
+                                        AktivitasItem(
+                                            title = item.judul,
+                                            date = formatTanggalKejadian(item.tanggalKejadian),
+                                            status = item.status.replaceFirstChar { it.uppercase() },
+                                            statusBg = statusBg,
+                                            statusColor = statusColor,
+                                            onClick = { onAktivitasItemClick(item.id) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -424,27 +451,42 @@ class MahasiswaDashboard {
                         }
 
                         // Horizontal list kartu rekomendasi magang
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                        ) {
-                            if (lowonganList.isEmpty()) {
-                                MagangCard(
-                                    title = "EXPLORE MAGANG",
-                                    company = "Mitra Kampus",
-                                    location = "Indonesia",
-                                    onClick = { onLowonganLihatSemuaClick() }
-                                )
-                            } else {
-                                lowonganList.forEach { lowongan ->
+                        AnimatedContent(
+                            targetState = isLoading && lowonganList.isEmpty(),
+                            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
+                            label = "magangDashboardLoading"
+                        ) { loading ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState())
+                            ) {
+                                if (loading) {
+                                    repeat(2) {
+                                        LenteraShimmerBox(
+                                            modifier = Modifier
+                                                .width(180.dp)
+                                                .height(110.dp),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                    }
+                                } else if (lowonganList.isEmpty()) {
                                     MagangCard(
-                                        title = lowongan.posisi.uppercase(),
-                                        company = lowongan.namaPerusahaan,
-                                        location = lowongan.kota,
-                                        onClick = { onLowonganItemClick(lowongan.id) }
+                                        title = "EXPLORE MAGANG",
+                                        company = "Mitra Kampus",
+                                        location = "Indonesia",
+                                        onClick = { onLowonganLihatSemuaClick() }
                                     )
+                                } else {
+                                    lowonganList.forEach { lowongan ->
+                                        MagangCard(
+                                            title = lowongan.posisi.uppercase(),
+                                            company = lowongan.namaPerusahaan,
+                                            location = lowongan.kota,
+                                            onClick = { onLowonganItemClick(lowongan.id) }
+                                        )
+                                    }
                                 }
                             }
                         }

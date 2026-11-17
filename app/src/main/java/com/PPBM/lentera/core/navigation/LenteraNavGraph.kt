@@ -462,10 +462,26 @@ fun LenteraNavGraph(
         )
     }
 
+    val authRoutes = remember {
+        setOf(
+            Routes.SPLASH,
+            Routes.LOGIN,
+            Routes.LUPA_PASSWORD,
+            Routes.VERIFIKASI_PEMULIHAN.substringBefore('/'),
+            Routes.RESET_PASSWORD.substringBefore('?')
+        )
+    }
+
+    fun baseRoute(route: String?): String? = route?.substringBefore('?')?.substringBefore('/')
+
+    fun isAuthRoute(route: String?): Boolean {
+        val base = baseRoute(route) ?: return false
+        return base in authRoutes || route in authRoutes
+    }
+
     fun isBottomBarDestination(route: String?): Boolean {
-        if (route == null) return false
-        val baseRoute = route.substringBefore('?').substringBefore('/')
-        return baseRoute in bottomBarRoutes || route in bottomBarRoutes
+        val base = baseRoute(route) ?: return false
+        return base in bottomBarRoutes || route in bottomBarRoutes
     }
 
     NavHost(
@@ -474,63 +490,68 @@ fun LenteraNavGraph(
         enterTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
-            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) +
-                        scaleIn(initialScale = 0.98f, animationSpec = tween(220, easing = LinearOutSlowInEasing))
-            } else {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> (fullWidth * 0.35f).toInt() },
-                    animationSpec = tween(340, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(340, easing = FastOutSlowInEasing))
+            when {
+                isAuthRoute(initial) || isAuthRoute(target) ->
+                    fadeIn(animationSpec = tween(240, easing = LinearOutSlowInEasing))
+                isBottomBarDestination(initial) && isBottomBarDestination(target) ->
+                    fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing)) +
+                        scaleIn(initialScale = 0.98f, animationSpec = tween(200, easing = LinearOutSlowInEasing))
+                else ->
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> (fullWidth * 0.30f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(280, easing = FastOutSlowInEasing))
             }
         },
         exitTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
-            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
-            } else if (isBottomBarDestination(initial)) {
-                fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing))
-            } else {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -(fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(340, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing))
+            when {
+                isAuthRoute(initial) || isAuthRoute(target) ->
+                    fadeOut(animationSpec = tween(240, easing = FastOutLinearInEasing))
+                isBottomBarDestination(initial) && isBottomBarDestination(target) ->
+                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
+                else ->
+                    slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> -(fullWidth * 0.18f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(280, easing = FastOutLinearInEasing))
             }
         },
         popEnterTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
-            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing))
-            } else if (isBottomBarDestination(target)) {
-                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing))
-            } else {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -(fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(340, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(340, easing = FastOutSlowInEasing))
+            when {
+                isAuthRoute(initial) || isAuthRoute(target) ->
+                    fadeIn(animationSpec = tween(240, easing = LinearOutSlowInEasing))
+                isBottomBarDestination(initial) && isBottomBarDestination(target) ->
+                    fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing)) +
+                        scaleIn(initialScale = 0.98f, animationSpec = tween(200, easing = LinearOutSlowInEasing))
+                else ->
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> -(fullWidth * 0.18f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(280, easing = FastOutSlowInEasing))
             }
         },
         popExitTransition = {
             val initial = initialState.destination.route
             val target = targetState.destination.route
-            if (isBottomBarDestination(initial) && isBottomBarDestination(target)) {
-                fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
-            } else {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> (fullWidth * 0.35f).toInt() },
-                    animationSpec = tween(340, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing))
+            when {
+                isAuthRoute(initial) || isAuthRoute(target) ->
+                    fadeOut(animationSpec = tween(240, easing = FastOutLinearInEasing))
+                isBottomBarDestination(initial) && isBottomBarDestination(target) ->
+                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
+                else ->
+                    slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> (fullWidth * 0.30f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(280, easing = FastOutLinearInEasing))
             }
         }
     ) {
         // Splash Screen
-        composable(
-            route = Routes.SPLASH,
-            enterTransition = { fadeIn(animationSpec = tween(500)) },
-            exitTransition = { fadeOut(animationSpec = tween(500)) }
-        ) {
+        composable(route = Routes.SPLASH) {
             SplashScreen(
                 holdNavigation = pendingRecoveryUri != null ||
                     loginState.isProcessingDeepLink ||
@@ -676,6 +697,7 @@ fun LenteraNavGraph(
             MahasiswaDashboard().mhsDashboard(
                 photoUrl = profile?.fotoProfilUrl,
                 userName = profile?.namaLengkap?.ifBlank { "Mahasiswa" } ?: "Mahasiswa",
+                isLoading = dashboardState.isLoading,
                 totalLaporan = dashboardState.totalLaporan,
                 laporanDiperiksa = dashboardState.laporanDiperiksa,
                 laporanSelesai = dashboardState.laporanSelesai,
@@ -2291,6 +2313,7 @@ fun LenteraNavGraph(
 
             RiwayatLaporanScreen(
                 reportList = riwayatItems,
+                isLoading = siagaState.isLoading,
                 onBackClick = { navController.popBackStack() },
                 onReportClick = { item ->
                     navController.navigate(Routes.detailLaporanTracking(item.id))
@@ -2492,6 +2515,7 @@ fun LenteraNavGraph(
 
             LowonganScreen(
                 lowonganList = items,
+                isLoading = magangState.isLoading,
                 bookmarkedIds = magangState.bookmarkedIds,
                 onBookmarkToggle = { lowongan ->
                     magangViewModel.toggleBookmark(lowongan.id)
