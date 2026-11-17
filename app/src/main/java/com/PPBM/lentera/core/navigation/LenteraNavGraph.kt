@@ -992,8 +992,10 @@ fun LenteraNavGraph(
             val context = LocalContext.current
             val session = SessionManager.getInstance(context)
             var currentProfile by remember { mutableStateOf(session.getProfile()) }
-            LaunchedEffect(Unit) {
-                currentProfile = session.getProfile()
+            LaunchedEffect(currentRoute) {
+                if (currentRoute == Routes.ADMIN_PROFIL) {
+                    currentProfile = session.getProfile()
+                }
             }
             val identifier = currentProfile?.nim?.takeIf { it.isNotBlank() }
                 ?: currentProfile?.email?.takeIf { it.isNotBlank() }
@@ -1008,27 +1010,6 @@ fun LenteraNavGraph(
                     "Admin terdaftar"
                 },
                 photoUrl = currentProfile?.fotoProfilUrl,
-                onUploadFoto = { bytes ->
-                    adminViewModel.uploadFotoProfilAdmin(
-                        context = context,
-                        fileBytes = bytes,
-                        onError = { showToast(it) },
-                        onSuccess = { newUrl ->
-                            currentProfile = currentProfile?.copy(fotoProfilUrl = newUrl)
-                            showToast("Foto profil berhasil diperbarui.", isLong = false)
-                        }
-                    )
-                },
-                onHapusFoto = {
-                    adminViewModel.hapusFotoProfilAdmin(
-                        context = context,
-                        onError = { showToast(it) },
-                        onSuccess = {
-                            currentProfile = currentProfile?.copy(fotoProfilUrl = null)
-                            showToast("Foto profil berhasil dihapus.", isLong = false)
-                        }
-                    )
-                },
                 onMenuClick = { menu ->
                     when (menu.judul) {
                         "Data Akun" -> navController.navigate(Routes.ADMIN_DATA_AKUN)
@@ -2811,6 +2792,7 @@ fun LenteraNavGraph(
                 statusAkun = statusLabel,
                 onNavigateToDataDiri = { navController.navigate(Routes.MAHASISWA_DATA_DIRI) },
                 onNavigateToDokumen = { navController.navigate(Routes.MAHASISWA_DOKUMEN_SAYA) },
+                onNavigateToLowonganTersimpan = { navController.navigate(Routes.MAHASISWA_LOWONGAN_TERSIMPAN) },
                 onNavigateToNotifikasi = { navController.navigate(Routes.PENGATURAN_NOTIFIKASI) },
                 onNavigateToBantuan = { navController.navigate(Routes.MAHASISWA_BANTUAN) },
                 onNavigateToTentang = { navController.navigate(Routes.MAHASISWA_TENTANG) },
@@ -2887,6 +2869,45 @@ fun LenteraNavGraph(
                     )
                 },
                 onBackClick = { navController.popBackStack() },
+                onTabSelected = { tab -> navigateMahasiswaTab(tab) }
+            )
+        }
+
+        // Halaman Lowongan Tersimpan (LowonganTersimpanScreen.kt)
+        composable(Routes.MAHASISWA_LOWONGAN_TERSIMPAN) {
+            LaunchedEffect(Unit) {
+                magangViewModel.loadMagangData()
+            }
+            val todayWita = LocalDate.now(WITA_ZONE)
+            val savedItems = magangState.lowonganList
+                .filter { magangState.bookmarkedIds.contains(it.id) }
+                .map { lw ->
+                    val isOpen = lw.kuota > 0 && (
+                        parseLocalDateFlexible(lw.batasPendaftaran)?.let { !it.isBefore(todayWita) } ?: true
+                    )
+                    LowonganItem(
+                        id = lw.id,
+                        posisi = lw.posisi,
+                        perusahaan = lw.namaPerusahaan,
+                        lokasi = lw.kota,
+                        durasi = lw.periodeMagang,
+                        kategori = lw.kategori ?: "Umum",
+                        sistemKerja = lw.sistemKerja,
+                        status = if (isOpen) "Available" else "Tutup",
+                        batasHari = daysUntilDeadline(lw.batasPendaftaran),
+                        logoDrawable = R.drawable.ic_avatar_2,
+                        logoUrl = lw.logoPath?.let { magangState.logoUrlMap[it] },
+                        isBookmarked = true
+                    )
+                }
+
+            LowonganTersimpanScreen(
+                savedList = savedItems,
+                isLoading = magangState.isLoading,
+                onBackClick = { navController.popBackStack() },
+                onLowonganClick = { item -> navController.navigate(Routes.detailMagang(item.id)) },
+                onBookmarkToggle = { item -> magangViewModel.toggleBookmark(item.id) },
+                onJelajahiClick = { navController.navigate(Routes.LOWONGAN_MAGANG) },
                 onTabSelected = { tab -> navigateMahasiswaTab(tab) }
             )
         }

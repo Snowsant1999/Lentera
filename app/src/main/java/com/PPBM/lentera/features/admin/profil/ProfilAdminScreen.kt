@@ -1,25 +1,17 @@
 package com.PPBM.lentera.features.admin.profil
-import com.PPBM.lentera.core.designsystem.components.*
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,8 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.core.designsystem.theme.*
 
 data class MenuProfilItem(
@@ -62,70 +54,10 @@ fun ProfilAdminScreen(
     photoUrl: String? = null,
     menu: List<MenuProfilItem> = SampleMenuProfil,
     onMenuClick: (MenuProfilItem) -> Unit = {},
-    onAvatarClick: () -> Unit = {},
-    onUploadFoto: (ByteArray) -> Unit = {},
-    onHapusFoto: () -> Unit = {},
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    val context = LocalContext.current
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var rawUriToCrop by remember { mutableStateOf<Uri?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
-    var showConfirmHapusFotoDialog by remember { mutableStateOf(false) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            rawUriToCrop = uri
-        }
-    }
-
-    if (rawUriToCrop != null) {
-        ProfilePhotoCropDialog(
-            sourceUri = rawUriToCrop!!,
-            onDismiss = { rawUriToCrop = null },
-            onCropSuccess = { croppedUri, _ ->
-                imageUri = croppedUri
-                rawUriToCrop = null
-                runCatching {
-                    context.contentResolver.openInputStream(croppedUri)?.use { stream ->
-                        val bytes = stream.readBytes()
-                        if (bytes.isNotEmpty()) {
-                            onUploadFoto(bytes)
-                        }
-                    }
-                }
-            }
-        )
-    }
-
-    if (showPhotoOptionsDialog) {
-        OpsiFotoProfilDialog(
-            onDismiss = { showPhotoOptionsDialog = false },
-            onGantiFoto = {
-                showPhotoOptionsDialog = false
-                imagePickerLauncher.launch("image/*")
-            },
-            onHapusFoto = {
-                showPhotoOptionsDialog = false
-                showConfirmHapusFotoDialog = true
-            }
-        )
-    }
-
-    if (showConfirmHapusFotoDialog) {
-        KonfirmasiHapusFotoDialog(
-            onDismiss = { showConfirmHapusFotoDialog = false },
-            onConfirm = {
-                showConfirmHapusFotoDialog = false
-                imageUri = null
-                onHapusFoto()
-            }
-        )
-    }
 
     if (showLogoutDialog) {
         KonfirmasiLogoutAdminDialog(
@@ -137,78 +69,78 @@ fun ProfilAdminScreen(
         )
     }
 
-    Scaffold(
-        containerColor = LenteraColors.Background,
-        bottomBar = {
-            LenteraBottomNavBar(
-                selected = LenteraNavItem.PROFIL,
-                onItemClick = onNavClick
-            )
-        }
-    ) { innerPadding ->
+    // Struktur layout mengikuti style Profil Mahasiswa (MahasiswaSettings.kt); edit profil & foto di Data Akun
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LenteraBg)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .statusBarsPadding()
         ) {
-            // Header Judul Layar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "PROFIL ADMIN",
-                    color = LenteraNavy,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontFamily = PlusJakartaSans
+                // Header Judul Layar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        text = "PROFIL ADMIN",
+                        color = LenteraNavy,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = PlusJakartaSans
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Avatar dan Ringkasan Profil (tanpa tombol edit langsung, selaras Mahasiswa)
+                RingkasanProfil(
+                    nama = nama,
+                    peran = peran,
+                    badge = badge,
+                    photoUrl = photoUrl
                 )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Menu Profil Card
+                MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
+                KeluarCard(onClick = { showLogoutDialog = true })
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Footer Versi Aplikasi
+                Text(
+                    text = "LENTERA · Versi $versi",
+                    color = LenteraTextSecondary,
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Avatar dan Ringkasan Profil
-            RingkasanProfil(
-                nama = nama,
-                peran = peran,
-                badge = badge,
-                imageUri = imageUri,
-                photoUrl = photoUrl,
-                onAvatarClick = {
-                    if (!photoUrl.isNullOrBlank() || imageUri != null) {
-                        showPhotoOptionsDialog = true
-                    } else {
-                        imagePickerLauncher.launch("image/*")
-                    }
-                    onAvatarClick()
-                }
+            // Bottom Navigation Bar konsisten dengan layar Admin lainnya
+            AdminBottomBar(
+                selected = LenteraNavItem.PROFIL,
+                onItemClick = onNavClick
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Menu Profil Card (Identik dengan Mahasiswa)
-            MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
-            KeluarCard(onClick = { showLogoutDialog = true })
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Footer Versi Aplikasi
-            Text(
-                text = "LENTERA · Versi $versi",
-                color = LenteraTextSecondary,
-                fontSize = 12.sp,
-                fontFamily = PlusJakartaSans,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -218,52 +150,28 @@ private fun RingkasanProfil(
     nama: String,
     peran: String,
     badge: String,
-    imageUri: Uri? = null,
-    photoUrl: String? = null,
-    onAvatarClick: () -> Unit = {}
+    photoUrl: String? = null
 ) {
+    val parts = peran.split("·").map { it.trim() }.filter { it.isNotEmpty() }
+    val line1 = parts.getOrNull(0) ?: peran
+    val line2 = parts.getOrNull(1) ?: "LENTERA · Admin Kampus"
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(100.dp)
-                .clickable(onClick = onAvatarClick)
+                .size(96.dp)
+                .background(Color.White, CircleShape)
+                .shadow(
+                    elevation = 6.dp,
+                    shape = CircleShape,
+                    spotColor = Color(0x15173B57)
+                )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .shadow(
-                        elevation = 6.dp,
-                        shape = CircleShape,
-                        spotColor = Color(0x15173B57)
-                    )
-                    .clip(CircleShape)
-                    .background(Color.White, CircleShape)
-            ) {
-                AsyncImage(
-                    model = imageUri ?: photoUrl ?: R.drawable.ic_avatar_2,
-                    contentDescription = "Foto Profil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            // Overlay ikon edit di pojok kanan bawah
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(32.dp)
-                    .align(Alignment.BottomEnd)
-                    .shadow(4.dp, CircleShape)
-                    .background(LenteraNavy, CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Ubah Foto Profil",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            ProfileAvatarImage(
+                photoUrl = photoUrl,
+                modifier = Modifier.size(88.dp)
+            )
         }
         Spacer(modifier = Modifier.height(14.dp))
         Text(
@@ -271,14 +179,24 @@ private fun RingkasanProfil(
             color = LenteraNavy,
             fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
-            fontFamily = PlusJakartaSans
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = peran,
+            text = line1,
             color = LenteraTextSecondary,
             fontSize = 13.sp,
-            fontFamily = PlusJakartaSans
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = line2,
+            color = LenteraTextSecondary,
+            fontSize = 13.sp,
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(10.dp))
         Box(
