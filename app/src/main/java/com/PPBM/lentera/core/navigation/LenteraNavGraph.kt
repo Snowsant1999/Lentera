@@ -1576,6 +1576,22 @@ fun LenteraNavGraph(
                 tempat = selectedTempat,
                 dokumenList = adminState.selectedTempatDokumenList,
                 logoUrl = selectedTempat?.logoPath?.let { adminState.logoUrlMap[it] },
+                isSubmitting = adminState.isSubmittingMagang,
+                onUploadOrReplaceLogo = { fileName, bytes ->
+                    if (selectedTempat != null) {
+                        adminViewModel.uploadOrReplaceLogoTempatMagang(
+                            tempat = selectedTempat,
+                            logoFileName = fileName,
+                            logoBytes = bytes,
+                            onSuccess = {
+                                showToast("Logo tempat magang berhasil diperbarui.", isLong = false)
+                            },
+                            onError = { err ->
+                                showToast(err, isLong = false)
+                            }
+                        )
+                    }
+                },
                 onDeleteLogo = {
                     val tid = selectedTempat?.id
                     if (!tid.isNullOrBlank()) {
@@ -1600,13 +1616,34 @@ fun LenteraNavGraph(
             )
         }
 
-        // Kelola Status Tempat Magang
+        // Kelola & Edit Tempat Magang
         composable(Routes.ADMIN_KELOLA_STATUS_TEMPAT) {
+            val selectedTempat = adminState.selectedTempatMagang
             KelolaStatusTempatScreen(
-                tempat = adminState.selectedTempatMagang,
+                tempat = selectedTempat,
+                logoUrl = selectedTempat?.logoPath?.let { adminState.logoUrlMap[it] },
                 isSubmitting = adminState.isSubmittingMagang,
+                onSimpanPerubahan = { updatedEntity, removeLogo, newLogoFileName, newLogoBytes, dokumenFileName, dokumenBytes, onError, onSuccess ->
+                    val tempatId = selectedTempat?.id
+                    if (tempatId != null) {
+                        adminViewModel.updateTempatMagang(
+                            tempatId = tempatId,
+                            entity = updatedEntity,
+                            oldLogoPath = selectedTempat.logoPath,
+                            removeLogo = removeLogo,
+                            newLogoFileName = newLogoFileName,
+                            newLogoBytes = newLogoBytes,
+                            dokumenFileName = dokumenFileName,
+                            dokumenBytes = dokumenBytes,
+                            onError = onError,
+                            onSuccess = onSuccess
+                        )
+                    } else {
+                        onError("Data tempat magang tidak ditemukan.")
+                    }
+                },
                 onSimpanStatus = { newStatus, catatan ->
-                    val tempatId = adminState.selectedTempatMagang?.id
+                    val tempatId = selectedTempat?.id
                     if (tempatId != null) {
                         adminViewModel.updateStatusTempatMagang(
                             tempatId = tempatId,

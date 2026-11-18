@@ -5,6 +5,8 @@ import com.PPBM.lentera.backend.admin.model.DokumenTempatMagangItem
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 import com.PPBM.lentera.backend.core.extractShortFileType
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,21 +50,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 
 @Composable
 fun DetailTempatMagangScreen(
     tempat: TempatMagangEntity? = null,
     dokumenList: List<DokumenTempatMagangItem> = emptyList(),
     logoUrl: String? = null,
+    isSubmitting: Boolean = false,
+    onUploadOrReplaceLogo: (fileName: String, bytes: ByteArray) -> Unit = { _, _ -> },
     onDeleteLogo: () -> Unit = {},
     onOpenDokumen: (DokumenTempatMagangItem) -> Unit = {},
     onNavigateToKelolaStatus: () -> Unit = {},
     onBackToTempatMagang: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
+    val context = LocalContext.current
     var showDeleteLogoDialog by remember { mutableStateOf(false) }
+    var logoValidationError by remember { mutableStateOf<String?>(null) }
+
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val picked = readPickedMitraFile(context, uri, "logo_mitra.png")
+            if (picked == null) {
+                logoValidationError = "Gagal membaca berkas gambar logo yang dipilih."
+            } else if (picked.second.size.toLong() > MAX_MITRA_LOGO_BYTES) {
+                logoValidationError = "Ukuran logo (${picked.third}) melebihi batas maksimal 10 MB."
+            } else {
+                onUploadOrReplaceLogo(picked.first, picked.second)
+            }
+        }
+    }
     val namaPerusahaan = tempat?.namaPerusahaan ?: "Tempat Magang"
     val subInfo = "${tempat?.kota ?: "-"} · ${tempat?.bidangUsaha ?: "-"}"
     val statusText = (tempat?.status ?: "Draf").replaceFirstChar { it.uppercase() }
@@ -153,31 +175,15 @@ fun DetailTempatMagangScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFEAF2F8)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (!logoUrl.isNullOrBlank()) {
-                                    AsyncImage(
-                                        model = logoUrl,
-                                        contentDescription = "Logo $namaPerusahaan",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(12.dp))
-                                    )
-                                } else {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_building_2),
-                                        contentDescription = "Building",
-                                        tint = MagangNavyDark,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                            }
+                            CompanyLogoBox(
+                                logoUrl = logoUrl,
+                                contentDescription = "Logo $namaPerusahaan",
+                                size = 48.dp,
+                                shape = RoundedCornerShape(12.dp),
+                                fallbackDrawableRes = R.drawable.ic_building_2,
+                                fallbackTint = MagangNavyDark,
+                                fallbackIconSize = 26.dp
+                            )
 
                             Spacer(modifier = Modifier.width(14.dp))
 
@@ -201,20 +207,43 @@ fun DetailTempatMagangScreen(
                                         color = MagangTextSecondary
                                     )
                                 )
-                                if (!tempat?.logoPath.isNullOrBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Hapus Logo",
-                                        style = TextStyle(
-                                            fontSize = 12.sp,
-                                            fontFamily = PlusJakartaFont,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFFD32F2F)
-                                        ),
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .clickable { showDeleteLogoDialog = true }
-                                    )
+                                if (tempat != null) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(
+                                            text = if (tempat.logoPath.isNullOrBlank()) "Unggah Logo" else "Ganti Logo",
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                fontFamily = PlusJakartaFont,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MagangNavyPrimary
+                                            ),
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .clickable(enabled = !isSubmitting) {
+                                                    logoPickerLauncher.launch("image/*")
+                                                }
+                                        )
+                                        if (!tempat.logoPath.isNullOrBlank()) {
+                                            Text(
+                                                text = "Hapus Logo",
+                                                style = TextStyle(
+                                                    fontSize = 12.sp,
+                                                    fontFamily = PlusJakartaFont,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Color(0xFFD32F2F)
+                                                ),
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .clickable(enabled = !isSubmitting) {
+                                                        showDeleteLogoDialog = true
+                                                    }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -569,6 +598,14 @@ fun DetailTempatMagangScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
+        LenteraFeedbackDialog(
+            show = logoValidationError != null,
+            isSuccess = false,
+            title = "Unggah Logo Gagal",
+            message = logoValidationError.orEmpty(),
+            onDismiss = { logoValidationError = null }
+        )
     }
 }
 

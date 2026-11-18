@@ -1,5 +1,9 @@
 package com.PPBM.lentera.features.admin.magang.components
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.compose.foundation.Image
+import java.util.Locale
 
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -345,6 +349,30 @@ private fun MagangBottomNavItem(
             )
         }
     }
+}
+
+internal const val MAX_MITRA_LOGO_BYTES = 10L * 1024L * 1024L
+internal const val MAX_MITRA_DOC_BYTES = 20L * 1024L * 1024L
+
+internal fun readPickedMitraFile(
+    context: Context,
+    uri: Uri,
+    fallbackName: String
+): Triple<String, ByteArray, String>? {
+    var name = fallbackName
+    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (cursor.moveToFirst() && nameIndex != -1) {
+            name = cursor.getString(nameIndex) ?: fallbackName
+        }
+    }
+    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+    val sizeStr = if (bytes.size >= 1024 * 1024) {
+        String.format(Locale.US, "%.1f MB", bytes.size / (1024.0 * 1024.0))
+    } else {
+        "${(bytes.size / 1024).coerceAtLeast(1)} KB"
+    }
+    return Triple(name, bytes, sizeStr)
 }
 
 /**
