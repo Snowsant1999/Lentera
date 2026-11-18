@@ -1636,10 +1636,18 @@ fun LenteraNavGraph(
                     t.id?.let { id -> id to t.namaPerusahaan }
                 }.toMap()
             }
+            val companyLogoUrlsById = remember(adminState.tempatMagangList, adminState.logoUrlMap) {
+                adminState.tempatMagangList.mapNotNull { t ->
+                    val id = t.id
+                    val url = t.logoPath?.let { adminState.logoUrlMap[it] }
+                    if (id != null && !url.isNullOrBlank()) id to url else null
+                }.toMap()
+            }
 
             DaftarLowonganScreen(
                 lowonganList = adminState.lowonganAdminList,
                 companyNamesById = companyNamesById,
+                companyLogoUrlsById = companyLogoUrlsById,
                 isUpdating = adminState.isSubmittingMagang,
                 onNavigateToDetailLowongan = { lowongan ->
                     adminViewModel.selectLowongan(lowongan)
@@ -1736,13 +1744,15 @@ fun LenteraNavGraph(
         // Detail Lowongan
         composable(Routes.ADMIN_DETAIL_LOWONGAN) {
             val selectedLowongan = adminState.selectedLowonganAdmin
-            val companyName = adminState.tempatMagangList
+            val companyTempat = adminState.tempatMagangList
                 .find { it.id == selectedLowongan?.tempatMagangId }
-                ?.namaPerusahaan
+            val companyName = companyTempat?.namaPerusahaan
+            val companyLogoUrl = companyTempat?.logoPath?.let { adminState.logoUrlMap[it] }
 
             DetailLowonganScreen(
                 lowongan = selectedLowongan,
                 companyName = companyName,
+                logoUrl = companyLogoUrl,
                 isSubmitting = adminState.isSubmittingMagang,
                 onToggleStatus = { newStatus ->
                     val lowonganId = selectedLowongan?.id

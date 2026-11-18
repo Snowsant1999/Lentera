@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,13 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 
 // ==========================================
@@ -336,6 +342,56 @@ private fun MagangBottomNavItem(
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSelected) MagangNavyDark else MagangNavyPrimary
                 )
+            )
+        }
+    }
+}
+
+/**
+ * Menampilkan foto/logo perusahaan secara konsisten di seluruh layar Magang Admin (P3),
+ * dengan fallback ke ikon default apabila logoUrl kosong.
+ */
+@Composable
+fun CompanyLogoBox(
+    logoUrl: String?,
+    contentDescription: String,
+    size: Dp = 46.dp,
+    shape: Shape = RoundedCornerShape(12.dp),
+    fallbackDrawableRes: Int = R.drawable.ic_building_2,
+    fallbackTint: Color? = MagangNavyDark,
+    fallbackIconSize: Dp = 26.dp
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(shape)
+            .background(Color(0xFFEAF2F8)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!logoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = logoUrl,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(shape)
+            )
+        } else if (fallbackTint != null) {
+            Icon(
+                painter = painterResource(id = fallbackDrawableRes),
+                contentDescription = contentDescription,
+                tint = fallbackTint,
+                modifier = Modifier.size(fallbackIconSize)
+            )
+        } else {
+            Image(
+                painter = painterResource(id = fallbackDrawableRes),
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(fallbackIconSize)
+                    .clip(shape)
             )
         }
     }
