@@ -59,15 +59,15 @@ fun SplashScreen(
     LaunchedEffect(holdNavigation) {
         if (holdNavigation) return@LaunchedEffect
         delay(2000)
-        try {
-            SupabaseConfig.client.auth.awaitInitialization()
-        } catch (_: Exception) {}
         val session = SessionManager.getInstance(context)
+        val authRepo = AuthRepository(context)
+        val hasSupabaseSession = authRepo.ensureValidAuthSession()
         val profile = session.getProfile()
-        val hasSupabaseSession = SupabaseConfig.client.auth.currentSessionOrNull() != null
         val destination = when {
             !session.isLoggedIn() || profile == null || !hasSupabaseSession -> {
-                if (profile?.statusAkun.equals("nonaktif", ignoreCase = true)) {
+                if ((session.isLoggedIn() && !hasSupabaseSession) ||
+                    profile?.statusAkun.equals("nonaktif", ignoreCase = true)
+                ) {
                     session.clearSession()
                 }
                 Routes.LOGIN
@@ -80,17 +80,20 @@ fun SplashScreen(
                 Routes.LOGIN
             }
             else -> {
-                val (isSessionValid, conflictMsg) = AuthRepository(context).validateOrClaimSessionOnStartup()
+                val (isSessionValid, conflictMsg) = authRepo.validateOrClaimSessionOnStartup()
                 if (!isSessionValid) {
                     if (!conflictMsg.isNullOrBlank()) {
                         session.notifySessionConflict(conflictMsg)
                     }
                     Routes.LOGIN
-                } else when {
-                    profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
-                    profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
-                        Routes.resetPassword(profile.email)
-                    else -> Routes.MAHASISWA_DASHBOARD
+                } else {
+                    session.markStartupReady()
+                    when {
+                        profile.role.equals("admin", ignoreCase = true) -> Routes.ADMIN_DASHBOARD
+                        profile.statusAkun.equals("belum_aktivasi", ignoreCase = true) ->
+                            Routes.resetPassword(profile.email)
+                        else -> Routes.MAHASISWA_DASHBOARD
+                    }
                 }
             }
         }

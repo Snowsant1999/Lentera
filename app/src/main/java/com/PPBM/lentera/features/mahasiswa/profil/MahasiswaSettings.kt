@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,7 @@ import android.net.Uri
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -376,6 +378,7 @@ class MahasiswaSettings {
         Dialog(onDismissRequest = onDismiss) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = LenteraDialogMaxWidth)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)

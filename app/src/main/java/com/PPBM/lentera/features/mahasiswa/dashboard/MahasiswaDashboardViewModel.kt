@@ -25,6 +25,7 @@ data class MahasiswaDashboardUiState(
     val lamaranStatusSummary: String = "Tidak ada update",
     val aktivitasTerbaru: List<LaporanSaya> = emptyList(),
     val rekomendasiLowongan: List<LowonganTerbit> = emptyList(),
+    val logoUrlMap: Map<String, String> = emptyMap(),
     val hasUnreadNotification: Boolean = false,
     val errorMessage: String? = null
 )
@@ -75,6 +76,20 @@ class MahasiswaDashboardViewModel(
             val lowonganResult = magangRepo.getLowonganTerbit()
             val lowonganList = lowonganResult.getOrDefault(emptyList()).take(5)
 
+            val logoMap = _uiState.value.logoUrlMap.toMutableMap()
+            val uniqueLogoPaths = lowonganList.mapNotNull { it.logoPath }
+                .filter { it.isNotBlank() }
+                .distinct()
+            for (path in uniqueLogoPaths) {
+                runCatching {
+                    magangRepo.createSignedUrl("logo-perusahaan", path)
+                }.onSuccess { result ->
+                    result.onSuccess { url ->
+                        logoMap[path] = url
+                    }
+                }
+            }
+
             // 4. Periksa Notifikasi Baru (Unread) & Bunyikan Notifikasi HP Sistem
             val notifResult = mahasiswaRepo.getNotifikasi()
             val notifList = notifResult.getOrDefault(emptyList())
@@ -97,6 +112,7 @@ class MahasiswaDashboardViewModel(
                 lamaranStatusSummary = lamaranSummary,
                 aktivitasTerbaru = laporanList.take(3),
                 rekomendasiLowongan = lowonganList,
+                logoUrlMap = logoMap,
                 hasUnreadNotification = hasUnread,
                 errorMessage = null
             )

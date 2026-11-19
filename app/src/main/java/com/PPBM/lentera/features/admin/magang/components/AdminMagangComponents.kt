@@ -52,7 +52,7 @@ import com.PPBM.lentera.R
 // ==========================================
 // COLOR SYSTEM - ADMIN MAGANG
 // ==========================================
-val MagangBgColor = Color(0xFFEFF5F9)
+val MagangBgColor = Color(0xFFF5F8FC)
 val MagangNavyDark = Color(0xFF173B57)
 val MagangNavyPrimary = Color(0xFF23496E)
 val MagangGoldenOrange = Color(0xFFE5A95C)
@@ -287,68 +287,6 @@ fun AdminMagangBottomBar(
             )
         }
     )
-}
-
-@Composable
-private fun MagangBottomNavItem(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    isHighlightPill: Boolean = false,
-    onClick: () -> Unit
-) {
-    if (isHighlightPill && isSelected) {
-        Box(
-            modifier = Modifier
-                .background(color = MagangNavyPrimary, shape = RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = PlusJakartaFont,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                )
-            }
-        }
-    } else {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .clickable { onClick() }
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = label,
-                tint = if (isSelected) MagangNavyDark else MagangNavyPrimary,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    fontFamily = PlusJakartaFont,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) MagangNavyDark else MagangNavyPrimary
-                )
-            )
-        }
-    }
 }
 
 internal const val MAX_MITRA_LOGO_BYTES = 10L * 1024L * 1024L

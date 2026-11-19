@@ -42,7 +42,7 @@ import com.PPBM.lentera.R
 // ==========================================
 // PALET WARNA & TIPOGRAFI DESIGN SYSTEM
 // ==========================================
-val SiagaBgColor = Color(0xFFEFF5F9)
+val SiagaBgColor = Color(0xFFF5F8FC)
 val SiagaNavyDark = Color(0xFF173B57)
 val SiagaNavyPrimary = Color(0xFF23496E)
 val SiagaTealPrimary = Color(0xFF2F7078)
@@ -266,68 +266,6 @@ fun AdminSiagaBottomBar(
             )
         }
     )
-}
-
-@Composable
-private fun BottomNavItem(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    isHighlightPill: Boolean = false,
-    onClick: () -> Unit
-) {
-    if (isHighlightPill && isSelected) {
-        Box(
-            modifier = Modifier
-                .background(color = SiagaNavyPrimary, shape = RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = PlusJakartaFont,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                )
-            }
-        }
-    } else {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .clickable { onClick() }
-        ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = label,
-                tint = if (isSelected) SiagaNavyPrimary else SiagaNavyDark,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    fontFamily = PlusJakartaFont,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) SiagaNavyPrimary else SiagaNavyDark
-                )
-            )
-        }
-    }
 }
 
 // ==========================================

@@ -204,13 +204,7 @@ fun HeaderTopBar(onBackClick: () -> Unit = {}) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_back_button),
-                contentDescription = "Kembali",
-                modifier = Modifier
-                    .size(44.dp)
-                    .clickable(onClick = onBackClick)
-            )
+            LenteraBackIcon(onClick = onBackClick)
             Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
@@ -218,13 +212,13 @@ fun HeaderTopBar(onBackClick: () -> Unit = {}) {
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     fontFamily = PlusJakartaSans,
-                    color = Color(0xFF1E3A5F)
+                    color = LenteraColors.NavyPrimary
                 )
                 Text(
                     text = "LENTERA · Administrator Kampus",
                     fontSize = 12.sp,
                     fontFamily = PlusJakartaSans,
-                    color = Color(0xFF7A8B9B)
+                    color = LenteraColors.SlateText
                 )
             }
         }
@@ -235,7 +229,7 @@ fun HeaderTopBar(onBackClick: () -> Unit = {}) {
             text = "Formulir pendaftaran akun mahasiswa baru. Akun baru berstatus Belum Aktivasi sampai mahasiswa login dan mengatur password sendiri.",
             fontSize = 13.sp,
             fontFamily = PlusJakartaSans,
-            color = Color(0xFF7A8B9B),
+            color = LenteraColors.SlateText,
             lineHeight = 18.sp
         )
     }

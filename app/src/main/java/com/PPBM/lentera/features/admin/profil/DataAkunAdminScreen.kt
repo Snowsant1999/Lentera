@@ -126,7 +126,7 @@ fun DataAkunAdminScreen(
     Scaffold(
         containerColor = LenteraColors.Background,
         bottomBar = {
-            LenteraBottomNavBar(
+            AdminBottomBar(
                 selected = LenteraNavItem.PROFIL,
                 onItemClick = onNavClick
             )

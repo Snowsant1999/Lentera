@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraBackIcon
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
-import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.*
 
 enum class KategoriNotifikasi(val label: String) {
@@ -134,18 +134,7 @@ fun AdminNotifikasiScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable(onClick = onBackClick)
-                            .padding(vertical = 4.dp)
-                    ) {
-                        BackArrowIcon(
-                            modifier = Modifier.size(20.dp),
-                            tint = LenteraNavy
-                        )
-                    }
+                    LenteraBackIcon(onClick = onBackClick)
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

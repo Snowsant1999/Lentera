@@ -21,6 +21,11 @@ data class BuatLaporanRpcResult(
     val nomorLaporan: String
 )
 
+private val INDONESIAN_MONTH_SHORT = arrayOf(
+    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+    "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+)
+
 private val INDONESIAN_MONTHS = mapOf(
     "januari" to 1, "jan" to 1,
     "februari" to 2, "feb" to 2,
@@ -342,6 +347,86 @@ fun formatTanggalKejadian(raw: String): String {
         val ld = LocalDate.parse(trimmed.take(10), DateTimeFormatter.ISO_LOCAL_DATE)
         return ld.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " 00:00:00"
     }.getOrNull()?.let { return it }
+
+    return trimmed
+}
+
+private fun formatIndoShortDate(date: LocalDate): String {
+    val day = date.dayOfMonth.toString().padStart(2, '0')
+    val month = INDONESIAN_MONTH_SHORT[date.monthValue - 1]
+    return "$day $month ${date.year}"
+}
+
+private fun formatIndoDateTimeWita(zdt: ZonedDateTime): String {
+    val wita = zdt.withZoneSameInstant(WITA_ZONE)
+    val hour = wita.hour.toString().padStart(2, '0')
+    val minute = wita.minute.toString().padStart(2, '0')
+    return "${formatIndoShortDate(wita.toLocalDate())} · $hour:$minute WITA"
+}
+
+private fun formatMatchedDate(match: MatchResult, monthParser: (String) -> Int?): String? {
+    val day = match.groupValues[1].toIntOrNull() ?: return null
+    val month = monthParser(match.groupValues[2]) ?: return null
+    val year = match.groupValues[3].toIntOrNull() ?: return null
+    val hour = match.groupValues[4].toIntOrNull()
+    val minute = match.groupValues[5].toIntOrNull()
+    val second = match.groupValues[6].toIntOrNull() ?: 0
+    return if (hour != null && minute != null) {
+        runCatching { LocalDateTime.of(year, month, day, hour, minute, second).atZone(WITA_ZONE) }
+            .getOrNull()?.let(::formatIndoDateTimeWita)
+    } else {
+        runCatching { LocalDate.of(year, month, day) }
+            .getOrNull()?.let(::formatIndoShortDate)
+    }
+}
+
+/**
+ * Format timestamp laporan menjadi standar tampilan UI: "18 Nov 2026 · 14:35 WITA".
+ * Tanggal tanpa jam (YYYY-MM-DD) diformat menjadi "18 Nov 2026" tanpa jam palsu.
+ */
+fun formatTanggalJamWita(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isBlank() || trimmed == "-") return "-"
+
+    val isoNormalized = trimmed
+        .let { s ->
+            if (s.length > 11 && s[10] == ' ' && s.take(4).all { it.isDigit() }) {
+                s.substring(0, 10) + "T" + s.substring(11)
+            } else {
+                s
+            }
+        }
+        .replace(Regex("""([+-]\d{2})$"""), "$1:00")
+
+    runCatching { OffsetDateTime.parse(isoNormalized).toZonedDateTime() }
+        .getOrNull()?.let { return formatIndoDateTimeWita(it) }
+
+    runCatching { Instant.parse(isoNormalized).atZone(WITA_ZONE) }
+        .getOrNull()?.let { return formatIndoDateTimeWita(it) }
+
+    runCatching { LocalDateTime.parse(isoNormalized, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atZone(WITA_ZONE) }
+        .getOrNull()?.let { return formatIndoDateTimeWita(it) }
+
+    for (pat in listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd HH.mm")) {
+        runCatching {
+            LocalDateTime.parse(trimmed, DateTimeFormatter.ofPattern(pat)).atZone(WITA_ZONE)
+        }.getOrNull()?.let { return formatIndoDateTimeWita(it) }
+    }
+
+    runCatching { LocalDate.parse(trimmed, DateTimeFormatter.ISO_LOCAL_DATE) }
+        .getOrNull()?.let { return formatIndoShortDate(it) }
+
+    val cleaned = trimmed
+        .replace(Regex("""\s+(WITA|WIB|WIT)$""", RegexOption.IGNORE_CASE), "")
+        .trim()
+
+    INDONESIAN_DATE_REGEX.matchEntire(cleaned)?.let { match ->
+        formatMatchedDate(match) { INDONESIAN_MONTHS[it.lowercase()] }?.let { return it }
+    }
+
+    NUMERIC_DATE_REGEX.matchEntire(cleaned)?.let { match ->
+        formatMatchedDate(match) { it.toIntOrNull() }?.let { return it }
+    }
 
     return trimmed
 }

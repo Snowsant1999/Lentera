@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.features.admin.magang.components.*
@@ -195,6 +197,7 @@ fun KelolaStatusTempatScreen(
     if (showDeleteLogoDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteLogoDialog = false },
+            modifier = Modifier.widthIn(max = LenteraDialogMaxWidth),
             title = {
                 Text(
                     text = "Hapus Foto / Logo Perusahaan?",

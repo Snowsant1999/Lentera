@@ -291,7 +291,7 @@ fun LenteraNavGraph(
             val baseSteps = listOf(
                 TimelineStepItem(
                     title = "Dikirim",
-                    description = "${detail.createdAt.take(10)} · Laporan diterima sistem",
+                    description = "${formatTanggalJamWita(detail.createdAt)} · Laporan diterima sistem",
                     state = TimelineStepState.COMPLETED
                 ),
                 TimelineStepItem(
@@ -312,7 +312,7 @@ fun LenteraNavGraph(
             val dynamicSteps = siagaState.timelineList.map { log ->
                 TimelineStepItem(
                     title = log.judulTindakan,
-                    description = log.createdAt.take(16).replace("T", " "),
+                    description = formatTanggalJamWita(log.createdAt),
                     state = TimelineStepState.COMPLETED
                 )
             }
@@ -331,12 +331,29 @@ fun LenteraNavGraph(
                 nomorReferensi = detail.nomorLaporan,
                 judul = detail.judul,
                 status = statusLabel,
-                tanggalPengiriman = "Dikirim ${detail.createdAt.take(10)} · ${if (detail.isAnonim) "Laporan anonim" else "Kerahasiaan terjamin"}",
+                tanggalPengiriman = "Dikirim ${formatTanggalJamWita(detail.createdAt)} · ${if (detail.isAnonim) "Laporan anonim" else "Kerahasiaan terjamin"}",
                 adminMessage = adminMsg,
                 hasAdminRequest = hasPendingAdmin,
                 hasilPenanganan = detail.hasilPenanganan,
                 isSelesai = norm == "selesai",
-                timeline = baseSteps + dynamicSteps + closingStep
+                timeline = baseSteps + dynamicSteps + closingStep,
+                kategori = detail.kategori,
+                tanggalKejadian = formatTanggalKejadian(detail.tanggalKejadian),
+                lokasiKejadian = detail.lokasiKejadian,
+                kronologi = detail.kronologi,
+                isAnonim = detail.isAnonim,
+                listLampiran = siagaState.buktiList.map { b ->
+                    LampiranBuktiDetail(
+                        nama = b.namaFile,
+                        ukuran = "${(b.ukuranBytes / 1024).coerceAtLeast(1)} KB",
+                        tipe = when (b.tipeFile.uppercase(Locale.US)) {
+                            "JPG", "PNG", "JPEG", "WEBP" -> "PHOTO"
+                            "MP3", "WAV", "M4A", "AAC" -> "AUDIO"
+                            else -> "DOC"
+                        },
+                        filePath = b.filePath
+                    )
+                }
             )
         } else {
             DetailLaporanTrackingData()
@@ -350,6 +367,11 @@ fun LenteraNavGraph(
             },
             onLihatHasilClick = {
                 navController.navigate(Routes.HASIL_PENANGANAN)
+            },
+            onAttachmentClick = { item ->
+                if (item.filePath.isNotBlank()) {
+                    openFile(item.filePath, item.nama) { siagaViewModel.getBuktiSignedUrl(item.filePath) }
+                }
             }
         )
     }
@@ -382,6 +404,7 @@ fun LenteraNavGraph(
                 durasi = lowongan.periodeMagang,
                 status = if (canApply) "Available" else "Tutup",
                 batasHari = daysUntilDeadline(lowongan.batasPendaftaran),
+                logoUrl = lowongan.logoPath?.let { magangState.logoUrlMap[it] },
                 deskripsiPekerjaan = lowongan.deskripsiPekerjaan,
                 persyaratan = lowongan.persyaratan.split("\n", ",").map { it.trim() }.filter { it.isNotEmpty() },
                 periodePendaftaran = "s/d ${lowongan.batasPendaftaran}"
@@ -437,6 +460,7 @@ fun LenteraNavGraph(
         StatusLamaranScreen(
             lamaran = lamaran,
             lowongan = lowongan,
+            logoUrl = lowongan?.logoPath?.let { magangState.logoUrlMap[it] },
             riwayatList = magangState.riwayatStatusList,
             dokumenList = magangState.dokumenLamaranList,
             onOpenDokumen = { doc ->
@@ -458,6 +482,8 @@ fun LenteraNavGraph(
             Routes.ADMIN_MAHASISWA,
             Routes.ADMIN_SIAGA,
             Routes.ADMIN_MAGANG,
+            Routes.ADMIN_DAFTAR_LOWONGAN,
+            Routes.ADMIN_KELOLA_LAMARAN,
             Routes.ADMIN_PROFIL
         )
     }
@@ -705,6 +731,7 @@ fun LenteraNavGraph(
                 lamaranStatusText = dashboardState.lamaranStatusSummary,
                 aktivitasList = dashboardState.aktivitasTerbaru,
                 lowonganList = dashboardState.rekomendasiLowongan,
+                logoUrlMap = dashboardState.logoUrlMap,
                 hasUnreadNotification = dashboardState.hasUnreadNotification,
                 onTabSelected = { tab -> navigateMahasiswaTab(tab, LenteraTab.BERANDA) },
                 onProfileClick = { navigateMahasiswaTab(LenteraTab.PROFIL, LenteraTab.BERANDA) },
@@ -745,7 +772,7 @@ fun LenteraNavGraph(
                 DashboardLaporanItem(
                     id = item.nomorLaporan.ifEmpty { item.id },
                     judul = item.judul,
-                    waktu = item.createdAt.take(10),
+                    waktu = formatTanggalJamWita(item.createdAt),
                     status = label,
                     statusBg = bg,
                     statusColor = txt
@@ -785,11 +812,11 @@ fun LenteraNavGraph(
                 lowonganList = lowonganDashboard,
                 hasUnread = adminState.hasUnreadNotifications,
                 photoUrl = profile?.fotoProfilUrl,
-                onNavigateToMahasiswa = { navController.navigate(Routes.ADMIN_MAHASISWA) },
-                onNavigateToSiaga = { navController.navigate(Routes.ADMIN_SIAGA) },
-                onNavigateToMagang = { navController.navigate(Routes.ADMIN_MAGANG) },
-                onNavigateToLowongan = { navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN) },
-                onNavigateToProfil = { navController.navigate(Routes.ADMIN_PROFIL) },
+                onNavigateToMahasiswa = { navigateAdminTab(LenteraNavItem.MAHASISWA, LenteraNavItem.BERANDA) },
+                onNavigateToSiaga = { navigateAdminTab(LenteraNavItem.LAPORAN, LenteraNavItem.BERANDA) },
+                onNavigateToMagang = { navigateAdminTab(LenteraNavItem.MAGANG, LenteraNavItem.BERANDA) },
+                onNavigateToLowongan = { navigateAdminMagangSubTab(Routes.ADMIN_DAFTAR_LOWONGAN) },
+                onNavigateToProfil = { navigateAdminTab(LenteraNavItem.PROFIL, LenteraNavItem.BERANDA) },
                 onNavigateToNotifikasi = { navController.navigate(Routes.ADMIN_NOTIFIKASI) },
                 onLaporanClick = { item ->
                     adminViewModel.selectLaporan(item.id)
@@ -1184,14 +1211,14 @@ fun LenteraNavGraph(
                 onNotifikasiClick = { notif ->
                     adminViewModel.markAllNotificationsAsRead()
                     when (notif.kategori) {
-                        AdminNotifKategori.LAPORAN -> navController.navigate(Routes.ADMIN_SIAGA)
+                        AdminNotifKategori.LAPORAN -> navigateAdminTab(LenteraNavItem.LAPORAN)
                         AdminNotifKategori.MAGANG -> {
                             when {
                                 notif.judul.contains("lamaran", ignoreCase = true) ->
-                                    navController.navigate(Routes.ADMIN_KELOLA_LAMARAN)
+                                    navigateAdminMagangSubTab(Routes.ADMIN_KELOLA_LAMARAN)
                                 notif.judul.contains("lowongan", ignoreCase = true) ->
-                                    navController.navigate(Routes.ADMIN_DAFTAR_LOWONGAN)
-                                else -> navController.navigate(Routes.ADMIN_MAGANG)
+                                    navigateAdminMagangSubTab(Routes.ADMIN_DAFTAR_LOWONGAN)
+                                else -> navigateAdminTab(LenteraNavItem.MAGANG)
                             }
                         }
                         AdminNotifKategori.SEMUA -> {}
@@ -1224,7 +1251,7 @@ fun LenteraNavGraph(
                 AdminLaporanItem(
                     id = lap.nomorLaporan,
                     judul = lap.judul,
-                    tanggal = "${formatTanggalKejadian(lap.tanggalKejadian)} · ${if (lap.isAnonim) "Anonim" else "Terverifikasi"}",
+                    tanggal = "${formatTanggalJamWita(lap.createdAt)} · ${if (lap.isAnonim) "Anonim" else "Terverifikasi"}",
                     status = label,
                     statusBgColor = bgCol,
                     statusTextColor = txtCol,
@@ -1296,7 +1323,7 @@ fun LenteraNavGraph(
                 onOpenDokumen = { item ->
                     openFile(item.filePath, item.namaFile) { adminViewModel.getSignedUrl("dokumen-hasil", item.filePath) }
                 },
-                onBackToDashboard = { navController.navigate(Routes.ADMIN_DASHBOARD) },
+                onBackToDashboard = { navigateAdminTab(LenteraNavItem.BERANDA, LenteraNavItem.LAPORAN) },
                 onNavClick = { item -> navigateAdminTab(item, LenteraNavItem.LAPORAN) }
             )
         }
@@ -1324,7 +1351,7 @@ fun LenteraNavGraph(
                 onOpenBukti = { item ->
                     openFile(item.filePath, item.namaFile) { adminViewModel.getSignedUrl("bukti-laporan", item.filePath) }
                 },
-                onNavigateToVerifikasi = { navController.navigate(Routes.ADMIN_SIAGA) },
+                onNavigateToVerifikasi = { navigateAdminTab(LenteraNavItem.LAPORAN) },
                 onNavigateToMintaInformasi = { navController.navigate(Routes.ADMIN_MINTA_INFORMASI) },
                 onNavigateToPenugasan = { navController.navigate(Routes.ADMIN_PENUGASAN_LAPORAN) },
                 onNavigateToCatatanTindakan = { navController.navigate(Routes.ADMIN_CATATAN_TINDAKAN) },
@@ -1526,7 +1553,7 @@ fun LenteraNavGraph(
                 onNavigateToTambahTempat = { navController.navigate(Routes.ADMIN_TAMBAH_TEMPAT_MAGANG) },
                 onNavigateToLowongan = { navigateAdminMagangSubTab(Routes.ADMIN_DAFTAR_LOWONGAN) },
                 onNavigateToLamaran = { navigateAdminMagangSubTab(Routes.ADMIN_KELOLA_LAMARAN) },
-                onBack = { navController.navigate(Routes.ADMIN_DASHBOARD) },
+                onBack = { navigateAdminTab(LenteraNavItem.BERANDA, LenteraNavItem.MAGANG) },
                 onNavClick = { item -> navigateAdminTab(item, LenteraNavItem.MAGANG) }
             )
         }
@@ -1733,6 +1760,7 @@ fun LenteraNavGraph(
             val existing = adminState.selectedLowonganAdmin
             FormLowonganScreen(
                 tempatMagangList = adminState.tempatMagangList,
+                logoUrlMap = adminState.logoUrlMap,
                 existingLowongan = existing,
                 isSubmitting = adminState.isSubmittingMagang,
                 onSimpanLowongan = {
@@ -1917,8 +1945,9 @@ fun LenteraNavGraph(
                 LaporanItem(
                     id = item.id,
                     title = item.judul,
-                    date = formatTanggalKejadian(item.tanggalKejadian),
-                    status = statusEnum
+                    date = formatTanggalJamWita(item.createdAt),
+                    status = statusEnum,
+                    nomorLaporan = item.nomorLaporan
                 )
             }
 
@@ -2215,8 +2244,11 @@ fun LenteraNavGraph(
                             attachmentBytes = fileBytes,
                             onError = { err -> showToast(err) }
                         ) {
+                            val trackingRoute = navController.previousBackStackEntry?.destination?.route
+                                ?.takeIf { it.startsWith(Routes.DETAIL_LAPORAN_TRACKING) }
+                                ?: Routes.DETAIL_LAPORAN_TRACKING_ROUTE
                             navController.navigate(Routes.INFORMASI_TERKIRIM) {
-                                popUpTo(Routes.DETAIL_LAPORAN_TRACKING) { inclusive = false }
+                                popUpTo(trackingRoute) { inclusive = false }
                             }
                         }
                     }
@@ -2330,7 +2362,7 @@ fun LenteraNavGraph(
                     nomorLaporan = item.nomorLaporan,
                     judul = item.judul,
                     kategori = item.kategori,
-                    waktu = formatTanggalKejadian(item.tanggalKejadian),
+                    waktu = formatTanggalJamWita(item.createdAt),
                     statusBadge = badgeLabel,
                     badgeBgColor = badgeBg,
                     badgeTextColor = badgeText,
@@ -2362,7 +2394,7 @@ fun LenteraNavGraph(
                     nomorLaporan = detail.nomorLaporan,
                     judul = detail.judul,
                     status = detail.status.replaceFirstChar { it.uppercase() },
-                    waktuKirim = "Dikirim ${detail.createdAt.take(10)}",
+                    waktuKirim = "Dikirim ${formatTanggalJamWita(detail.createdAt)}",
                     pelaporNama = if (detail.isAnonim) "Anonim" else "Pelapor Terverifikasi",
                     pelaporDeskripsi = if (detail.isAnonim) "Identitas pelapor dirahasiakan" else "Data identitas terjaga aman",
                     kategori = detail.kategori,
@@ -2382,7 +2414,7 @@ fun LenteraNavGraph(
                         )
                     },
                     listTimeline = siagaState.timelineList.map { log ->
-                        log.judulTindakan to log.createdAt.take(16).replace("T", " ")
+                        log.judulTindakan to formatTanggalJamWita(log.createdAt)
                     }
                 )
             } else {
@@ -2415,15 +2447,22 @@ fun LenteraNavGraph(
             }
 
             val profile = profilState.profile
-            val completionChecks = listOf(
-                !profile?.namaLengkap.isNullOrBlank(),
-                !profile?.nim.isNullOrBlank(),
-                !profile?.noTelepon.isNullOrBlank(),
-                !profile?.programStudi.isNullOrBlank(),
-                profilState.dokumenList.any { it.jenis.equals("CV", ignoreCase = true) },
-                profilState.dokumenList.any { it.jenis.equals("Transkrip", ignoreCase = true) }
-            )
+            val hasNama = !profile?.namaLengkap.isNullOrBlank()
+            val hasNim = !profile?.nim.isNullOrBlank()
+            val hasNoTelp = !profile?.noTelepon.isNullOrBlank()
+            val hasProdi = !profile?.programStudi.isNullOrBlank()
+            val hasCv = profilState.dokumenList.any { it.jenis.equals("CV", ignoreCase = true) }
+            val hasTranskrip = profilState.dokumenList.any { it.jenis.equals("Transkrip", ignoreCase = true) }
+            val completionChecks = listOf(hasNama, hasNim, hasNoTelp, hasProdi, hasCv, hasTranskrip)
             val profilCompletionPct = (completionChecks.count { it } * 100) / completionChecks.size
+            val profilChecklistItems = listOf(
+                ProfilChecklistItem("Nama Lengkap", hasNama, "Data Diri"),
+                ProfilChecklistItem("NIM", hasNim, "Data Diri", isAdminManaged = true),
+                ProfilChecklistItem("Nomor HP / WhatsApp", hasNoTelp, "Data Diri"),
+                ProfilChecklistItem("Program Studi", hasProdi, "Data Diri", isAdminManaged = true),
+                ProfilChecklistItem("CV", hasCv, "Dokumen Pendukung"),
+                ProfilChecklistItem("Transkrip Nilai", hasTranskrip, "Dokumen Pendukung")
+            )
 
             val totalLam = magangState.lamaranSayaList.size
             val dtr = magangState.lamaranSayaList.count { normalizeLamaranStatus(it.status) == "diterima" }
@@ -2477,6 +2516,9 @@ fun LenteraNavGraph(
             MagangScreen(
                 userName = profile?.namaLengkap?.ifBlank { "Mahasiswa" } ?: "Mahasiswa",
                 profilCompletion = profilCompletionPct,
+                profilChecklist = profilChecklistItems,
+                onNavigateToDataDiri = { navController.navigate(Routes.MAHASISWA_DATA_DIRI) },
+                onNavigateToDokumenSaya = { navController.navigate(Routes.MAHASISWA_DOKUMEN_SAYA) },
                 totalLamaran = totalLam,
                 jumlahDiterima = dtr,
                 jumlahDitolak = dtl,
@@ -2611,6 +2653,7 @@ fun LenteraNavGraph(
             FormulirLamaranScreen(
                 posisiJudul = posisi,
                 perusahaan = perusahaan,
+                logoUrl = lowongan.logoPath?.let { magangState.logoUrlMap[it] },
                 initialNama = mhsProfile?.namaLengkap.orEmpty(),
                 initialNim = mhsProfile?.nim.orEmpty(),
                 initialEmail = mhsProfile?.email.orEmpty(),

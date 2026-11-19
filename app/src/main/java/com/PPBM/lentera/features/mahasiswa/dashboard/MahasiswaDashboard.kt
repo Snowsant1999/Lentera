@@ -42,12 +42,15 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.net.Uri
-import com.PPBM.lentera.backend.core.formatTanggalKejadian
+import coil.compose.AsyncImage
+import com.PPBM.lentera.backend.core.formatTanggalJamWita
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.core.designsystem.components.LenteraNotificationBell
 import com.PPBM.lentera.R
@@ -57,6 +60,7 @@ import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraShimmerBox
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.components.bounceClick
+import com.PPBM.lentera.core.designsystem.components.rememberAdaptiveHorizontalCardWidth
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBlueDark
 import com.PPBM.lentera.core.designsystem.theme.LenteraBlueLight
@@ -86,6 +90,7 @@ class MahasiswaDashboard {
         lamaranStatusText: String = "Tidak ada update",
         aktivitasList: List<LaporanSaya> = emptyList(),
         lowonganList: List<LowonganTerbit> = emptyList(),
+        logoUrlMap: Map<String, String> = emptyMap(),
         hasUnreadNotification: Boolean = false,
         isLoading: Boolean = false,
         onNotificationClick: () -> Unit = {},
@@ -407,7 +412,7 @@ class MahasiswaDashboard {
                                         }
                                         AktivitasItem(
                                             title = item.judul,
-                                            date = formatTanggalKejadian(item.tanggalKejadian),
+                                            date = formatTanggalJamWita(item.createdAt),
                                             status = item.status.replaceFirstChar { it.uppercase() },
                                             statusBg = statusBg,
                                             statusColor = statusColor,
@@ -451,6 +456,11 @@ class MahasiswaDashboard {
                         }
 
                         // Horizontal list kartu rekomendasi magang
+                        val magangCardWidth = rememberAdaptiveHorizontalCardWidth(
+                            compactFraction = 0.44f,
+                            minWidth = 152.dp,
+                            maxWidth = 220.dp
+                        )
                         AnimatedContent(
                             targetState = isLoading && lowonganList.isEmpty(),
                             transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
@@ -466,7 +476,7 @@ class MahasiswaDashboard {
                                     repeat(2) {
                                         LenteraShimmerBox(
                                             modifier = Modifier
-                                                .width(180.dp)
+                                                .width(magangCardWidth)
                                                 .height(110.dp),
                                             shape = RoundedCornerShape(16.dp)
                                         )
@@ -476,6 +486,7 @@ class MahasiswaDashboard {
                                         title = "EXPLORE MAGANG",
                                         company = "Mitra Kampus",
                                         location = "Indonesia",
+                                        cardWidth = magangCardWidth,
                                         onClick = { onLowonganLihatSemuaClick() }
                                     )
                                 } else {
@@ -484,6 +495,8 @@ class MahasiswaDashboard {
                                             title = lowongan.posisi.uppercase(),
                                             company = lowongan.namaPerusahaan,
                                             location = lowongan.kota,
+                                            logoUrl = lowongan.logoPath?.let { logoUrlMap[it] },
+                                            cardWidth = magangCardWidth,
                                             onClick = { onLowonganItemClick(lowongan.id) }
                                         )
                                     }
@@ -523,10 +536,15 @@ class MahasiswaDashboard {
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
                 Text(
                     text = title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = PlusJakartaSans,
@@ -536,6 +554,8 @@ class MahasiswaDashboard {
                 )
                 Text(
                     text = date,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontFamily = PlusJakartaSans,
@@ -552,6 +572,7 @@ class MahasiswaDashboard {
             ) {
                 Text(
                     text = status,
+                    maxLines = 1,
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontFamily = PlusJakartaSans,
@@ -568,12 +589,14 @@ class MahasiswaDashboard {
         title: String,
         company: String,
         location: String,
+        logoUrl: String? = null,
+        cardWidth: Dp = 160.dp,
         onClick: () -> Unit = {}
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
-                .width(160.dp)
+                .width(cardWidth)
                 .clickable { onClick() }
                 .shadow(
                     elevation = 8.dp,
@@ -584,19 +607,31 @@ class MahasiswaDashboard {
                 .background(Color.White, shape = RoundedCornerShape(20.dp))
                 .padding(14.dp)
         ) {
-            // Icon Group Company
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(Color(0xFFEFF5FD), CircleShape)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_group),
-                    contentDescription = null,
-                    tint = LenteraNavy,
-                    modifier = Modifier.size(24.dp)
+            // Logo Perusahaan atau Icon Group Company fallback
+            if (!logoUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = logoUrl,
+                    contentDescription = "Logo $company",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFEFF5FD), RoundedCornerShape(10.dp))
                 )
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFFEFF5FD), CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_group),
+                        contentDescription = null,
+                        tint = LenteraNavy,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             Text(

@@ -3,7 +3,7 @@ package com.PPBM.lentera.core.designsystem.theme
 import androidx.compose.ui.graphics.Color
 
 object LenteraColors {
-    val Background = Color(0xFFF5F7FA)
+    val Background = Color(0xFFF5F8FC)
     val NavyPrimary = Color(0xFF1E3A5F)
     val NavyDark = Color(0xFF1E3A5F)
     val SlateText = Color(0xFF7A8B9B)

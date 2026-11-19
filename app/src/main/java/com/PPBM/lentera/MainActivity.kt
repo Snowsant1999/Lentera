@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.PPBM.lentera.backend.auth.repository.AuthRepository
@@ -23,10 +24,13 @@ import com.PPBM.lentera.core.designsystem.theme.LenteraTheme
 import com.PPBM.lentera.core.navigation.LenteraNavGraph
 import com.PPBM.lentera.core.notification.LenteraNotifWorker
 import com.PPBM.lentera.core.notification.LenteraNotificationHelper
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private var pendingRecoveryUri by mutableStateOf<Uri?>(null)
     private var pendingNotifCategory by mutableStateOf<String?>(null)
+    private var resumeSessionJob: Job? = null
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -39,6 +43,23 @@ class MainActivity : ComponentActivity() {
         // N1.1: Pastikan channel tetap lentera_alerts_v1 dibuat saat aplikasi dibuka & channel usang dibersihkan
         LenteraNotificationHelper.createNotificationChannel(this)
         LenteraNotifWorker.schedule(this)
+
+        val sessionManager = SessionManager.getInstance(this)
+        sessionManager.resetStartupReady()
+        lifecycleScope.launch {
+            sessionManager.startupReadyFlow.collect { ready ->
+                if (ready &&
+                    lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                    sessionManager.isLoggedIn() &&
+                    !sessionManager.isHeartbeatRunning()
+                ) {
+                    val authRepo = AuthRepository(this@MainActivity)
+                    sessionManager.startHeartbeat(lifecycleScope, immediateCheck = false) {
+                        authRepo.sendHeartbeatWithDetail()
+                    }
+                }
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -78,19 +99,34 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // C1: Jalankan detak sesi aktif (heartbeat) tiap 60 detik selama aplikasi aktif
+        // C1: Validasi/klaim ulang sesi setelah startup selesai, lalu jalankan heartbeat tiap 60 detik
         val sessionManager = SessionManager.getInstance(this)
-        if (sessionManager.isLoggedIn()) {
-            val authRepo = AuthRepository(this)
-            sessionManager.startHeartbeat(lifecycleScope, immediateCheck = true) {
-                authRepo.sendHeartbeatWithDetail()
+        if (sessionManager.isLoggedIn() && sessionManager.isStartupReady) {
+            resumeSessionJob?.cancel()
+            resumeSessionJob = lifecycleScope.launch {
+                val authRepo = AuthRepository(this@MainActivity)
+                val (isValid, conflictMsg) = authRepo.validateOrClaimSessionOnStartup()
+                if (!isValid) {
+                    val message = conflictMsg?.takeIf { it.isNotBlank() }
+                        ?: "Sesi login Anda telah berakhir. Silakan masuk kembali."
+                    sessionManager.notifySessionConflict(message)
+                } else if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                    sessionManager.isLoggedIn() &&
+                    !sessionManager.isHeartbeatRunning()
+                ) {
+                    sessionManager.startHeartbeat(lifecycleScope, immediateCheck = false) {
+                        authRepo.sendHeartbeatWithDetail()
+                    }
+                }
             }
         }
     }
 
     override fun onPause() {
         super.onPause()
-        // C1: Hentikan detak saat aplikasi masuk ke background
+        // C1: Batalkan pengecekan resume yang tertunda dan hentikan detak saat aplikasi ke background
+        resumeSessionJob?.cancel()
+        resumeSessionJob = null
         SessionManager.getInstance(this).stopHeartbeat()
     }
 

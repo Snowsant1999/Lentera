@@ -20,15 +20,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.LenteraContentMaxWidth
 import com.PPBM.lentera.core.designsystem.theme.*
 
 // ============================================================================
@@ -46,6 +50,7 @@ data class DetailMagangData(
     val persentaseCocok: Int = 92,
     val batasHari: Int = 0,
     val logoDrawable: Int = R.drawable.ic_avatar_2,
+    val logoUrl: String? = null,
     val isBookmarked: Boolean = false,
     val deskripsiPekerjaan: String = "",
     val persyaratan: List<String> = emptyList(),
@@ -74,32 +79,39 @@ fun DetailMagangScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(ScreenBackground)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .navigationBarsPadding(),
+                contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isButtonEnabled) MagangAmberPrimary else Color(0xFFCBD5E1))
-                        .clickable(enabled = isButtonEnabled, onClick = onLamarSekarangClick),
-                    contentAlignment = Alignment.Center
+                        .widthIn(max = LenteraContentMaxWidth)
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = when {
-                            hasApplied -> "Lamaran Sudah Diajukan"
-                            !canApply -> "Pendaftaran Ditutup"
-                            else -> "Lamar Sekarang"
-                        },
-                        style = TextStyle(
-                            fontFamily = plusJakarta,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NavyDark
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .shadow(2.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isButtonEnabled) MagangAmberPrimary else Color(0xFFCBD5E1))
+                            .clickable(enabled = isButtonEnabled, onClick = onLamarSekarangClick),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = when {
+                                hasApplied -> "Lamaran Sudah Diajukan"
+                                !canApply -> "Pendaftaran Ditutup"
+                                else -> "Lamar Sekarang"
+                            },
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -109,105 +121,112 @@ fun DetailMagangScreen(
                 .fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Top Bar dengan tombol back bulat & Judul "DETAIL MAGANG"
-            DetailMagangTopBar(
-                onBackClick = onBackClick,
-                fontFamily = plusJakarta
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .widthIn(max = LenteraContentMaxWidth)
             ) {
-                // 2. Kartu Header Utama Lowongan
-                HeaderLowonganCard(
-                    data = data.copy(isBookmarked = isBookmarked),
-                    onBookmarkToggle = onBookmarkToggle,
+                // 1. Top Bar dengan tombol back bulat & Judul "DETAIL MAGANG"
+                DetailMagangTopBar(
+                    onBackClick = onBackClick,
                     fontFamily = plusJakarta
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // 3. Tab Bar "Deskripsi" | "Persyaratan"
-                MagangTabBar(
-                    selectedTabIndex = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                if (selectedTab == 1) {
-                    // Konten Tab Persyaratan
-                    Text(
-                        text = "Siapkan langkah pertamamu",
-                        style = TextStyle(
-                            fontFamily = plusJakarta,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = NavyDark
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Daftar Persyaratan dengan Checkbox Amber
-                    data.persyaratan.forEach { syarat ->
-                        ChecklistItemRow(
-                            text = syarat,
-                            fontFamily = plusJakarta
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Kartu Periode Pendaftaran
-                    PeriodePendaftaranCard(
-                        periode = data.periodePendaftaran,
-                        mulaiMagang = data.mulaiMagang,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    // 2. Kartu Header Utama Lowongan
+                    HeaderLowonganCard(
+                        data = data.copy(isBookmarked = isBookmarked),
+                        onBookmarkToggle = onBookmarkToggle,
                         fontFamily = plusJakarta
                     )
-                } else {
-                    // Konten Tab Deskripsi
-                    Text(
-                        text = "Tentang Pekerjaan",
-                        style = TextStyle(
-                            fontFamily = plusJakarta,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = NavyDark
-                        )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 3. Tab Bar "Deskripsi" | "Persyaratan"
+                    MagangTabBar(
+                        selectedTabIndex = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        fontFamily = plusJakarta
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
-                    ) {
+                    if (selectedTab == 1) {
+                        // Konten Tab Persyaratan
                         Text(
-                            text = data.deskripsiPekerjaan,
-                            modifier = Modifier.padding(16.dp),
+                            text = "Siapkan langkah pertamamu",
                             style = TextStyle(
                                 fontFamily = plusJakarta,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = SlateGray,
-                                lineHeight = 22.sp
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = NavyDark
                             )
                         )
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Daftar Persyaratan dengan Checkbox Amber
+                        data.persyaratan.forEach { syarat ->
+                            ChecklistItemRow(
+                                text = syarat,
+                                fontFamily = plusJakarta
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Kartu Periode Pendaftaran
+                        PeriodePendaftaranCard(
+                            periode = data.periodePendaftaran,
+                            mulaiMagang = data.mulaiMagang,
+                            fontFamily = plusJakarta
+                        )
+                    } else {
+                        // Konten Tab Deskripsi
+                        Text(
+                            text = "Tentang Pekerjaan",
+                            style = TextStyle(
+                                fontFamily = plusJakarta,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = NavyDark
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+                        ) {
+                            Text(
+                                text = data.deskripsiPekerjaan,
+                                modifier = Modifier.padding(16.dp),
+                                style = TextStyle(
+                                    fontFamily = plusJakarta,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = SlateGray,
+                                    lineHeight = 22.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
@@ -282,11 +301,20 @@ private fun HeaderLowonganCard(
                         .border(1.dp, Color(0xFFE2ECF5), RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = data.logoDrawable),
-                        contentDescription = "Logo Perusahaan",
-                        modifier = Modifier.size(44.dp)
-                    )
+                    if (!data.logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = data.logoUrl,
+                            contentDescription = "Logo Perusahaan",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = data.logoDrawable),
+                            contentDescription = "Logo Perusahaan",
+                            modifier = Modifier.size(44.dp)
+                        )
+                    }
                 }
 
                 // Bookmark icon
@@ -312,6 +340,8 @@ private fun HeaderLowonganCard(
             // Posisi
             Text(
                 text = data.posisi,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
                     fontFamily = fontFamily,
                     fontSize = 22.sp,
@@ -325,6 +355,8 @@ private fun HeaderLowonganCard(
             // Perusahaan - Lokasi
             Text(
                 text = "${data.perusahaan} - ${data.lokasi}",
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
                     fontFamily = fontFamily,
                     fontSize = 13.5.sp,
@@ -336,10 +368,11 @@ private fun HeaderLowonganCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             // Tags Pill Row (Penuh Waktu, 3 Bulan, Available)
-            Row(
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Tag 1: Penuh Waktu
                 TagPillAmber(
@@ -363,6 +396,7 @@ private fun HeaderLowonganCard(
                 ) {
                     Text(
                         text = data.status,
+                        maxLines = 1,
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.sp,
@@ -379,10 +413,10 @@ private fun HeaderLowonganCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(34.dp)
+                    .defaultMinSize(minHeight = 34.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFFEFF5FA))
-                    .padding(horizontal = 14.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(
@@ -392,6 +426,7 @@ private fun HeaderLowonganCard(
                 ) {
                     Text(
                         text = "${data.persentaseCocok}% cocok",
+                        maxLines = 1,
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.5.sp,
@@ -402,6 +437,9 @@ private fun HeaderLowonganCard(
 
                     Text(
                         text = if (data.batasHari <= 0) "Berakhir hari ini" else "Tutup ${data.batasHari} hari lagi",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.5.sp,

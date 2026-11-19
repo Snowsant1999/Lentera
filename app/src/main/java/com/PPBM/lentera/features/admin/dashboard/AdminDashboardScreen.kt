@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -473,9 +474,15 @@ fun KartuLaporanMasukTerakhir(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp)
+                        ) {
                             Text(
                                 text = item.judul,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(
                                     fontSize = 13.5.sp,
                                     fontFamily = PlusJakartaSans,
@@ -486,6 +493,8 @@ fun KartuLaporanMasukTerakhir(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "${item.id} · ${item.waktu}",
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(
                                     fontSize = 11.sp,
                                     fontFamily = PlusJakartaSans,
@@ -502,6 +511,7 @@ fun KartuLaporanMasukTerakhir(
                         ) {
                             Text(
                                 text = item.status,
+                                maxLines = 1,
                                 style = TextStyle(
                                     fontSize = 11.sp,
                                     fontFamily = PlusJakartaSans,

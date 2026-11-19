@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -33,10 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.core.WITA_ZONE
 import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenMahasiswaItem
+import com.PPBM.lentera.core.designsystem.components.LenteraContentMaxWidth
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.theme.*
 import java.time.ZonedDateTime
@@ -75,6 +79,7 @@ data class FormLamaranData(
 fun FormulirLamaranScreen(
     posisiJudul: String = "",
     perusahaan: String = "",
+    logoUrl: String? = null,
     initialNama: String = "",
     initialNim: String = "",
     initialEmail: String = "",
@@ -176,15 +181,17 @@ fun FormulirLamaranScreen(
         activeDocForUpload = null
     }
 
-    MaterialTheme(
-        colorScheme = MaterialTheme.colorScheme.copy(
-            background = Color.White,
-            surface = Color.White,
-            surfaceVariant = Color.White,
-            onBackground = NavyDark,
-            onSurface = NavyDark
-        )
-    ) {
+    LenteraTheme(darkTheme = false) {
+        MaterialTheme(
+            colorScheme = MaterialTheme.colorScheme.copy(
+                background = Color.White,
+                surface = Color.White,
+                surfaceVariant = Color.White,
+                surfaceContainer = Color.White,
+                onBackground = NavyDark,
+                onSurface = NavyDark
+            )
+        ) {
         Scaffold(
             containerColor = Color.White,
             modifier = Modifier
@@ -300,70 +307,78 @@ fun FormulirLamaranScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
         ) {
-            if (currentStep < 4) {
-                StepperHeader(
-                    currentStep = currentStep,
-                    fontFamily = fontFamily
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            Column(
+                modifier = Modifier
+                    .widthIn(max = LenteraContentMaxWidth)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                if (currentStep < 4) {
+                    StepperHeader(
+                        currentStep = currentStep,
+                        fontFamily = fontFamily
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-            when (currentStep) {
-                1 -> Step1DataDiri(
-                    nama = namaLengkap, onNamaChange = { namaLengkap = it },
-                    nimVal = nim, onNimChange = { nim = it },
-                    ttlVal = tempatTanggalLahir, onTtlChange = { tempatTanggalLahir = it },
-                    alamatKtpVal = alamatKtp, onAlamatKtpChange = { alamatKtp = it },
-                    alamatDomisiliVal = alamatDomisili, onAlamatDomisiliChange = { alamatDomisili = it },
-                    agamaVal = agama, onAgamaChange = { agama = it },
-                    golDarahVal = golonganDarah, onGolDarahChange = { golonganDarah = it },
-                    email = emailKampus, onEmailChange = { emailKampus = it },
-                    waVal = noWa, onWaChange = { noWa = it },
-                    prodiVal = prodi, onProdiChange = { prodi = it },
-                    semVal = semester, onSemChange = { semester = it },
-                    ipkVal = ipk, onIpkChange = { ipk = it },
-                    fontFamily = fontFamily
-                )
-                2 -> Step2UnggahDokumen(
-                    dokumenList = dokumenList,
-                    onUploadClick = { item ->
-                        activeDocForUpload = item
-                        showUploadModal = true
-                    },
-                    fontFamily = fontFamily
-                )
-                3 -> Step3Konfirmasi(
-                    nama = namaLengkap,
-                    nim = nim,
-                    ttl = tempatTanggalLahir,
-                    alamatDomisili = alamatDomisili,
-                    email = emailKampus,
-                    wa = noWa,
-                    posisi = posisiJudul,
-                    perusahaan = perusahaan,
-                    dokumenList = dokumenList,
-                    isAgreed = isAgreed,
-                    onAgreedChange = { isAgreed = it },
-                    onUbahDataDiri = { currentStep = 1 },
-                    onUbahDokumen = { currentStep = 2 },
-                    fontFamily = fontFamily
-                )
-                4 -> Step4Sukses(
-                    posisi = posisiJudul,
-                    perusahaan = perusahaan,
-                    nomorLamaran = submittedNomorLamaran,
-                    tanggalKirim = submittedTimestampText,
-                    onCekStatus = onCekStatusLamaran,
-                    onKembali = onKembaliKeBeranda,
-                    fontFamily = fontFamily
-                )
+                when (currentStep) {
+                    1 -> Step1DataDiri(
+                        nama = namaLengkap, onNamaChange = { namaLengkap = it },
+                        nimVal = nim, onNimChange = { nim = it },
+                        ttlVal = tempatTanggalLahir, onTtlChange = { tempatTanggalLahir = it },
+                        alamatKtpVal = alamatKtp, onAlamatKtpChange = { alamatKtp = it },
+                        alamatDomisiliVal = alamatDomisili, onAlamatDomisiliChange = { alamatDomisili = it },
+                        agamaVal = agama, onAgamaChange = { agama = it },
+                        golDarahVal = golonganDarah, onGolDarahChange = { golonganDarah = it },
+                        email = emailKampus, onEmailChange = { emailKampus = it },
+                        waVal = noWa, onWaChange = { noWa = it },
+                        prodiVal = prodi, onProdiChange = { prodi = it },
+                        semVal = semester, onSemChange = { semester = it },
+                        ipkVal = ipk, onIpkChange = { ipk = it },
+                        fontFamily = fontFamily
+                    )
+                    2 -> Step2UnggahDokumen(
+                        dokumenList = dokumenList,
+                        onUploadClick = { item ->
+                            activeDocForUpload = item
+                            showUploadModal = true
+                        },
+                        fontFamily = fontFamily
+                    )
+                    3 -> Step3Konfirmasi(
+                        nama = namaLengkap,
+                        nim = nim,
+                        ttl = tempatTanggalLahir,
+                        alamatDomisili = alamatDomisili,
+                        email = emailKampus,
+                        wa = noWa,
+                        posisi = posisiJudul,
+                        perusahaan = perusahaan,
+                        logoUrl = logoUrl,
+                        dokumenList = dokumenList,
+                        isAgreed = isAgreed,
+                        onAgreedChange = { isAgreed = it },
+                        onUbahDataDiri = { currentStep = 1 },
+                        onUbahDokumen = { currentStep = 2 },
+                        fontFamily = fontFamily
+                    )
+                    4 -> Step4Sukses(
+                        posisi = posisiJudul,
+                        perusahaan = perusahaan,
+                        nomorLamaran = submittedNomorLamaran,
+                        tanggalKirim = submittedTimestampText,
+                        onCekStatus = onCekStatusLamaran,
+                        onKembali = onKembaliKeBeranda,
+                        fontFamily = fontFamily
+                    )
+                }
             }
         }
     }
@@ -424,6 +439,7 @@ fun FormulirLamaranScreen(
         message = feedbackMessage,
         onDismiss = { showFeedback = false }
     )
+    }
     }
 }
 
@@ -738,11 +754,19 @@ private fun DropdownSelectFieldItem(
             }
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
+                containerColor = Color.White
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text(option, fontFamily = fontFamily) },
+                        text = {
+                            Text(
+                                text = option,
+                                fontFamily = fontFamily,
+                                color = NavyDark
+                            )
+                        },
+                        colors = MenuDefaults.itemColors(textColor = NavyDark),
                         onClick = {
                             onOptionSelected(option)
                             expanded = false
@@ -920,6 +944,7 @@ private fun Step3Konfirmasi(
     wa: String,
     posisi: String,
     perusahaan: String,
+    logoUrl: String? = null,
     dokumenList: List<LamaranDokumenItem> = emptyList(),
     isAgreed: Boolean,
     onAgreedChange: (Boolean) -> Unit,
@@ -963,11 +988,25 @@ private fun Step3Konfirmasi(
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                    contentDescription = perusahaan,
-                    modifier = Modifier.size(46.dp)
-                )
+                if (!logoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = logoUrl,
+                        contentDescription = perusahaan,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_avatar_2),
+                        contentDescription = perusahaan,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
@@ -1338,6 +1377,7 @@ private fun UploadDokumenLamaranDialog(
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = LenteraDialogMaxWidth)
                     .fillMaxWidth()
                     .clickable(enabled = false) {}
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
@@ -1529,6 +1569,7 @@ private fun PilihDariProfilDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
+                .widthIn(max = LenteraDialogMaxWidth)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color.White)

@@ -27,6 +27,13 @@ class SessionManager(context: Context) {
     private val _sessionConflictMessage = MutableStateFlow<String?>(null)
     val sessionConflictMessage: StateFlow<String?> = _sessionConflictMessage.asStateFlow()
 
+    @Volatile
+    var isStartupReady: Boolean = false
+        private set
+
+    private val _startupReadyFlow = MutableStateFlow(false)
+    val startupReadyFlow: StateFlow<Boolean> = _startupReadyFlow.asStateFlow()
+
     companion object {
         private const val PREF_NAME = "lentera_session_prefs"
         private const val KEY_USER_PROFILE = "key_user_profile"
@@ -68,6 +75,7 @@ class SessionManager(context: Context) {
             .putBoolean(KEY_IS_LOGGED_IN, true)
             .putString(KEY_USER_PROFILE, profileJson)
             .apply()
+        markStartupReady()
     }
 
     fun getProfile(): UserProfile? {
@@ -122,6 +130,18 @@ class SessionManager(context: Context) {
         }
     }
 
+    fun resetStartupReady() {
+        isStartupReady = false
+        _startupReadyFlow.value = false
+    }
+
+    fun markStartupReady() {
+        isStartupReady = true
+        _startupReadyFlow.value = true
+    }
+
+    fun isHeartbeatRunning(): Boolean = heartbeatJob?.isActive == true
+
     fun stopHeartbeat() {
         heartbeatJob?.cancel()
         heartbeatJob = null
@@ -129,6 +149,7 @@ class SessionManager(context: Context) {
 
     fun clearSession() {
         stopHeartbeat()
+        resetStartupReady()
         val deviceId = getDeviceId() // Simpan deviceId agar tidak hilang
         prefs.edit().clear().apply()
         prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()

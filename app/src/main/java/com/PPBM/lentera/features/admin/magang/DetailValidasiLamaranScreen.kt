@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.core.extractShortFileType
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenLamaranItem
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
 import com.PPBM.lentera.core.designsystem.theme.*
@@ -96,6 +97,7 @@ fun DetailValidasiLamaranScreen(
         )
     }
 
+    LenteraTheme(darkTheme = false) {
     Scaffold(
         topBar = {
             AdminMagangHeader(
@@ -418,7 +420,7 @@ fun DetailValidasiLamaranScreen(
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
+                            containerColor = Color(0x12b000),
                             contentColor = MagangNavyDark
                         ),
                         border = BorderStroke(1.dp, Color(0xFFDCE6EE))
@@ -441,6 +443,8 @@ fun DetailValidasiLamaranScreen(
     if (showMintaRevisiDialog) {
         AlertDialog(
             onDismissRequest = { showMintaRevisiDialog = false },
+            modifier = Modifier.widthIn(max = LenteraDialogMaxWidth),
+            containerColor = Color.White,
             title = {
                 Text(
                     text = "Minta Perbaikan Dokumen",
@@ -469,7 +473,28 @@ fun DetailValidasiLamaranScreen(
                             .fillMaxWidth()
                             .height(120.dp),
                         shape = RoundedCornerShape(10.dp),
-                        placeholder = { Text("Contoh: Transkrip nilai buram, unggah ulang...") }
+                        textStyle = TextStyle(
+                            fontFamily = PlusJakartaFont,
+                            fontSize = 13.sp,
+                            color = MagangNavyDark
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFEA580C),
+                            unfocusedBorderColor = Color(0xFFDCE6EE),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = MagangNavyDark,
+                            unfocusedTextColor = MagangNavyDark,
+                            cursorColor = Color(0xFFEA580C)
+                        ),
+                        placeholder = {
+                            Text(
+                                text = "Contoh: Transkrip nilai buram, unggah ulang...",
+                                fontFamily = PlusJakartaFont,
+                                fontSize = 12.sp,
+                                color = SlateGrayLight
+                            )
+                        }
                     )
                     if (revisiError != null) {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -499,15 +524,18 @@ fun DetailValidasiLamaranScreen(
                             successMsg = "Status lamaran diperbarui menjadi Perlu Perbaikan dan catatan dikirim ke mahasiswa."
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEA580C),
+                        contentColor = Color.White
+                    ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Kirim Catatan")
+                    Text("Kirim Catatan", fontFamily = PlusJakartaFont, color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showMintaRevisiDialog = false }) {
-                    Text("Batal")
+                    Text("Batal", fontFamily = PlusJakartaFont, color = MagangNavyDark)
                 }
             }
         )
@@ -522,6 +550,8 @@ fun DetailValidasiLamaranScreen(
         )
         AlertDialog(
             onDismissRequest = { showKeputusanDialog = false },
+            modifier = Modifier.widthIn(max = LenteraDialogMaxWidth),
+            containerColor = Color.White,
             title = {
                 Text(
                     text = "Perbarui Tahap Seleksi",
@@ -544,7 +574,11 @@ fun DetailValidasiLamaranScreen(
                         ) {
                             RadioButton(
                                 selected = selectedKeputusan == label,
-                                onClick = { selectedKeputusan = label }
+                                onClick = { selectedKeputusan = label },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MagangNavyDark,
+                                    unselectedColor = SlateGray
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -575,15 +609,18 @@ fun DetailValidasiLamaranScreen(
                             successMsg = "Status lamaran berhasil diperbarui ke: $selectedKeputusan."
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MagangNavyDark),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MagangNavyDark,
+                        contentColor = Color.White
+                    ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Simpan Status")
+                    Text("Simpan Status", fontFamily = PlusJakartaFont, color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showKeputusanDialog = false }) {
-                    Text("Batal")
+                    Text("Batal", fontFamily = PlusJakartaFont, color = MagangNavyDark)
                 }
             }
         )
@@ -596,6 +633,7 @@ fun DetailValidasiLamaranScreen(
         message = feedbackMessage,
         onDismiss = { showFeedbackDialog = false }
     )
+    }
 }
 
 @Composable

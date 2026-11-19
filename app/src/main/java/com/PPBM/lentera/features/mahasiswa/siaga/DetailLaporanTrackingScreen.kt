@@ -1,4 +1,5 @@
 package com.PPBM.lentera.features.mahasiswa.siaga
+import com.PPBM.lentera.core.designsystem.components.LenteraContentMaxWidth
 import com.PPBM.lentera.core.designsystem.icons.*
 import com.PPBM.lentera.core.designsystem.illustrations.*
 
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +70,13 @@ data class DetailLaporanTrackingData(
     val hasAdminRequest: Boolean = false,
     val hasilPenanganan: String? = null,
     val isSelesai: Boolean = false,
-    val timeline: List<TimelineStepItem> = emptyList()
+    val timeline: List<TimelineStepItem> = emptyList(),
+    val kategori: String = "",
+    val tanggalKejadian: String = "",
+    val lokasiKejadian: String = "",
+    val kronologi: String = "",
+    val isAnonim: Boolean = false,
+    val listLampiran: List<LampiranBuktiDetail> = emptyList()
 )
 
 // ============================================================================
@@ -88,7 +96,8 @@ fun DetailLaporanTrackingScreen(
     reportData: DetailLaporanTrackingData = DetailLaporanTrackingData(),
     onBackClick: () -> Unit = {},
     onLengkapiInformasiClick: () -> Unit = {},
-    onLihatHasilClick: (() -> Unit)? = null
+    onLihatHasilClick: (() -> Unit)? = null,
+    onAttachmentClick: (LampiranBuktiDetail) -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     var isHasilExpanded by remember { mutableStateOf(false) }
@@ -102,58 +111,82 @@ fun DetailLaporanTrackingScreen(
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Top Bar
-            TopBarDetailLaporan(
-                onBackClick = onBackClick,
-                fontFamily = plusJakarta
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .widthIn(max = LenteraContentMaxWidth)
             ) {
-                // 2. Kartu Header Laporan
-                HeaderInfoCard(
-                    data = reportData,
+                // 1. Top Bar
+                TopBarDetailLaporan(
+                    onBackClick = onBackClick,
                     fontFamily = plusJakarta
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // 3. Kartu Timeline "Proses penanganan"
-                TimelineProsesCard(
-                    timeline = reportData.timeline,
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // 4. Banner "Admin meminta informasi tambahan" (jika ada permintaan)
-                if (reportData.hasAdminRequest) {
-                    AdminRequestNoticeCard(
-                        message = reportData.adminMessage,
-                        onLengkapiClick = onLengkapiInformasiClick,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    // 2. Kartu Header Laporan
+                    HeaderInfoCard(
+                        data = reportData,
                         fontFamily = plusJakarta
                     )
+
                     Spacer(modifier = Modifier.height(18.dp))
+
+                    // 3. Kartu Timeline "Proses penanganan"
+                    TimelineProsesCard(
+                        timeline = reportData.timeline,
+                        fontFamily = plusJakarta
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // 4. Banner "Admin meminta informasi tambahan" (jika ada permintaan)
+                    if (reportData.hasAdminRequest) {
+                        AdminRequestNoticeCard(
+                            message = reportData.adminMessage,
+                            onLengkapiClick = onLengkapiInformasiClick,
+                            fontFamily = plusJakarta
+                        )
+                        Spacer(modifier = Modifier.height(18.dp))
+                    }
+
+                    // 5. Kartu Detail Laporan Lengkap (Kategori, Pelapor, Waktu, Lokasi, Kronologi)
+                    DetailLaporanInfoCard(
+                        data = reportData,
+                        fontFamily = plusJakarta
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // 6. Kartu Lampiran Bukti
+                    LampiranBuktiCard(
+                        listLampiran = reportData.listLampiran,
+                        onAttachmentClick = onAttachmentClick,
+                        fontFamily = plusJakarta
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // 7. Kartu "Hasil Penanganan" (Expandable)
+                    HasilPenangananCard(
+                        hasilPenanganan = reportData.hasilPenanganan,
+                        isSelesai = reportData.isSelesai,
+                        isExpanded = isHasilExpanded,
+                        onToggleExpand = { isHasilExpanded = !isHasilExpanded },
+                        onLihatHasilClick = onLihatHasilClick,
+                        fontFamily = plusJakarta
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
                 }
-
-                // 5. Kartu "Hasil Penanganan" (Expandable)
-                HasilPenangananCard(
-                    hasilPenanganan = reportData.hasilPenanganan,
-                    isSelesai = reportData.isSelesai,
-                    isExpanded = isHasilExpanded,
-                    onToggleExpand = { isHasilExpanded = !isHasilExpanded },
-                    onLihatHasilClick = onLihatHasilClick,
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
             }
         }
     }
@@ -235,6 +268,11 @@ private fun HeaderInfoCard(
             ) {
                 Text(
                     text = data.nomorReferensi,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 10.dp),
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 15.sp,
@@ -253,6 +291,7 @@ private fun HeaderInfoCard(
                 ) {
                     Text(
                         text = data.status,
+                        maxLines = 1,
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontSize = 12.sp,
@@ -628,6 +667,291 @@ private fun HasilPenangananCard(
 }
 
 // ============================================================================
+// Kartu "Detail Laporan" & "Lampiran Bukti"
+// ============================================================================
+
+@Composable
+private fun DetailLaporanInfoCard(
+    data: DetailLaporanTrackingData,
+    fontFamily: FontFamily
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Text(
+                text = "Detail Laporan",
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            DetailInfoRowBox(
+                icon = {
+                    AvatarIcon(
+                        modifier = Modifier.size(22.dp),
+                        tint = NavyDark
+                    )
+                },
+                label = "Status Pelapor",
+                value = if (data.isAnonim) "Anonim (Identitas dirahasiakan)" else "Terverifikasi",
+                fontFamily = fontFamily
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            DetailInfoRowBox(
+                icon = {
+                    ListIcon(
+                        modifier = Modifier.size(22.dp),
+                        tint = NavyDark
+                    )
+                },
+                label = "Kategori",
+                value = data.kategori.ifBlank { "-" },
+                fontFamily = fontFamily
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            DetailInfoRowBox(
+                icon = {
+                    CalendarIcon(
+                        modifier = Modifier.size(22.dp),
+                        tint = NavyDark
+                    )
+                },
+                label = "Tanggal Kejadian",
+                value = data.tanggalKejadian.ifBlank { "-" },
+                fontFamily = fontFamily
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            DetailInfoRowBox(
+                icon = {
+                    LocationPinIcon(
+                        modifier = Modifier.size(22.dp),
+                        tint = NavyDark
+                    )
+                },
+                label = "Lokasi Kejadian",
+                value = data.lokasiKejadian.ifBlank { "-" },
+                fontFamily = fontFamily
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "Kronologi",
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = data.kronologi.ifBlank { "Belum ada rincian kronologi." },
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = SlateGray,
+                    lineHeight = 20.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailInfoRowBox(
+    icon: @Composable () -> Unit,
+    label: String,
+    value: String,
+    fontFamily: FontFamily
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        icon()
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column {
+            Text(
+                text = label,
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SlateGrayLight
+                )
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = value,
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun LampiranBuktiCard(
+    listLampiran: List<LampiranBuktiDetail>,
+    onAttachmentClick: (LampiranBuktiDetail) -> Unit,
+    fontFamily: FontFamily
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Text(
+                text = "Lampiran Bukti",
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDark
+                )
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (listLampiran.isEmpty()) {
+                Text(
+                    text = "Tidak ada lampiran bukti",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        color = SlateGrayLight
+                    )
+                )
+            } else {
+                listLampiran.forEachIndexed { index, lampiran ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                            .clickable { onAttachmentClick(lampiran) }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NavyDark),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                when (lampiran.tipe) {
+                                    "PHOTO" -> ImagePlaceholderIcon(
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.White
+                                    )
+                                    "AUDIO" -> MusicNoteIcon(
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.White
+                                    )
+                                    else -> FileDocIcon(
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
+                            ) {
+                                Text(
+                                    text = lampiran.nama,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = TextStyle(
+                                        fontFamily = fontFamily,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NavyDark
+                                    )
+                                )
+                                if (lampiran.ukuran.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = lampiran.ukuran,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = TextStyle(
+                                            fontFamily = fontFamily,
+                                            fontSize = 12.sp,
+                                            color = SlateGrayLight
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        ChevronRightIcon(
+                            modifier = Modifier.size(16.dp),
+                            tint = SlateGrayLight
+                        )
+                    }
+
+                    if (index < listLampiran.lastIndex) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
 // Ikon & Aset Visual (Compose Canvas Murni)
 // ============================================================================
 
@@ -640,13 +964,15 @@ fun DetailLaporanTracking(
     reportData: DetailLaporanTrackingData = DetailLaporanTrackingData(),
     onBackClick: () -> Unit = {},
     onLengkapiInformasiClick: () -> Unit = {},
-    onLihatHasilClick: (() -> Unit)? = null
+    onLihatHasilClick: (() -> Unit)? = null,
+    onAttachmentClick: (LampiranBuktiDetail) -> Unit = {}
 ) {
     DetailLaporanTrackingScreen(
         reportData = reportData,
         onBackClick = onBackClick,
         onLengkapiInformasiClick = onLengkapiInformasiClick,
-        onLihatHasilClick = onLihatHasilClick
+        onLihatHasilClick = onLihatHasilClick,
+        onAttachmentClick = onAttachmentClick
     )
 }
 

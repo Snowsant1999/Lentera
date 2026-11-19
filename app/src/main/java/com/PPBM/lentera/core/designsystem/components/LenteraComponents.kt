@@ -137,6 +137,7 @@ fun LenteraBackIcon(onClick: () -> Unit) {
         contentDescription = "Back",
         modifier = Modifier
             .size(44.dp)
+            .clip(CircleShape)
             .clickable(onClick = onClick)
     )
 }
@@ -181,13 +182,17 @@ fun LenteraCompactHeader(
     description: String,
     onBackClick: () -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
             LenteraBackIcon(onClick = onBackClick)
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = title,
@@ -204,7 +209,7 @@ fun LenteraCompactHeader(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = description,
             fontSize = 13.sp,

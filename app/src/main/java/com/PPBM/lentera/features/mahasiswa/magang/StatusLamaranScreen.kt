@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.backend.core.extractShortFileType
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenLamaranItem
@@ -48,6 +49,7 @@ private fun statusTitleLabel(status: String): String = when (status.lowercase())
 fun StatusLamaranScreen(
     lamaran: LamaranSaya? = null,
     lowongan: LowonganTerbit? = null,
+    logoUrl: String? = null,
     riwayatList: List<LamaranRiwayatItem> = emptyList(),
     dokumenList: List<DokumenLamaranItem> = emptyList(),
     onOpenDokumen: (DokumenLamaranItem) -> Unit = {},
@@ -65,11 +67,14 @@ fun StatusLamaranScreen(
     val isRejected = statusCode == "ditolak"
     val catatanAdmin = lamaran?.catatanAdmin?.takeIf { it.isNotBlank() }
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ScreenBackground),
-        topBar = {
+    LenteraTheme(darkTheme = false) {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ScreenBackground),
+            containerColor = ScreenBackground,
+            contentColor = NavyDark,
+            topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -117,14 +122,25 @@ fun StatusLamaranScreen(
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_avatar_2),
-                        contentDescription = perusahaan,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                    )
+                    if (!logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = logoUrl,
+                            contentDescription = perusahaan,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_avatar_2),
+                            contentDescription = perusahaan,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -482,6 +498,7 @@ fun StatusLamaranScreen(
             }
 
             Spacer(modifier = Modifier.height(30.dp))
+        }
         }
     }
 }

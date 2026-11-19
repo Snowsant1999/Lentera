@@ -126,26 +126,26 @@ fun RiwayatLaporanScreen(
                     .navigationBarsPadding()
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SiagaTealPrimary)
-                        .clickable(onClick = onKembaliKeDashboard),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Kembali ke Dashboard",
-                        style = TextStyle(
-                            fontFamily = plusJakarta,
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .height(52.dp)
+//                        .shadow(2.dp, RoundedCornerShape(16.dp))
+//                        .clip(RoundedCornerShape(16.dp))
+//                        .background(SiagaTealPrimary)
+//                        .clickable(onClick = onKembaliKeDashboard),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text(
+//                        text = "Kembali ke Dashboard",
+//                        style = TextStyle(
+//                            fontFamily = plusJakarta,
+//                            fontSize = 14.5.sp,
+//                            fontWeight = FontWeight.Bold,
+//                            color = Color.White
+//                        )
+//                    )
+//                }
             }
         }
     ) { innerPadding ->

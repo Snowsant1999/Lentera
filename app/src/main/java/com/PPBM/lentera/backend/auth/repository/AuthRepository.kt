@@ -150,6 +150,50 @@ class AuthRepository(context: Context) {
         sessionManager.clearSession()
     }
 
+    private fun isPermanentAuthRevocation(error: Throwable): Boolean {
+        val msg = generateSequence(error) { it.cause }
+            .mapNotNull { it.message }
+            .joinToString(" | ")
+        return msg.contains("invalid_grant", ignoreCase = true) ||
+            msg.contains("refresh_token_not_found", ignoreCase = true) ||
+            msg.contains("invalid refresh token", ignoreCase = true) ||
+            msg.contains("session_not_found", ignoreCase = true)
+    }
+
+    private suspend fun clearInvalidAuthSession() {
+        try {
+            client.auth.clearSession()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {}
+        sessionManager.clearSession()
+    }
+
+    /**
+     * Memastikan Supabase Auth sudah terinisialisasi dan JWT masih berlaku (refresh bila <= 60 detik atau dipaksa).
+     * Mengembalikan false jika tidak ada sesi atau refresh token dicabut permanen;
+     * tetap mengembalikan true saat error jaringan sementara agar pengguna offline tidak langsung dikeluarkan.
+     */
+    suspend fun ensureValidAuthSession(forceRefresh: Boolean = false): Boolean {
+        runCatching { client.auth.awaitInitialization() }
+            .onFailure { if (it is CancellationException) throw it }
+
+        val session = client.auth.currentSessionOrNull() ?: return false
+        val isExpiringSoon = session.expiresAt.toEpochMilliseconds() <= System.currentTimeMillis() + 60_000L
+
+        if (forceRefresh || isExpiringSoon) {
+            try {
+                client.auth.refreshCurrentSession()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return !isPermanentAuthRevocation(e)
+            }
+        }
+
+        return client.auth.currentSessionOrNull() != null
+    }
+
     /**
      * Mengirim detak sesi (heartbeat) aktif ke server setiap 60 detik (C1).
      */
@@ -157,44 +201,92 @@ class AuthRepository(context: Context) {
 
     suspend fun sendHeartbeatWithDetail(): Pair<Boolean, String?> {
         if (!isLoggedIn()) return true to null
+        if (!ensureValidAuthSession()) {
+            clearInvalidAuthSession()
+            return false to "Sesi login Anda telah berakhir. Silakan masuk kembali."
+        }
+
         val deviceId = sessionManager.getDeviceId()
         return try {
-            val rpcParams = buildJsonObject {
-                put("p_device_id", deviceId)
+            suspend fun callDetakSesi(): JsonObject {
+                val rpcParams = buildJsonObject {
+                    put("p_device_id", deviceId)
+                }
+                return client.postgrest.rpc("detak_sesi", rpcParams).decodeAs<JsonObject>()
             }
-            val res = client.postgrest.rpc("detak_sesi", rpcParams).decodeAs<JsonObject>()
-            val isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
-            val message = res["message"]?.jsonPrimitive?.contentOrNull
+
+            var res = callDetakSesi()
+            var isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+            var message = res["message"]?.jsonPrimitive?.contentOrNull
+
+            if (!isSuccess && message?.contains("Sesi autentikasi tidak valid", ignoreCase = true) == true) {
+                val refreshed = ensureValidAuthSession(forceRefresh = true)
+                if (!refreshed) {
+                    clearInvalidAuthSession()
+                    return false to "Sesi login Anda telah berakhir. Silakan masuk kembali."
+                }
+                res = callDetakSesi()
+                isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+                message = res["message"]?.jsonPrimitive?.contentOrNull
+            }
+
             isSuccess to message
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             true to null // Jangan putus sesi hanya karena fluktuasi jaringan sementara
         }
     }
 
     /**
-     * Memvalidasi atau mengklaim ulang sesi pada cold start aplikasi (C1).
+     * Memvalidasi atau mengklaim ulang sesi pada cold start atau resume aplikasi (C1).
      */
     suspend fun validateOrClaimSessionOnStartup(): Pair<Boolean, String?> {
         if (!isLoggedIn()) return false to null
+        if (!ensureValidAuthSession()) {
+            clearInvalidAuthSession()
+            return false to null
+        }
+
         val deviceId = sessionManager.getDeviceId()
         val deviceInfo = sessionManager.getDeviceInfo()
         return try {
-            val rpcParams = buildJsonObject {
-                put("p_device_id", deviceId)
-                put("p_device_info", deviceInfo)
+            suspend fun callKlaimSesi(): JsonObject {
+                val rpcParams = buildJsonObject {
+                    put("p_device_id", deviceId)
+                    put("p_device_info", deviceInfo)
+                }
+                return client.postgrest.rpc("klaim_sesi", rpcParams).decodeAs<JsonObject>()
             }
-            val res = client.postgrest.rpc("klaim_sesi", rpcParams).decodeAs<JsonObject>()
-            val isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
-            val message = res["message"]?.jsonPrimitive?.contentOrNull
+
+            var res = callKlaimSesi()
+            var isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+            var message = res["message"]?.jsonPrimitive?.contentOrNull
+
+            if (!isSuccess && message?.contains("Sesi autentikasi tidak valid", ignoreCase = true) == true) {
+                val refreshed = ensureValidAuthSession(forceRefresh = true)
+                if (!refreshed) {
+                    clearInvalidAuthSession()
+                    return false to null
+                }
+                res = callKlaimSesi()
+                isSuccess = res["success"]?.jsonPrimitive?.booleanOrNull ?: true
+                message = res["message"]?.jsonPrimitive?.contentOrNull
+            }
+
             if (!isSuccess) {
                 try {
                     client.auth.signOut()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {}
                 sessionManager.clearSession()
                 false to (message?.takeIf { it.isNotBlank() } ?: "Akun sedang aktif digunakan di perangkat lain.")
             } else {
                 true to null
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             true to null // Jangan memblokir akses jika offline sementara
         }

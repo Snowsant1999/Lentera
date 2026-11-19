@@ -117,11 +117,14 @@ fun LamaranSayaScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ScreenBackground),
-        topBar = {
+    LenteraTheme(darkTheme = false) {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ScreenBackground),
+            containerColor = ScreenBackground,
+            contentColor = NavyDark,
+            topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -228,13 +231,23 @@ fun LamaranSayaScreen(
                             modifier = Modifier.size(18.dp)
                         )
                     },
+                    textStyle = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        color = NavyDark
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White, RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MagangAmberPrimary,
-                        unfocusedBorderColor = CardBorder
+                        unfocusedBorderColor = CardBorder,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedTextColor = NavyDark,
+                        unfocusedTextColor = NavyDark,
+                        cursorColor = MagangAmberPrimary
                     ),
                     singleLine = true
                 )
@@ -413,6 +426,7 @@ fun LamaranSayaScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
         }
     }
 }
