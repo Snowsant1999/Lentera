@@ -5,6 +5,7 @@ import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkResult
 import com.PPBM.lentera.backend.core.WITA_ZONE
 import com.PPBM.lentera.backend.core.daysUntilDeadline
 import com.PPBM.lentera.backend.core.extractShortFileType
+import com.PPBM.lentera.backend.core.formatTanggalJamWita
 import com.PPBM.lentera.backend.core.isPgUniqueViolation
 import com.PPBM.lentera.backend.core.mapSupabaseError
 import com.PPBM.lentera.backend.core.normalizeDokumenLamaranJenis
@@ -246,6 +247,50 @@ class LenteraContractsTest {
         assertEquals("PDF", extractShortFileType("cv_mahasiswa.pdf"))
         assertEquals("FILE", extractShortFileType("tanpa_ekstensi"))
         assertEquals("VERYLONGEX", extractShortFileType("arsip.verylongextension"))
+    }
+
+    @Test
+    fun formatTanggalJamWita_formatsTimestampsToWitaWithIndonesianShortMonths() {
+        assertEquals(
+            "18 Nov 2026 · 14:35 WITA",
+            formatTanggalJamWita("2026-11-18T06:35:00Z")
+        )
+        assertEquals(
+            "01 Sep 2026 · 01:10 WITA",
+            formatTanggalJamWita("2026-08-31T17:10:00Z")
+        )
+        assertEquals(
+            "03 Mei 2026 · 10:05 WITA",
+            formatTanggalJamWita("2026-05-03T02:05:00Z")
+        )
+        assertEquals(
+            "17 Agu 2026 · 08:00 WITA",
+            formatTanggalJamWita("2026-08-17T00:00:00Z")
+        )
+        assertEquals(
+            "28 Okt 2026 · 20:15 WITA",
+            formatTanggalJamWita("2026-10-28T12:15:00Z")
+        )
+        assertEquals(
+            "26 Des 2026 · 00:00 WITA",
+            formatTanggalJamWita("2026-12-25T16:00:00Z")
+        )
+        assertEquals(
+            "18 Nov 2026 · 14:35 WITA",
+            formatTanggalJamWita("2026-11-18T14:35:00+08:00")
+        )
+        assertEquals(
+            "18 Nov 2026 · 14:35 WITA",
+            formatTanggalJamWita("2026-11-18T13:35:00+07:00")
+        )
+        assertEquals(
+            "18 Nov 2026",
+            formatTanggalJamWita("2026-11-18")
+        )
+        assertEquals("-", formatTanggalJamWita(""))
+        assertEquals("-", formatTanggalJamWita("   "))
+        assertEquals("-", formatTanggalJamWita("-"))
+        assertEquals("format tidak dikenali", formatTanggalJamWita("  format tidak dikenali  "))
     }
 }
 

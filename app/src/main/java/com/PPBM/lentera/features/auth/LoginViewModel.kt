@@ -8,6 +8,7 @@ import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkParser
 import com.PPBM.lentera.backend.auth.repository.RecoveryDeepLinkResult
+import com.PPBM.lentera.backend.auth.repository.SessionConflictException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 data class LoginUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val sessionConflictMessage: String? = null,
     val successMessage: String? = null,
     val loggedInProfile: UserProfile? = null,
     val isProcessingDeepLink: Boolean = false,
@@ -46,7 +48,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     onRoleDetermined(profile.role, profile.statusAkun)
                 },
                 onFailure = { error ->
-                    _uiState.value = LoginUiState(errorMessage = error.message ?: "Login gagal.")
+                    val conflictMsg = (error as? SessionConflictException)?.message
+                    _uiState.value = LoginUiState(
+                        errorMessage = error.message ?: "Login gagal.",
+                        sessionConflictMessage = conflictMsg
+                    )
                 }
             )
         }
@@ -192,6 +198,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun clearError() {
         if (_uiState.value.errorMessage != null) {
             _uiState.value = _uiState.value.copy(errorMessage = null)
+        }
+    }
+
+    fun clearSessionConflict() {
+        if (_uiState.value.sessionConflictMessage != null) {
+            _uiState.value = _uiState.value.copy(sessionConflictMessage = null)
         }
     }
 }

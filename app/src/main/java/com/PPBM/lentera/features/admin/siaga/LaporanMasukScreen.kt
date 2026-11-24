@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -255,6 +256,11 @@ fun LaporanMasukScreen(
                         ) {
                             Text(
                                 text = laporan.id,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
                                 style = TextStyle(
                                     fontSize = 13.sp,
                                     fontFamily = PlusJakartaFont,
@@ -265,6 +271,7 @@ fun LaporanMasukScreen(
 
                             Text(
                                 text = laporan.status,
+                                maxLines = 1,
                                 modifier = Modifier
                                     .background(
                                         color = laporan.statusBgColor,
@@ -289,6 +296,11 @@ fun LaporanMasukScreen(
                         ) {
                             Text(
                                 text = laporan.judul,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 10.dp),
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     fontFamily = PlusJakartaFont,
@@ -309,6 +321,8 @@ fun LaporanMasukScreen(
 
                         Text(
                             text = laporan.tanggal,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = PlusJakartaFont,

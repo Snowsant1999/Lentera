@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 data class SelectedBukti(
+    val id: String? = null,
+    val storagePath: String? = null,
     val uri: Uri? = null,
     val fileName: String,
     val fileType: String,
@@ -34,7 +36,7 @@ data class SiagaUiState(
 
     // Form pembuatan laporan
     val selectedKategoriId: String = "",
-    val selectedKategoriNama: String = "Pelecehan Verbal",
+    val selectedKategoriNama: String = "",
     val formJudul: String = "",
     val formTanggalWaktu: String = "",
     val formLokasi: String = "",
@@ -75,8 +77,9 @@ class SiagaViewModel(
         viewModelScope.launch {
             siagaRepo.getKategoriList().onSuccess { list ->
                 val currentNama = _uiState.value.selectedKategoriNama
-                val matched = list.find { it.nama.equals(currentNama, ignoreCase = true) }
-                    ?: list.firstOrNull()
+                val matched = if (currentNama.isNotBlank()) {
+                    list.find { it.nama.equals(currentNama, ignoreCase = true) }
+                } else null
                 _uiState.value = _uiState.value.copy(
                     kategoriList = list,
                     selectedKategoriId = matched?.id ?: _uiState.value.selectedKategoriId,
@@ -122,14 +125,21 @@ class SiagaViewModel(
      * Memilih kategori berdasarkan nama tampilan enum UI lalu mencocokkannya dengan UUID database.
      */
     fun setKategoriByName(kategoriNama: String) {
+        val clean = kategoriNama.trim()
+        if (clean.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                selectedKategoriId = "",
+                selectedKategoriNama = ""
+            )
+            return
+        }
         val list = _uiState.value.kategoriList
-        val matched = list.find { it.nama.equals(kategoriNama.trim(), ignoreCase = true) }
-            ?: list.find { it.nama.contains(kategoriNama.trim(), ignoreCase = true) }
-            ?: list.firstOrNull()
+        val matched = list.find { it.nama.equals(clean, ignoreCase = true) }
+            ?: list.find { it.nama.contains(clean, ignoreCase = true) }
         _uiState.value = _uiState.value.copy(
             selectedKategoriId = matched?.id.orEmpty(),
-            selectedKategoriNama = matched?.nama ?: kategoriNama,
-            formJudul = if (_uiState.value.formJudul.isBlank()) (matched?.nama ?: kategoriNama) else _uiState.value.formJudul
+            selectedKategoriNama = matched?.nama ?: clean,
+            formJudul = if (_uiState.value.formJudul.isBlank()) (matched?.nama ?: clean) else _uiState.value.formJudul
         )
         if (list.isEmpty()) {
             loadKategoriList()
@@ -200,8 +210,50 @@ class SiagaViewModel(
         }
     }
 
+    /**
+     * Menghapus bukti secara fisik dari draf dan database/storage jika sudah tersimpan
+     */
+    fun removeBukti(
+        index: Int,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        val current = _uiState.value.uploadedBuktiList.toMutableList()
+        if (index !in current.indices) return
+        val target = current[index]
+
+        if (!target.id.isNullOrBlank() || !target.storagePath.isNullOrBlank()) {
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                val result = siagaRepo.deleteBuktiLaporan(target.id.orEmpty(), target.storagePath)
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                result.onSuccess {
+                    val updated = _uiState.value.uploadedBuktiList.toMutableList()
+                    if (index in updated.indices && updated[index] == target) {
+                        updated.removeAt(index)
+                    } else {
+                        updated.removeAll { it.fileName == target.fileName }
+                    }
+                    _uiState.value = _uiState.value.copy(uploadedBuktiList = updated)
+                    onSuccess("Berkas bukti '${target.fileName}' berhasil dihapus.")
+                }.onFailure { err ->
+                    val msg = err.message ?: "Gagal menghapus berkas bukti."
+                    _uiState.value = _uiState.value.copy(errorMessage = msg)
+                    onError(msg)
+                }
+            }
+        } else {
+            // Berkas lokal di form draf: langsung hapus dari memori
+            current.removeAt(index)
+            _uiState.value = _uiState.value.copy(uploadedBuktiList = current)
+            onSuccess("Berkas bukti '${target.fileName}' dihapus dari draf.")
+        }
+    }
+
     fun resetDraftForm() {
         _uiState.value = _uiState.value.copy(
+            selectedKategoriId = "",
+            selectedKategoriNama = "",
             formJudul = "",
             formTanggalWaktu = "",
             formLokasi = "",
@@ -223,6 +275,12 @@ class SiagaViewModel(
 
         viewModelScope.launch {
             val state = _uiState.value
+            if (state.selectedKategoriNama.isBlank()) {
+                val msg = "Kategori laporan wajib dipilih terlebih dahulu."
+                _uiState.value = state.copy(errorMessage = msg)
+                onError(msg)
+                return@launch
+            }
             if (state.formTanggalWaktu.isBlank() || state.formLokasi.isBlank() || state.formKronologi.isBlank()) {
                 val msg = "Tanggal kejadian, lokasi, dan kronologi wajib diisi."
                 _uiState.value = state.copy(errorMessage = msg)
@@ -238,7 +296,6 @@ class SiagaViewModel(
                 val katList = siagaRepo.getKategoriList().getOrDefault(emptyList())
                 val matched = katList.find { it.nama.equals(resolvedKategoriNama, ignoreCase = true) }
                     ?: katList.find { it.nama.contains(resolvedKategoriNama, ignoreCase = true) }
-                    ?: katList.firstOrNull()
                 if (matched != null) {
                     resolvedKategoriId = matched.id
                     resolvedKategoriNama = matched.nama
@@ -251,7 +308,7 @@ class SiagaViewModel(
             }
 
             if (resolvedKategoriId.isBlank()) {
-                val msg = "Daftar kategori laporan gagal dimuat. Periksa koneksi internet Anda."
+                val msg = "Kategori laporan tidak valid atau gagal dimuat."
                 _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = msg)
                 onError(msg)
                 return@launch

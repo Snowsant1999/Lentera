@@ -1,18 +1,37 @@
 package com.PPBM.lentera.core.designsystem.components
-import androidx.compose.foundation.Image
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +42,85 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.core.designsystem.theme.*
 import com.PPBM.lentera.core.designsystem.theme.PlusJakartaSans
 import com.PPBM.lentera.features.admin.akunmahasiswa.StatusAkun
+
+/**
+ * Efek skala halus saat elemen ditekan menggunakan [interactionSource] yang sudah ada.
+ */
+fun Modifier.pressScale(
+    interactionSource: InteractionSource,
+    scaleDown: Float = 0.97f
+): Modifier = composed {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) scaleDown else 1f,
+        animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing),
+        label = "pressScale"
+    )
+    this.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+/**
+ * Modifier klik dengan micro-interaction press scale (0.97f, 100ms).
+ */
+fun Modifier.bounceClick(
+    scaleDown: Float = 0.97f,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+): Modifier = composed {
+    val interactionSource = remember { MutableInteractionSource() }
+    this
+        .pressScale(interactionSource = interactionSource, scaleDown = scaleDown)
+        .clickable(
+            interactionSource = interactionSource,
+            indication = LocalIndication.current,
+            enabled = enabled,
+            onClick = onClick
+        )
+}
+
+/**
+ * Modifier efek shimmer gradient sweep untuk skeleton loading.
+ */
+fun Modifier.shimmerEffect(): Modifier = composed {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1200f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFFE6EAF0),
+            Color(0xFFF4F6FA),
+            Color(0xFFE6EAF0)
+        ),
+        start = Offset(x = translateAnim - 400f, y = 0f),
+        end = Offset(x = translateAnim, y = 200f)
+    )
+    this.background(brush)
+}
+
+/**
+ * Kotak kerangka (skeleton) dengan animasi shimmer.
+ */
+@Composable
+fun LenteraShimmerBox(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(10.dp)
+) {
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .shimmerEffect()
+    )
+}
 
 enum class LenteraNavItem {
     BERANDA,
@@ -39,6 +137,7 @@ fun LenteraBackIcon(onClick: () -> Unit) {
         contentDescription = "Back",
         modifier = Modifier
             .size(44.dp)
+            .clip(CircleShape)
             .clickable(onClick = onClick)
     )
 }
@@ -83,13 +182,17 @@ fun LenteraCompactHeader(
     description: String,
     onBackClick: () -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
             LenteraBackIcon(onClick = onBackClick)
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = title,
@@ -106,7 +209,7 @@ fun LenteraCompactHeader(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = description,
             fontSize = 13.sp,
@@ -175,7 +278,7 @@ fun LenteraCard(
 ) {
     val actualContainerColor = if (containerColor != Color.Unspecified) containerColor else LenteraColors.CardBackground
     val cardModifier = if (onClick != null) {
-        modifier.fillMaxWidth().clickable(onClick = onClick)
+        modifier.fillMaxWidth().bounceClick(onClick = onClick)
     } else {
         modifier.fillMaxWidth()
     }
@@ -209,7 +312,8 @@ fun ProfileAvatar(
     size: Dp = 42.dp,
     containerColor: Color = Color.Unspecified,
     iconTint: Color = Color.Unspecified,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    avatarUrl: String? = null
 ) {
     val actualBg = if (containerColor != Color.Unspecified) containerColor else LenteraColors.Background
     Box(
@@ -219,14 +323,27 @@ fun ProfileAvatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        androidx.compose.foundation.Image(
-            painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
-            contentDescription = "Avatar",
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        )
+        if (!avatarUrl.isNullOrBlank()) {
+            coil.compose.AsyncImage(
+                model = avatarUrl,
+                placeholder = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                error = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                contentDescription = "Avatar",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        } else {
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = com.PPBM.lentera.R.drawable.ic_avatar_2),
+                contentDescription = "Avatar",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        }
     }
 }
 
@@ -340,11 +457,14 @@ fun LenteraButton(
 ) {
     val actualBg = if (containerColor != Color.Unspecified) containerColor else LenteraColors.NavyPrimary
     val actualContentColor = if (contentColor != Color.Unspecified) contentColor else Color.White
+    val interactionSource = remember { MutableInteractionSource() }
     Button(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(50.dp)
+            .pressScale(interactionSource),
         colors = ButtonDefaults.buttonColors(containerColor = actualBg, contentColor = actualContentColor),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -378,11 +498,14 @@ fun LenteraSecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     OutlinedButton(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(50.dp)
+            .pressScale(interactionSource),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.White,
             contentColor = LenteraColors.NavyPrimary

@@ -19,13 +19,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.PPBM.lentera.R
+import coil.compose.AsyncImage
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.components.LenteraNotificationBell
 import com.PPBM.lentera.core.designsystem.theme.*
 
 data class DashboardLaporanItem(
@@ -55,6 +58,8 @@ fun AdminDashboardScreen(
     totalLowongan: Int = 0,
     laporanList: List<DashboardLaporanItem> = emptyList(),
     lowonganList: List<DashboardLowonganItem> = emptyList(),
+    hasUnread: Boolean = false,
+    photoUrl: String? = null,
     onNavigateToMahasiswa: () -> Unit = {},
     onNavigateToSiaga: () -> Unit = {},
     onNavigateToMagang: () -> Unit = {},
@@ -87,6 +92,8 @@ fun AdminDashboardScreen(
             item {
                 HeaderAdmin(
                     userName = userName,
+                    hasUnread = hasUnread,
+                    photoUrl = photoUrl,
                     onProfileClick = onNavigateToProfil,
                     onNotificationClick = onNavigateToNotifikasi
                 )
@@ -141,6 +148,8 @@ fun AdminDashboardScreen(
 fun HeaderAdmin(
     userName: String = "Admin Lentera",
     userRole: String = "Admin Kampus · LENTERA",
+    hasUnread: Boolean = false,
+    photoUrl: String? = null,
     onProfileClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
 ) {
@@ -171,14 +180,27 @@ fun HeaderAdmin(
                     .clickable { onProfileClick() }
                     .background(Color.White, CircleShape)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                )
+                if (!photoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "Profile",
+                        placeholder = painterResource(id = R.drawable.ic_avatar_2),
+                        error = painterResource(id = R.drawable.ic_avatar_2),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_avatar_2),
+                        contentDescription = "Profile",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                    )
+                }
             }
 
             // Bagian Teks Sapaan
@@ -208,20 +230,11 @@ fun HeaderAdmin(
         }
 
         // Bagian Lonceng Notifikasi (Disamakan dengan Mahasiswa Dashboard)
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onNotificationClick)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_bell_outline),
-                contentDescription = "Notifikasi",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        LenteraNotificationBell(
+            hasUnread = hasUnread,
+            onClick = onNotificationClick,
+            tint = Color.White
+        )
     }
 }
 
@@ -461,9 +474,15 @@ fun KartuLaporanMasukTerakhir(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp)
+                        ) {
                             Text(
                                 text = item.judul,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(
                                     fontSize = 13.5.sp,
                                     fontFamily = PlusJakartaSans,
@@ -474,6 +493,8 @@ fun KartuLaporanMasukTerakhir(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "${item.id} · ${item.waktu}",
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(
                                     fontSize = 11.sp,
                                     fontFamily = PlusJakartaSans,
@@ -490,6 +511,7 @@ fun KartuLaporanMasukTerakhir(
                         ) {
                             Text(
                                 text = item.status,
+                                maxLines = 1,
                                 style = TextStyle(
                                     fontSize = 11.sp,
                                     fontFamily = PlusJakartaSans,

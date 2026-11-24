@@ -16,13 +16,17 @@ import com.PPBM.lentera.backend.auth.model.UserProfile
 import com.PPBM.lentera.backend.auth.repository.AuthRepository
 import com.PPBM.lentera.backend.core.SessionManager
 import com.PPBM.lentera.backend.core.extractShortFileType
+import com.PPBM.lentera.backend.core.normalizeLamaranStatus
+import com.PPBM.lentera.backend.core.normalizeLaporanStatus
 import com.PPBM.lentera.backend.core.normalizeLowonganStatus
 import com.PPBM.lentera.backend.core.normalizeTempatStatus
+import com.PPBM.lentera.core.notification.LenteraNotificationHelper
 import com.PPBM.lentera.backend.mahasiswa.model.BuktiLaporanItem
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenHasilItem
 import com.PPBM.lentera.backend.mahasiswa.model.DokumenLamaranItem
 import com.PPBM.lentera.backend.mahasiswa.model.LamaranSaya
 import com.PPBM.lentera.backend.mahasiswa.model.PermintaanInformasiItem
+import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
 import com.PPBM.lentera.features.admin.magang.PelamarLamaranItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,9 +53,12 @@ data class AdminUiState(
     val selectedPelamarDokumenList: List<DokumenLamaranItem> = emptyList(),
     val selectedTempatMagang: TempatMagangEntity? = null,
     val selectedLowonganAdmin: LowonganEntity? = null,
+    val logoUrlMap: Map<String, String> = emptyMap(),
     val isCreatingMahasiswa: Boolean = false,
     val isUpdatingLaporan: Boolean = false,
     val isSubmittingMagang: Boolean = false,
+    val hasUnreadNotifications: Boolean = false,
+    val allNotificationsMarkedRead: Boolean = false,
     val errorMessage: String? = null,
     val actionSuccessMessage: String? = null
 )
@@ -80,7 +87,7 @@ class AdminViewModel(
     /**
      * Memuat data statistik dashboard, laporan terkini, dan referensi mitra/lowongan
      */
-    fun loadDashboardData() {
+    fun loadDashboardData(context: Context? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
@@ -94,6 +101,29 @@ class AdminViewModel(
             val lamaranResult = adminMagangRepo.getAllLamaranMasuk()
             val lamaranList = lamaranResult.getOrDefault(_uiState.value.lamaranMasukList)
 
+            val notifRepo = MahasiswaRepository()
+            val notifResult = notifRepo.getNotifikasi()
+            val adminNotifs = notifResult.getOrDefault(emptyList())
+            val unreadNotifs = adminNotifs.filter { !it.isDibaca }
+
+            val hasPendingLaporan = laporanList.any { normalizeLaporanStatus(it.status) == "baru" }
+            val hasPendingLamaran = lamaranList.any {
+                val norm = normalizeLamaranStatus(it.status)
+                norm == "terkirim" || norm == "pemeriksaan"
+            }
+            val hasDraftLowongan = lowonganList.any { normalizeLowonganStatus(it.status) == "draf" }
+            val unreadCount = (if (hasPendingLaporan) 1 else 0) + (if (hasPendingLamaran) 1 else 0) + (if (hasDraftLowongan) 1 else 0)
+            val shouldShowUnread = !_uiState.value.allNotificationsMarkedRead && (unreadNotifs.isNotEmpty() || unreadCount > 0)
+
+            if (context != null && unreadNotifs.isNotEmpty()) {
+                val sentIds = LenteraNotificationHelper.showPendingServerNotifications(context, unreadNotifs)
+                if (sentIds.isNotEmpty()) {
+                    notifRepo.tandaiNotifikasiTerkirim(sentIds)
+                }
+            }
+
+            val resolvedLogoMap = resolveMissingLogoUrls(tempatList)
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stats = statsResult.getOrDefault(_uiState.value.stats),
@@ -101,10 +131,19 @@ class AdminViewModel(
                 laporanTerbaruList = laporanList.take(5),
                 lowonganAdminList = lowonganList,
                 tempatMagangList = tempatList,
+                logoUrlMap = resolvedLogoMap,
                 lamaranMasukList = lamaranList,
+                hasUnreadNotifications = shouldShowUnread,
                 errorMessage = statsResult.exceptionOrNull()?.message
             )
         }
+    }
+
+    fun markAllNotificationsAsRead() {
+        _uiState.value = _uiState.value.copy(
+            hasUnreadNotifications = false,
+            allNotificationsMarkedRead = true
+        )
     }
 
     /**
@@ -534,6 +573,7 @@ class AdminViewModel(
         perguruanTinggi: String?,
         programStudi: String?,
         angkatan: String?,
+        noTelepon: String? = null,
         onError: (String) -> Unit = {},
         onSuccess: () -> Unit = {}
     ) {
@@ -552,6 +592,7 @@ class AdminViewModel(
                 perguruanTinggi = perguruanTinggi,
                 programStudi = programStudi,
                 angkatan = angkatan,
+                noTelepon = noTelepon,
                 emailChanged = emailChanged
             )
             res.onSuccess {
@@ -639,14 +680,38 @@ class AdminViewModel(
     // ========================================================================
 
     /**
-     * Memuat seluruh daftar tempat magang / mitra
+     * Helper terpusat untuk me-resolve signed URL logo perusahaan yang belum ada di cache (P3).
+     */
+    private suspend fun resolveMissingLogoUrls(
+        list: List<TempatMagangEntity>,
+        existingMap: Map<String, String> = _uiState.value.logoUrlMap
+    ): Map<String, String> {
+        val currentLogoMap = existingMap.toMutableMap()
+        val pathsToFetch = list.mapNotNull { it.logoPath }
+            .filter { it.isNotBlank() && !currentLogoMap.containsKey(it) }
+            .distinct()
+        for (path in pathsToFetch) {
+            adminMagangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                currentLogoMap[path] = url
+            }
+        }
+        return currentLogoMap
+    }
+
+    /**
+     * Memuat seluruh daftar tempat magang / mitra beserta signed URL logo
      */
     fun loadTempatMagangList() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val res = adminMagangRepo.getTempatMagangList()
             res.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, tempatMagangList = list)
+                val currentLogoMap = resolveMissingLogoUrls(list)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    tempatMagangList = list,
+                    logoUrlMap = currentLogoMap
+                )
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -657,7 +722,7 @@ class AdminViewModel(
     }
 
     /**
-     * Memuat seluruh daftar lowongan magang
+     * Memuat seluruh daftar lowongan magang beserta signed URL logo tempat magang (P3)
      */
     fun loadLowonganAdminList() {
         viewModelScope.launch {
@@ -665,16 +730,19 @@ class AdminViewModel(
             val res = adminMagangRepo.getLowonganList()
             val tempatRes = adminMagangRepo.getTempatMagangList()
             val updatedTempat = tempatRes.getOrDefault(_uiState.value.tempatMagangList)
+            val resolvedLogoMap = resolveMissingLogoUrls(updatedTempat)
             res.onSuccess { list ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     lowonganAdminList = list,
-                    tempatMagangList = updatedTempat
+                    tempatMagangList = updatedTempat,
+                    logoUrlMap = resolvedLogoMap
                 )
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     tempatMagangList = updatedTempat,
+                    logoUrlMap = resolvedLogoMap,
                     errorMessage = err.message ?: "Gagal memuat daftar lowongan"
                 )
             }
@@ -690,16 +758,21 @@ class AdminViewModel(
             val res = adminMagangRepo.getAllLamaranMasuk()
             val lowonganRes = adminMagangRepo.getLowonganList()
             val tempatRes = adminMagangRepo.getTempatMagangList()
+            val updatedTempat = tempatRes.getOrDefault(_uiState.value.tempatMagangList)
+            val resolvedLogoMap = resolveMissingLogoUrls(updatedTempat)
             res.onSuccess { list ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     lamaranMasukList = list,
                     lowonganAdminList = lowonganRes.getOrDefault(_uiState.value.lowonganAdminList),
-                    tempatMagangList = tempatRes.getOrDefault(_uiState.value.tempatMagangList)
+                    tempatMagangList = updatedTempat,
+                    logoUrlMap = resolvedLogoMap
                 )
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    tempatMagangList = updatedTempat,
+                    logoUrlMap = resolvedLogoMap,
                     errorMessage = err.message ?: "Gagal memuat lamaran masuk"
                 )
             }
@@ -715,6 +788,167 @@ class AdminViewModel(
         viewModelScope.launch {
             val doks = adminMagangRepo.getDokumenTempatMagang(tempatId).getOrDefault(emptyList())
             _uiState.value = _uiState.value.copy(selectedTempatDokumenList = doks)
+
+            // Resolve signed URL untuk logo jika ada
+            val path = tempat.logoPath
+            if (!path.isNullOrBlank() && !_uiState.value.logoUrlMap.containsKey(path)) {
+                adminMagangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                    val map = _uiState.value.logoUrlMap.toMutableMap()
+                    map[path] = url
+                    _uiState.value = _uiState.value.copy(logoUrlMap = map)
+                }
+            }
+        }
+    }
+
+    /**
+     * Menghapus logo tempat magang dari storage dan database
+     */
+    fun deleteLogoTempatMagang(
+        tempatId: String,
+        storagePath: String?,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true, errorMessage = null)
+            val res = adminMagangRepo.deleteLogoTempatMagang(tempatId, storagePath)
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = false)
+            res.onSuccess {
+                val updatedTempat = _uiState.value.selectedTempatMagang?.takeIf { it.id == tempatId }?.copy(logoPath = null)
+                val updatedList = _uiState.value.tempatMagangList.map {
+                    if (it.id == tempatId) it.copy(logoPath = null) else it
+                }
+                val updatedLogoMap = _uiState.value.logoUrlMap.toMutableMap()
+                if (!storagePath.isNullOrBlank()) {
+                    updatedLogoMap.remove(storagePath)
+                }
+                _uiState.value = _uiState.value.copy(
+                    selectedTempatMagang = updatedTempat ?: _uiState.value.selectedTempatMagang,
+                    tempatMagangList = updatedList,
+                    logoUrlMap = updatedLogoMap
+                )
+                onSuccess()
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal menghapus logo tempat magang"
+                _uiState.value = _uiState.value.copy(errorMessage = msg)
+                onError(msg)
+            }
+        }
+    }
+
+    /**
+     * Mengunggah atau mengganti logo tempat magang secara langsung (P2).
+     */
+    fun uploadOrReplaceLogoTempatMagang(
+        tempat: TempatMagangEntity,
+        logoFileName: String,
+        logoBytes: ByteArray,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        val tempatId = tempat.id ?: return
+        updateTempatMagang(
+            tempatId = tempatId,
+            entity = tempat,
+            oldLogoPath = tempat.logoPath,
+            removeLogo = false,
+            newLogoFileName = logoFileName,
+            newLogoBytes = logoBytes,
+            onError = onError,
+            onSuccess = onSuccess
+        )
+    }
+
+    /**
+     * Memperbarui profil lengkap tempat magang, status, catatan internal, logo, serta dokumen kemitraan opsional (P1/P2).
+     */
+    fun updateTempatMagang(
+        tempatId: String,
+        entity: TempatMagangEntity,
+        oldLogoPath: String? = entity.logoPath,
+        removeLogo: Boolean = false,
+        newLogoFileName: String? = null,
+        newLogoBytes: ByteArray? = null,
+        dokumenFileName: String? = null,
+        dokumenBytes: ByteArray? = null,
+        onError: (String) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingMagang = true, errorMessage = null)
+
+            var targetLogoPath: String? = if (removeLogo) null else entity.logoPath
+            var pathToDeleteFromStorage: String? = if (removeLogo && !oldLogoPath.isNullOrBlank()) oldLogoPath else null
+
+            if (newLogoBytes != null) {
+                val logoRes = adminMagangRepo.uploadLogoPerusahaan(
+                    newLogoFileName ?: "logo.png",
+                    newLogoBytes
+                )
+                if (logoRes.isFailure) {
+                    val msg = logoRes.exceptionOrNull()?.message ?: "Gagal mengunggah logo baru."
+                    _uiState.value = _uiState.value.copy(isSubmittingMagang = false, errorMessage = msg)
+                    onError(msg)
+                    return@launch
+                }
+                targetLogoPath = logoRes.getOrNull()
+                if (!oldLogoPath.isNullOrBlank() && oldLogoPath != targetLogoPath) {
+                    pathToDeleteFromStorage = oldLogoPath
+                }
+            }
+
+            val finalEntity = entity.copy(id = tempatId, logoPath = targetLogoPath)
+            val res = adminMagangRepo.updateTempatMagang(
+                tempatId = tempatId,
+                entity = finalEntity,
+                oldLogoPathToDelete = pathToDeleteFromStorage
+            )
+            res.onSuccess { updated ->
+                if (dokumenBytes != null) {
+                    val docRes = adminMagangRepo.uploadDokumenTempatMagang(
+                        tempatMagangId = tempatId,
+                        fileName = dokumenFileName ?: "dokumen_mitra.pdf",
+                        fileBytes = dokumenBytes
+                    )
+                    if (docRes.isFailure) {
+                        val msg = docRes.exceptionOrNull()?.message
+                            ?: "Data perusahaan diperbarui, namun dokumen tambahan gagal diunggah."
+                        _uiState.value = _uiState.value.copy(isSubmittingMagang = false, errorMessage = msg)
+                        loadTempatMagangList()
+                        onError(msg)
+                        return@onSuccess
+                    }
+                }
+
+                val updatedDokumenList = if (dokumenBytes != null) {
+                    adminMagangRepo.getDokumenTempatMagang(tempatId).getOrDefault(_uiState.value.selectedTempatDokumenList)
+                } else {
+                    _uiState.value.selectedTempatDokumenList
+                }
+
+                val updatedLogoMap = _uiState.value.logoUrlMap.toMutableMap()
+                if (!pathToDeleteFromStorage.isNullOrBlank()) {
+                    updatedLogoMap.remove(pathToDeleteFromStorage)
+                }
+                val resolvedLogoMap = resolveMissingLogoUrls(listOf(updated), updatedLogoMap)
+                val updatedList = _uiState.value.tempatMagangList.map {
+                    if (it.id == tempatId) updated else it
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingMagang = false,
+                    selectedTempatMagang = if (_uiState.value.selectedTempatMagang?.id == tempatId) updated else _uiState.value.selectedTempatMagang,
+                    selectedTempatDokumenList = updatedDokumenList,
+                    tempatMagangList = updatedList,
+                    logoUrlMap = resolvedLogoMap
+                )
+                onSuccess()
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal memperbarui data tempat magang"
+                _uiState.value = _uiState.value.copy(isSubmittingMagang = false, errorMessage = msg)
+                onError(msg)
+            }
         }
     }
 
@@ -1004,6 +1238,73 @@ class AdminViewModel(
                 onSuccess(updated)
             }.onFailure { err ->
                 val msg = err.message ?: "Gagal memperbarui profil admin"
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = msg
+                )
+                onError(msg)
+            }
+        }
+    }
+
+    /**
+     * Mengunggah foto profil admin dan memperbarui sesi lokal.
+     */
+    fun uploadFotoProfilAdmin(
+        context: Context,
+        fileBytes: ByteArray,
+        onError: (String) -> Unit = {},
+        onSuccess: (String) -> Unit = {}
+    ) {
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile() ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val res = adminMhsRepo.uploadFotoProfilAdmin(fileBytes)
+            res.onSuccess { newUrl ->
+                val updatedProfile = profile.copy(fotoProfilUrl = newUrl)
+                session.saveSession(updatedProfile)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    actionSuccessMessage = "Foto profil admin berhasil diperbarui"
+                )
+                onSuccess(newUrl)
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal mengunggah foto profil admin"
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = msg
+                )
+                onError(msg)
+            }
+        }
+    }
+
+    /**
+     * Menghapus foto profil admin (B3) dan mereset sesi lokal.
+     */
+    fun hapusFotoProfilAdmin(
+        context: Context,
+        onError: (String) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        val session = SessionManager.getInstance(context)
+        val profile = session.getProfile() ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val res = adminMhsRepo.deleteFotoProfilAdmin()
+            res.onSuccess {
+                val updatedProfile = profile.copy(fotoProfilUrl = null)
+                session.saveSession(updatedProfile)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    actionSuccessMessage = "Foto profil admin berhasil dihapus"
+                )
+                onSuccess()
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal menghapus foto profil admin"
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = msg

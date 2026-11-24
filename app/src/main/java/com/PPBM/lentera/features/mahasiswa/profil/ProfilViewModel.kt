@@ -68,6 +68,7 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
     fun updateProfil(
         namaLengkap: String,
         noTelepon: String?,
+        fotoProfilUrl: String? = null,
         onError: (String) -> Unit = {},
         onSuccess: () -> Unit = {}
     ) {
@@ -80,7 +81,8 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
                 perguruanTinggi = current?.perguruanTinggi,
                 jurusan = current?.jurusan,
                 programStudi = current?.programStudi,
-                angkatan = current?.angkatan
+                angkatan = current?.angkatan,
+                fotoProfilUrl = fotoProfilUrl ?: current?.fotoProfilUrl
             )
 
             result.onSuccess { newProfile ->
@@ -97,6 +99,34 @@ class ProfilViewModel(application: Application) : AndroidViewModel(application) 
                     isLoading = false,
                     errorMessage = msg
                 )
+                onError(msg)
+            }
+        }
+    }
+
+    fun uploadFotoProfil(
+        fileBytes: ByteArray,
+        onError: (String) -> Unit = {},
+        onSuccess: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = mahasiswaRepo.uploadFotoProfil(fileBytes)
+            result.onSuccess { newUrl ->
+                val updatedProfile = _uiState.value.profile?.copy(fotoProfilUrl = newUrl)
+                if (updatedProfile != null) {
+                    sessionManager.saveSession(updatedProfile)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        profile = updatedProfile
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
+                onSuccess(newUrl)
+            }.onFailure { err ->
+                val msg = err.message ?: "Gagal mengunggah foto profil"
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = msg)
                 onError(msg)
             }
         }

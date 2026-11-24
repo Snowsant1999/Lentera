@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -472,6 +474,7 @@ private fun PanduanInfoDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
+                .widthIn(max = LenteraDialogMaxWidth)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color.White)
@@ -548,6 +551,7 @@ private fun DukunganDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
+                .widthIn(max = LenteraDialogMaxWidth)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color.White)

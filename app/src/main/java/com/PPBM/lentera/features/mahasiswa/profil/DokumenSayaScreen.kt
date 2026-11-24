@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraFeedbackDialog
 import com.PPBM.lentera.core.designsystem.icons.BackArrowIcon
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
@@ -406,6 +408,7 @@ fun DokumenSayaScreen(
     docPendingDelete?.let { doc ->
         AlertDialog(
             onDismissRequest = { docPendingDelete = null },
+            modifier = Modifier.widthIn(max = LenteraDialogMaxWidth),
             title = {
                 Text(
                     text = "Hapus Dokumen?",
@@ -642,6 +645,7 @@ private fun InAppDocumentPreviewDialog(
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = LenteraDialogMaxWidth)
                     .fillMaxWidth()
                     .fillMaxHeight(0.92f)
                     .clip(RoundedCornerShape(24.dp))
@@ -959,6 +963,7 @@ private fun UploadDokumenDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
+                .widthIn(max = LenteraDialogMaxWidth)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color.White)

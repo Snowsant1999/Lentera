@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -84,12 +85,15 @@ fun BuatLaporanScreen(
     onKembaliKeKategoriClick: () -> Unit = {},
     onLanjutKeBuktiClick: (BuatLaporanFormData) -> Unit = {},
     onDatePickerClick: () -> Unit = {},
-    onLocationPickerClick: () -> Unit = {}
+    onLocationPickerClick: () -> Unit = {},
+    onKategoriSelected: (String) -> Unit = {}
 ) {
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
+    var kategoriState by remember(initialData.kategori) { mutableStateOf(initialData.kategori) }
+    var showPilihKategoriSheet by remember { mutableStateOf(false) }
     var judul by remember { mutableStateOf(initialData.judul) }
     var tanggalWaktu by remember { mutableStateOf(initialData.tanggalWaktu) }
     var lokasi by remember { mutableStateOf(initialData.lokasi) }
@@ -97,9 +101,9 @@ fun BuatLaporanScreen(
     var isAnonim by remember { mutableStateOf(initialData.isAnonim) }
     var validationError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(initialData.kategori) {
-        if (judul.isBlank() && initialData.kategori.isNotBlank()) {
-            judul = initialData.kategori
+    LaunchedEffect(kategoriState) {
+        if (judul.isBlank() && kategoriState.isNotBlank()) {
+            judul = kategoriState
         }
     }
 
@@ -142,11 +146,13 @@ fun BuatLaporanScreen(
             BottomActionBar(
                 onKembali = onKembaliKeKategoriClick,
                 onLanjut = {
+                    val cleanKategori = kategoriState.trim()
                     val cleanJudul = judul.trim()
                     val cleanTanggal = tanggalWaktu.trim()
                     val cleanLokasi = lokasi.trim()
                     val cleanDeskripsi = deskripsi.trim()
                     when {
+                        cleanKategori.isEmpty() -> validationError = "Kategori laporan wajib dipilih terlebih dahulu."
                         cleanJudul.isEmpty() -> validationError = "Judul laporan wajib diisi."
                         cleanTanggal.isEmpty() -> validationError = "Tanggal & waktu kejadian wajib diisi."
                         cleanLokasi.isEmpty() -> validationError = "Lokasi kejadian wajib diisi."
@@ -155,7 +161,7 @@ fun BuatLaporanScreen(
                             validationError = null
                             onLanjutKeBuktiClick(
                                 BuatLaporanFormData(
-                                    kategori = initialData.kategori,
+                                    kategori = cleanKategori,
                                     judul = cleanJudul,
                                     tanggalWaktu = cleanTanggal,
                                     lokasi = cleanLokasi,
@@ -222,8 +228,8 @@ fun BuatLaporanScreen(
 
                 // Kategori Terpilih Card
                 KategoriTerpilihCard(
-                    kategori = initialData.kategori,
-                    onUbahClick = onUbahKategoriClick,
+                    kategori = kategoriState,
+                    onUbahClick = { showPilihKategoriSheet = true },
                     fontFamily = plusJakarta
                 )
 
@@ -350,6 +356,23 @@ fun BuatLaporanScreen(
             }
         }
     }
+
+    PilihKategoriBottomSheet(
+        isVisible = showPilihKategoriSheet,
+        initialSelected = KategoriLaporanType.entries.find { it.displayName.equals(kategoriState, ignoreCase = true) },
+        onDismiss = { showPilihKategoriSheet = false },
+        onLanjutKeDetail = { cat ->
+            showPilihKategoriSheet = false
+            kategoriState = cat.displayName
+            onKategoriSelected(cat.displayName)
+            if (judul.isBlank()) {
+                judul = cat.displayName
+            }
+            if (validationError?.contains("Kategori", ignoreCase = true) == true) {
+                validationError = null
+            }
+        }
+    )
 }
 
 // ============================================================================
@@ -526,9 +549,11 @@ private fun KategoriTerpilihCard(
     onUbahClick: () -> Unit,
     fontFamily: FontFamily
 ) {
+    val isSelected = kategori.isNotBlank()
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Kategori terpilih",
+            text = if (isSelected) "Kategori terpilih" else "Kategori laporan",
             style = TextStyle(
                 fontFamily = fontFamily,
                 fontSize = 13.5.sp,
@@ -539,76 +564,154 @@ private fun KategoriTerpilihCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardWhite),
-            border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Row(
+        if (isSelected) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Ikon Kotak Centang
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SiagaTealPrimary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CheckIcon(
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // Detail Kategori
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = kategori,
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyDark
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Dipilih dari daftar kategori",
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = SlateGrayLight
+                            )
+                        )
+                    }
+
+                    // Tombol "Ubah"
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(Color(0xFFEBF5F7))
+                            .clickable(onClick = onUbahClick)
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Ubah",
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SiagaTealPrimary
+                            )
+                        )
+                    }
+                }
+            }
+        } else {
+            // Placeholder: Belum ada kategori yang dipilih
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(onClick = onUbahClick),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                // Ikon Kotak Centang
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(SiagaTealPrimary),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CheckIcon(
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Detail Kategori
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = kategori,
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NavyDark
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFE2E8F0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_message_square_plus),
+                            contentDescription = "Pilih Kategori",
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(18.dp)
                         )
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Dipilih dari daftar kategori",
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = SlateGrayLight
-                        )
-                    )
-                }
+                    }
 
-                // Tombol "Ubah"
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color(0xFFEBF5F7))
-                        .clickable(onClick = onUbahClick)
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Ubah",
-                        style = TextStyle(
-                            fontFamily = fontFamily,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = SiagaTealPrimary
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Pilih Kategori",
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF475569)
+                            )
                         )
-                    )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Wajib memilih kategori laporan kejadian",
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xFF94A3B8)
+                            )
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SiagaTealPrimary)
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "+ Pilih",
+                            style = TextStyle(
+                                fontFamily = fontFamily,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        )
+                    }
                 }
             }
         }

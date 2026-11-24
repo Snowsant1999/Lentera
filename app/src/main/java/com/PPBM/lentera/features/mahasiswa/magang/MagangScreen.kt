@@ -1,8 +1,13 @@
 package com.PPBM.lentera.features.mahasiswa.magang
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.layout.ContentScale
 
+import com.PPBM.lentera.core.designsystem.components.LenteraContentMaxWidth
 import com.PPBM.lentera.core.designsystem.components.MahasiswaBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
+import com.PPBM.lentera.core.designsystem.components.rememberAdaptiveHorizontalCardWidth
 
 
 import androidx.compose.foundation.Image
@@ -19,9 +24,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,10 +43,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.icons.CheckIcon
 import com.PPBM.lentera.core.designsystem.theme.*
 
 // ============================================================================
@@ -70,7 +84,15 @@ data class LowonganCardData(
     val persentaseCocok: Int = 92,
     val batasHari: Int = 5,
     val logoDrawable: Int = R.drawable.ic_avatar_2,
+    val logoUrl: String? = null,
     val isBookmarked: Boolean = false
+)
+
+data class ProfilChecklistItem(
+    val label: String,
+    val isCompleted: Boolean,
+    val kategori: String,
+    val isAdminManaged: Boolean = false
 )
 
 // ============================================================================
@@ -103,9 +125,26 @@ fun MagangScreen(
     bookmarkedIds: Set<String> = emptySet(),
     onBookmarkClick: (LowonganCardData) -> Unit = {},
     selectedNavTab: MagangNavTab = MagangNavTab.MAGANG_HUB,
-    onNavTabClick: (MagangNavTab) -> Unit = {}
+    onNavTabClick: (MagangNavTab) -> Unit = {},
+    profilChecklist: List<ProfilChecklistItem> = emptyList(),
+    onNavigateToDataDiri: () -> Unit = {},
+    onNavigateToDokumenSaya: () -> Unit = {}
 ) {
     val plusJakarta = remember { FontFamily(Font(R.font.plus_jakarta_sans)) }
+    var showProfilChecklistSheet by remember { mutableStateOf(false) }
+
+    val effectiveChecklist = remember(profilChecklist) {
+        profilChecklist.ifEmpty {
+            listOf(
+                ProfilChecklistItem("Nama Lengkap", false, "Data Diri"),
+                ProfilChecklistItem("NIM", false, "Data Diri", isAdminManaged = true),
+                ProfilChecklistItem("Nomor HP/WhatsApp", false, "Data Diri"),
+                ProfilChecklistItem("Program Studi", false, "Data Diri", isAdminManaged = true),
+                ProfilChecklistItem("CV", false, "Dokumen Pendukung"),
+                ProfilChecklistItem("Transkrip Nilai", false, "Dokumen Pendukung")
+            )
+        }
+    }
 
     Scaffold(
         containerColor = ScreenBackground,
@@ -143,13 +182,15 @@ fun MagangScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 3. Pill Bar "Lengkapi profil 70%"
-                LengkapiProfilCard(
-                    completionPercentage = profilCompletion,
-                    fontFamily = plusJakarta
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
+                // 3. Pill Bar "Lengkapi profil" (Sembunyikan jika progres sudah 100% sesuai M2)
+                if (profilCompletion < 100) {
+                    LengkapiProfilCard(
+                        completionPercentage = profilCompletion,
+                        onClick = { showProfilChecklistSheet = true },
+                        fontFamily = plusJakarta
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 // 4. Search Bar
                 MagangSearchBar(
@@ -229,6 +270,11 @@ fun MagangScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Horizontal Row Kartu Lowongan
+                val lowonganCardWidth = rememberAdaptiveHorizontalCardWidth(
+                    compactFraction = 0.62f,
+                    minWidth = 200.dp,
+                    maxWidth = 280.dp
+                )
                 if (lowonganList.isEmpty()) {
                     Text(
                         text = "Belum ada lowongan magang yang tersedia.",
@@ -248,6 +294,7 @@ fun MagangScreen(
                             val isBookmarked = bookmarkedIds.contains(item.id)
                             LowonganHorizontalCard(
                                 data = item.copy(isBookmarked = isBookmarked),
+                                cardWidth = lowonganCardWidth,
                                 onClick = { onLowonganClick(item) },
                                 onBookmarkClick = { onBookmarkClick(item) },
                                 fontFamily = plusJakarta
@@ -258,21 +305,42 @@ fun MagangScreen(
             }
         }
     }
+
+    if (showProfilChecklistSheet) {
+        ProfilChecklistBottomSheet(
+            completionPercentage = profilCompletion,
+            checklist = effectiveChecklist,
+            onDismiss = { showProfilChecklistSheet = false },
+            onNavigateToDataDiri = {
+                showProfilChecklistSheet = false
+                onNavigateToDataDiri()
+            },
+            onNavigateToDokumenSaya = {
+                showProfilChecklistSheet = false
+                onNavigateToDokumenSaya()
+            },
+            fontFamily = plusJakarta
+        )
+    }
 }
 
 
 
 // ============================================================================
-// Komponen Kartu "Lengkapi profil 70%"
+// Komponen Kartu "Lengkapi profil 70%" & Modal Bottom Sheet Checklist
 // ============================================================================
 
 @Composable
 private fun LengkapiProfilCard(
     completionPercentage: Int,
+    onClick: () -> Unit = {},
     fontFamily: FontFamily
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.2.dp, MagangAmberPrimary.copy(alpha = 0.6f)),
@@ -290,6 +358,11 @@ private fun LengkapiProfilCard(
             ) {
                 Text(
                     text = "Lengkapi profil",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = 13.5.sp,
@@ -298,20 +371,39 @@ private fun LengkapiProfilCard(
                     )
                 )
 
-                Text(
-                    text = "$completionPercentage%",
-                    style = TextStyle(
-                        fontFamily = fontFamily,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NavyDark
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "$completionPercentage%",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyDark
+                        )
                     )
-                )
+
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_status_chevron),
+                        contentDescription = "Lihat rincian profil",
+                        tint = NavyDark,
+                        modifier = Modifier.size(11.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Progress Bar Baris
+            var startProgressAnim by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { startProgressAnim = true }
+            val animatedFraction by animateFloatAsState(
+                targetValue = if (startProgressAnim) (completionPercentage.coerceIn(0, 100) / 100f) else 0f,
+                animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+                label = "magangProgress"
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -321,13 +413,286 @@ private fun LengkapiProfilCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(fraction = (completionPercentage.coerceIn(0, 100) / 100f))
+                        .fillMaxWidth(fraction = animatedFraction)
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(MagangAmberPrimary)
                 )
             }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Ketuk untuk lihat rincian & lengkapi",
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = SlateGray
+                )
+            )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfilChecklistBottomSheet(
+    completionPercentage: Int,
+    checklist: List<ProfilChecklistItem>,
+    onDismiss: () -> Unit,
+    onNavigateToDataDiri: () -> Unit,
+    onNavigateToDokumenSaya: () -> Unit,
+    fontFamily: FontFamily
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val dataDiriItems = remember(checklist) {
+        checklist.filter { it.kategori.equals("Data Diri", ignoreCase = true) }
+    }
+    val dokumenItems = remember(checklist) {
+        checklist.filter { !it.kategori.equals("Data Diri", ignoreCase = true) }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = LenteraContentMaxWidth)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Kelengkapan Profil Magang",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = NavyDark
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MagangAmberPillBg)
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "$completionPercentage%",
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MagangAmberPillText
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = CardBorder)
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (dataDiriItems.isNotEmpty()) {
+                ChecklistGroupHeader(title = "Data Diri", fontFamily = fontFamily)
+                Spacer(modifier = Modifier.height(8.dp))
+                dataDiriItems.forEach { item ->
+                    ProfilChecklistRow(item = item, fontFamily = fontFamily)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+
+            if (dokumenItems.isNotEmpty()) {
+                ChecklistGroupHeader(title = "Dokumen Pendukung", fontFamily = fontFamily)
+                Spacer(modifier = Modifier.height(8.dp))
+                dokumenItems.forEach { item ->
+                    ProfilChecklistRow(item = item, fontFamily = fontFamily)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFFEFF5FA))
+                        .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                        .clickable(onClick = onNavigateToDataDiri)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Lengkapi Data Diri",
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyDark
+                        )
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MagangAmberPrimary)
+                        .clickable(onClick = onNavigateToDokumenSaya)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Unggah Dokumen",
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyDark
+                        )
+                    )
+                }
+            }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChecklistGroupHeader(
+    title: String,
+    fontFamily: FontFamily
+) {
+    Text(
+        text = title,
+        style = TextStyle(
+            fontFamily = fontFamily,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = SlateGray
+        )
+    )
+}
+
+@Composable
+private fun ProfilChecklistRow(
+    item: ProfilChecklistItem,
+    fontFamily: FontFamily
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF7FAFD))
+            .border(1.dp, Color(0xFFE4EDF5), RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (item.isCompleted) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(MagangPillGreenBg),
+                contentAlignment = Alignment.Center
+            ) {
+                CheckIcon(
+                    modifier = Modifier.size(14.dp),
+                    tint = MagangPillGreenText
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(MagangAmberPillBg),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "!",
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MagangAmberPillText
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp)
+        ) {
+            Text(
+                text = item.label,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NavyDark
+                )
+            )
+            if (!item.isCompleted && item.isAdminManaged) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Dikelola oleh admin kampus",
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(
+                        fontFamily = fontFamily,
+                        fontSize = 11.5.sp,
+                        color = SlateGray
+                    )
+                )
+            }
+        }
+
+        Text(
+            text = if (item.isCompleted) "Lengkap" else "Belum",
+            maxLines = 1,
+            style = TextStyle(
+                fontFamily = fontFamily,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (item.isCompleted) MagangPillGreenText else MagangAmberPillText
+            )
+        )
     }
 }
 
@@ -729,13 +1094,14 @@ private fun LamaranSection(
 @Composable
 private fun LowonganHorizontalCard(
     data: LowonganCardData,
+    cardWidth: Dp = 220.dp,
     onClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     fontFamily: FontFamily
 ) {
     Card(
         modifier = Modifier
-            .width(220.dp)
+            .width(cardWidth)
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
@@ -767,11 +1133,22 @@ private fun LowonganHorizontalCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     // Logo perusahaan
-                    Image(
-                        painter = painterResource(id = data.logoDrawable),
-                        contentDescription = "Logo Perusahaan",
-                        modifier = Modifier.size(42.dp)
-                    )
+                    if (!data.logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = data.logoUrl,
+                            contentDescription = "Logo Perusahaan",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = data.logoDrawable),
+                            contentDescription = "Logo Perusahaan",
+                            modifier = Modifier.size(42.dp)
+                        )
+                    }
 
                     // Bookmark icon
                     Box(

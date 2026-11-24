@@ -65,14 +65,14 @@ enum class KategoriLaporanType(val displayName: String) {
 @Composable
 fun PilihKategoriBottomSheet(
     isVisible: Boolean,
-    initialSelected: KategoriLaporanType = KategoriLaporanType.PELECEHAN_VERBAL,
+    initialSelected: KategoriLaporanType? = null,
     onDismiss: () -> Unit = {},
     onLanjutKeDetail: (KategoriLaporanType) -> Unit = {}
 ) {
     if (!isVisible) return
 
     val plusJakarta = FontFamily(Font(R.font.plus_jakarta_sans))
-    var selectedCategory by remember { mutableStateOf(initialSelected) }
+    var selectedCategory by remember(initialSelected, isVisible) { mutableStateOf(initialSelected) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -220,14 +220,17 @@ fun PilihKategoriBottomSheet(
             Spacer(modifier = Modifier.height(22.dp))
 
             // 5. Tombol "Lanjut ke Detail ->"
+            val isCategorySelected = selectedCategory != null
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .shadow(2.dp, RoundedCornerShape(16.dp))
+                    .shadow(if (isCategorySelected) 2.dp else 0.dp, RoundedCornerShape(16.dp))
                     .clip(RoundedCornerShape(16.dp))
-                    .background(SiagaTealPrimary)
-                    .clickable { onLanjutKeDetail(selectedCategory) },
+                    .background(if (isCategorySelected) SiagaTealPrimary else Color(0xFFCFD8DC))
+                    .clickable(enabled = isCategorySelected) {
+                        selectedCategory?.let { onLanjutKeDetail(it) }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -235,7 +238,7 @@ fun PilihKategoriBottomSheet(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Lanjut ke Detail",
+                        text = if (isCategorySelected) "Lanjut ke Detail" else "Pilih Kategori Terlebih Dahulu",
                         style = TextStyle(
                             fontFamily = plusJakarta,
                             fontSize = 14.5.sp,
@@ -244,12 +247,14 @@ fun PilihKategoriBottomSheet(
                         )
                     )
 
-                    Spacer(modifier = Modifier.width(10.dp))
+                    if (isCategorySelected) {
+                        Spacer(modifier = Modifier.width(10.dp))
 
-                    ArrowForwardIcon(
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.White
-                    )
+                        ArrowForwardIcon(
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                    }
                 }
             }
         }

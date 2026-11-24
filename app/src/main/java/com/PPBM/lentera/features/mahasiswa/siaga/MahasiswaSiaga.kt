@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,8 @@ data class LaporanItem(
     val id: String,
     val title: String,
     val date: String,
-    val status: LaporanStatus
+    val status: LaporanStatus,
+    val nomorLaporan: String = ""
 )
 
 enum class SiagaNavTab(val label: String) {
@@ -433,11 +435,15 @@ private fun LaporanCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
                 // Kode ID Laporan
                 Text(
-                    text = item.id,
+                    text = item.nomorLaporan.ifBlank { item.id },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style = androidx.compose.ui.text.TextStyle(
                         fontFamily = fontFamilyFallback(fontFamily),
                         fontSize = 12.5.sp,
@@ -451,6 +457,8 @@ private fun LaporanCard(
                 // Judul Laporan
                 Text(
                     text = item.title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = androidx.compose.ui.text.TextStyle(
                         fontFamily = fontFamilyFallback(fontFamily),
                         fontSize = 15.sp,
@@ -464,6 +472,8 @@ private fun LaporanCard(
                 // Tanggal
                 Text(
                     text = item.date,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = androidx.compose.ui.text.TextStyle(
                         fontFamily = fontFamilyFallback(fontFamily),
                         fontSize = 12.5.sp,
@@ -483,6 +493,7 @@ private fun LaporanCard(
             ) {
                 Text(
                     text = item.status.label,
+                    maxLines = 1,
                     style = androidx.compose.ui.text.TextStyle(
                         fontFamily = fontFamilyFallback(fontFamily),
                         fontSize = 12.sp,

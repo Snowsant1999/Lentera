@@ -68,6 +68,34 @@ class AdminMagangRepository {
     }
 
     /**
+     * Menghapus berkas logo dari bucket `logo-perusahaan` dan mengosongkan `logo_path` pada tabel `tempat_magang`.
+     */
+    suspend fun deleteLogoTempatMagang(tempatId: String, storagePath: String? = null): Result<Unit> {
+        return try {
+            if (!storagePath.isNullOrBlank()) {
+                try {
+                    storage.from("logo-perusahaan").delete(storagePath)
+                } catch (_: Exception) {
+                    // Abaikan jika berkas di storage sudah tidak ada
+                }
+            }
+            if (tempatId.isNotBlank()) {
+                val payload = buildJsonObject {
+                    put("logo_path", null as String?)
+                }
+                client.from("tempat_magang").update(payload) {
+                    filter {
+                        eq("id", tempatId)
+                    }
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal menghapus logo tempat magang.")))
+        }
+    }
+
+    /**
      * Mengunggah dokumen MOU / legalitas mitra ke bucket `dokumen-mitra`
      * dan mencatatnya ke tabel `dokumen_tempat_magang`.
      */
@@ -122,33 +150,111 @@ class AdminMagangRepository {
     }
 
     /**
-     * Menambah tempat magang / mitra baru dengan normalisasi enum backend.
+     * Memvalidasi & menormalisasi payload tempat magang sebelum create/update.
      */
-    suspend fun createTempatMagang(entity: TempatMagangEntity): Result<TempatMagangEntity> {
-        return try {
-            val sanitized = entity.copy(
-                namaPerusahaan = entity.namaPerusahaan.trim(),
-                bidangUsaha = entity.bidangUsaha.trim(),
+    private fun sanitizeTempatMagangEntity(entity: TempatMagangEntity): Result<TempatMagangEntity> {
+        val nama = entity.namaPerusahaan.trim()
+        val bidang = entity.bidangUsaha.trim()
+        val alamat = entity.alamatLengkap.trim()
+        val kota = entity.kota.trim()
+        val namaKontak = entity.namaKontak.trim()
+        val emailKontak = entity.emailKontak.trim()
+        val teleponKontak = entity.teleponKontak.trim()
+
+        if (nama.isBlank() || bidang.isBlank() || alamat.isBlank() || kota.isBlank() ||
+            namaKontak.isBlank() || emailKontak.isBlank() || teleponKontak.isBlank()
+        ) {
+            return Result.failure(Exception("Nama perusahaan, bidang usaha, alamat, kota, dan kontak PIC wajib diisi."))
+        }
+        if (!emailKontak.contains("@") || !emailKontak.contains(".")) {
+            return Result.failure(Exception("Format email kontak perusahaan tidak valid."))
+        }
+
+        return Result.success(
+            entity.copy(
+                namaPerusahaan = nama,
+                bidangUsaha = bidang,
                 namaCabang = entity.namaCabang.trim().ifBlank { "Pusat" },
                 deskripsi = entity.deskripsi.trim(),
-                alamatLengkap = entity.alamatLengkap.trim(),
-                kota = entity.kota.trim(),
+                alamatLengkap = alamat,
+                kota = kota,
                 provinsi = entity.provinsi.trim(),
                 sistemKerja = normalizeSistemKerja(entity.sistemKerja, "Hybrid"),
-                namaKontak = entity.namaKontak.trim(),
-                emailKontak = entity.emailKontak.trim(),
-                teleponKontak = entity.teleponKontak.trim(),
+                namaKontak = namaKontak,
+                emailKontak = emailKontak,
+                teleponKontak = teleponKontak,
                 situsWeb = entity.situsWeb?.trim()?.ifBlank { null },
                 logoPath = entity.logoPath?.trim()?.ifBlank { null },
                 status = normalizeTempatStatus(entity.status),
                 catatanInternal = entity.catatanInternal?.trim()?.ifBlank { null }
             )
-            val inserted = client.from("tempat_magang").insert(sanitized) {
+        )
+    }
+
+    private fun buildTempatMagangPayload(sanitized: TempatMagangEntity, includeId: Boolean) = buildJsonObject {
+        if (includeId && !sanitized.id.isNullOrBlank()) put("id", sanitized.id)
+        put("nama_perusahaan", sanitized.namaPerusahaan)
+        put("bidang_usaha", sanitized.bidangUsaha)
+        put("nama_cabang", sanitized.namaCabang)
+        put("deskripsi", sanitized.deskripsi)
+        put("alamat_lengkap", sanitized.alamatLengkap)
+        put("kota", sanitized.kota)
+        put("provinsi", sanitized.provinsi)
+        put("sistem_kerja", sanitized.sistemKerja)
+        put("nama_kontak", sanitized.namaKontak)
+        put("email_kontak", sanitized.emailKontak)
+        put("telepon_kontak", sanitized.teleponKontak)
+        put("situs_web", sanitized.situsWeb)
+        put("logo_path", sanitized.logoPath)
+        put("status", sanitized.status)
+        put("catatan_internal", sanitized.catatanInternal)
+    }
+
+    /**
+     * Menambah tempat magang / mitra baru dengan normalisasi enum backend.
+     */
+    suspend fun createTempatMagang(entity: TempatMagangEntity): Result<TempatMagangEntity> {
+        return try {
+            val sanitized = sanitizeTempatMagangEntity(entity).getOrThrow()
+            val payload = buildTempatMagangPayload(sanitized, includeId = true)
+            val inserted = client.from("tempat_magang").insert(payload) {
                 select()
             }.decodeSingle<TempatMagangEntity>()
             Result.success(inserted)
         } catch (e: Exception) {
             Result.failure(Exception(mapSupabaseError(e, "Gagal menambah tempat magang.")))
+        }
+    }
+
+    /**
+     * Memperbarui seluruh detail profil, lokasi, kontak PIC, status, catatan internal, dan logo tempat magang (P1/P2).
+     */
+    suspend fun updateTempatMagang(
+        tempatId: String,
+        entity: TempatMagangEntity,
+        oldLogoPathToDelete: String? = null
+    ): Result<TempatMagangEntity> {
+        return try {
+            if (tempatId.isBlank()) {
+                return Result.failure(Exception("ID tempat magang tidak valid."))
+            }
+            val sanitized = sanitizeTempatMagangEntity(entity).getOrThrow()
+            val payload = buildTempatMagangPayload(sanitized, includeId = false)
+            val updated = client.from("tempat_magang").update(payload) {
+                filter { eq("id", tempatId) }
+                select()
+            }.decodeSingle<TempatMagangEntity>()
+
+            if (!oldLogoPathToDelete.isNullOrBlank() && oldLogoPathToDelete != updated.logoPath) {
+                try {
+                    storage.from("logo-perusahaan").delete(oldLogoPathToDelete)
+                } catch (_: Exception) {
+                    // Abaikan jika berkas lama di storage sudah terhapus
+                }
+            }
+            Result.success(updated)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui data tempat magang.")))
         }
     }
 
@@ -199,7 +305,22 @@ class AdminMagangRepository {
     suspend fun createLowongan(entity: LowonganEntity): Result<LowonganEntity> {
         return try {
             val sanitized = sanitizeLowonganEntity(entity).getOrThrow()
-            val inserted = client.from("lowongan").insert(sanitized) {
+            val payload = buildJsonObject {
+                if (!sanitized.id.isNullOrBlank()) put("id", sanitized.id)
+                put("tempat_magang_id", sanitized.tempatMagangId)
+                put("posisi", sanitized.posisi)
+                sanitized.kategori?.let { put("kategori", it) }
+                put("lokasi", sanitized.lokasi)
+                put("sistem_kerja", sanitized.sistemKerja)
+                put("deskripsi_pekerjaan", sanitized.deskripsiPekerjaan)
+                put("persyaratan", sanitized.persyaratan)
+                put("periode_magang", sanitized.periodeMagang)
+                put("batas_pendaftaran", sanitized.batasPendaftaran)
+                put("kuota", sanitized.kuota)
+                put("status", sanitized.status)
+                sanitized.catatanInternal?.let { put("catatan_internal", it) }
+            }
+            val inserted = client.from("lowongan").insert(payload) {
                 select()
             }.decodeSingle<LowonganEntity>()
             Result.success(inserted)

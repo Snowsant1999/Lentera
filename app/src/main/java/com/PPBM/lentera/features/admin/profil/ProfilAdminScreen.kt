@@ -1,23 +1,17 @@
 package com.PPBM.lentera.features.admin.profil
-import com.PPBM.lentera.core.designsystem.components.*
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,15 +19,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import androidx.compose.ui.window.Dialog
 import com.PPBM.lentera.R
+import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
+import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.core.designsystem.theme.*
 
 data class MenuProfilItem(
@@ -55,86 +51,96 @@ fun ProfilAdminScreen(
     peran: String = "NIP. 198803152015042001 · Admin Kampus",
     badge: String = "Admin aktif",
     versi: String = "1.0.0",
+    photoUrl: String? = null,
     menu: List<MenuProfilItem> = SampleMenuProfil,
     onMenuClick: (MenuProfilItem) -> Unit = {},
-    onAvatarClick: () -> Unit = {},
     onKeluarClick: () -> Unit = {},
     onNavClick: (LenteraNavItem) -> Unit = {}
 ) {
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        KonfirmasiLogoutAdminDialog(
+            onDismiss = { showLogoutDialog = false },
+            onConfirm = {
+                showLogoutDialog = false
+                onKeluarClick()
+            }
+        )
     }
 
-    Scaffold(
-        containerColor = LenteraColors.Background,
-        bottomBar = {
-            LenteraBottomNavBar(
-                selected = LenteraNavItem.PROFIL,
-                onItemClick = onNavClick
-            )
-        }
-    ) { innerPadding ->
+    // Struktur layout mengikuti style Profil Mahasiswa (MahasiswaSettings.kt); edit profil & foto di Data Akun
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LenteraBg)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .statusBarsPadding()
         ) {
-            // Header Judul Layar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "PROFIL ADMIN",
-                    color = LenteraNavy,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontFamily = PlusJakartaSans
+                // Header Judul Layar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        text = "PROFIL ADMIN",
+                        color = LenteraNavy,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = PlusJakartaSans
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Avatar dan Ringkasan Profil (tanpa tombol edit langsung, selaras Mahasiswa)
+                RingkasanProfil(
+                    nama = nama,
+                    peran = peran,
+                    badge = badge,
+                    photoUrl = photoUrl
                 )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Menu Profil Card
+                MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
+                KeluarCard(onClick = { showLogoutDialog = true })
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Footer Versi Aplikasi
+                Text(
+                    text = "LENTERA · Versi $versi",
+                    color = LenteraTextSecondary,
+                    fontSize = 12.sp,
+                    fontFamily = PlusJakartaSans,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Avatar dan Ringkasan Profil
-            RingkasanProfil(
-                nama = nama,
-                peran = peran,
-                badge = badge,
-                imageUri = imageUri,
-                onAvatarClick = {
-                    imagePickerLauncher.launch("image/*")
-                    onAvatarClick()
-                }
+            // Bottom Navigation Bar konsisten dengan layar Admin lainnya
+            AdminBottomBar(
+                selected = LenteraNavItem.PROFIL,
+                onItemClick = onNavClick
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Menu Profil Card (Identik dengan Mahasiswa)
-            MenuProfilCard(menu = menu, onMenuClick = onMenuClick)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Tombol Keluar (Merah Muda Soft Identik Mahasiswa)
-            KeluarCard(onClick = onKeluarClick)
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Footer Versi Aplikasi
-            Text(
-                text = "LENTERA · Versi $versi",
-                color = LenteraTextSecondary,
-                fontSize = 12.sp,
-                fontFamily = PlusJakartaSans,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -144,51 +150,28 @@ private fun RingkasanProfil(
     nama: String,
     peran: String,
     badge: String,
-    imageUri: Uri? = null,
-    onAvatarClick: () -> Unit = {}
+    photoUrl: String? = null
 ) {
+    val parts = peran.split("·").map { it.trim() }.filter { it.isNotEmpty() }
+    val line1 = parts.getOrNull(0) ?: peran
+    val line2 = parts.getOrNull(1) ?: "LENTERA · Admin Kampus"
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(100.dp)
-                .clickable(onClick = onAvatarClick)
+                .size(96.dp)
+                .background(Color.White, CircleShape)
+                .shadow(
+                    elevation = 6.dp,
+                    shape = CircleShape,
+                    spotColor = Color(0x15173B57)
+                )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .shadow(
-                        elevation = 6.dp,
-                        shape = CircleShape,
-                        spotColor = Color(0x15173B57)
-                    )
-                    .clip(CircleShape)
-                    .background(Color.White, CircleShape)
-            ) {
-                AsyncImage(
-                    model = imageUri ?: R.drawable.ic_avatar_2,
-                    contentDescription = "Foto Profil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            // Overlay ikon edit di pojok kanan bawah
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(32.dp)
-                    .align(Alignment.BottomEnd)
-                    .shadow(4.dp, CircleShape)
-                    .background(LenteraNavy, CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Ubah Foto Profil",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            ProfileAvatarImage(
+                photoUrl = photoUrl,
+                modifier = Modifier.size(88.dp)
+            )
         }
         Spacer(modifier = Modifier.height(14.dp))
         Text(
@@ -196,14 +179,24 @@ private fun RingkasanProfil(
             color = LenteraNavy,
             fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
-            fontFamily = PlusJakartaSans
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = peran,
+            text = line1,
             color = LenteraTextSecondary,
             fontSize = 13.sp,
-            fontFamily = PlusJakartaSans
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = line2,
+            color = LenteraTextSecondary,
+            fontSize = 13.sp,
+            fontFamily = PlusJakartaSans,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(10.dp))
         Box(
@@ -338,6 +331,95 @@ private fun KeluarCard(onClick: () -> Unit) {
             tint = LenteraRedMuted,
             modifier = Modifier.size(16.dp)
         )
+    }
+}
+
+@Composable
+private fun KonfirmasiLogoutAdminDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_simbol_keluar),
+                contentDescription = "Keluar",
+                modifier = Modifier.size(56.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Keluar dari akun?",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                color = LenteraNavy
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Apakah Anda yakin ingin keluar?",
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = LenteraTextSecondary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEFF5FD),
+                        contentColor = LenteraNavy
+                    )
+                ) {
+                    Text(
+                        text = "Batal",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LenteraRedMuted,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Ya, Keluar",
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
     }
 }
 

@@ -44,6 +44,7 @@ fun DetailAkunMahasiswaScreen(
     perguruanTinggi: String = "",
     programStudi: String = mahasiswa.prodi,
     angkatan: String = "",
+    noTelepon: String = "",
     emailKampus: String = "",
     metodeAkses: String = "Kirim tautan aktivasi ke email",
     isProcessing: Boolean = false,
@@ -56,9 +57,10 @@ fun DetailAkunMahasiswaScreen(
         perguruanTinggi: String,
         programStudi: String,
         angkatan: String,
+        noTelepon: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
-    ) -> Unit = { _, _, _, _, _, _, onSuccess, _ -> onSuccess() },
+    ) -> Unit = { _, _, _, _, _, _, _, onSuccess, _ -> onSuccess() },
     onToggleStatusClick: (newStatus: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { _, onSuccess, _ -> onSuccess() },
     onDeleteClick: (onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit = { onSuccess, _ -> onSuccess() },
     onAfterDelete: () -> Unit = onBackClick,
@@ -84,6 +86,7 @@ fun DetailAkunMahasiswaScreen(
     var editPt by remember(perguruanTinggi) { mutableStateOf(cleanEditableValue(perguruanTinggi)) }
     var editProdi by remember(programStudi) { mutableStateOf(cleanEditableValue(programStudi)) }
     var editAngkatan by remember(angkatan) { mutableStateOf(cleanEditableValue(angkatan)) }
+    var editNoTelepon by remember(noTelepon) { mutableStateOf(cleanEditableValue(noTelepon)) }
 
     val isNonaktif = mahasiswa.status == StatusAkun.NONAKTIF
 
@@ -141,7 +144,8 @@ fun DetailAkunMahasiswaScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         ProfileAvatar(
                             size = 46.dp,
-                            iconTint = LenteraColors.NavyPrimary
+                            iconTint = LenteraColors.NavyPrimary,
+                            avatarUrl = mahasiswa.fotoProfilUrl
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
@@ -231,6 +235,13 @@ fun DetailAkunMahasiswaScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     ReadOnlyField(
+                        label = "No. HP / WhatsApp",
+                        value = noTelepon.ifBlank { "-" }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    ReadOnlyField(
                         label = "Email kampus",
                         value = emailKampus.ifBlank { "-" }
                     )
@@ -255,6 +266,7 @@ fun DetailAkunMahasiswaScreen(
                             editPt = cleanEditableValue(perguruanTinggi)
                             editProdi = cleanEditableValue(programStudi)
                             editAngkatan = cleanEditableValue(angkatan)
+                            editNoTelepon = cleanEditableValue(noTelepon)
                             editError = null
                             isSavingEdit = false
                             showEditDialog = true
@@ -575,6 +587,14 @@ fun DetailAkunMahasiswaScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
 
+                    EditDialogInputField(
+                        label = "No. HP / WhatsApp",
+                        value = editNoTelepon,
+                        onValueChange = { editNoTelepon = it },
+                        enabled = !isSavingEdit,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    )
+
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
@@ -662,7 +682,13 @@ fun DetailAkunMahasiswaScreen(
                                 val cleanEmail = editEmail.trim().lowercase()
                                 val cleanPt = editPt.trim()
                                 val cleanProdi = editProdi.trim()
-                                val cleanAngkatan = editAngkatan.trim()
+                                val rawAngkatan = editAngkatan.trim()
+                                val cleanPhone = editNoTelepon.trim()
+                                val cleanAngkatan = if (rawAngkatan.isBlank()) {
+                                    com.PPBM.lentera.core.util.LenteraFormatUtils.deriveAngkatanFromNim(cleanNim)
+                                } else {
+                                    rawAngkatan
+                                }
 
                                 when {
                                     cleanNama.isBlank() -> {
@@ -675,6 +701,10 @@ fun DetailAkunMahasiswaScreen(
                                     }
                                     !EMAIL_REGEX.matches(cleanEmail) -> {
                                         editError = "Masukkan alamat email yang valid."
+                                        return@Button
+                                    }
+                                    cleanPhone.isNotEmpty() && !com.PPBM.lentera.core.util.LenteraFormatUtils.isValidIndonesianPhone(cleanPhone) -> {
+                                        editError = "Format No. HP / WhatsApp tidak valid (contoh: 081234567890)."
                                         return@Button
                                     }
                                     cleanAngkatan.isNotEmpty() &&
@@ -693,6 +723,7 @@ fun DetailAkunMahasiswaScreen(
                                     cleanPt,
                                     cleanProdi,
                                     cleanAngkatan,
+                                    cleanPhone,
                                     {
                                         isSavingEdit = false
                                         showEditDialog = false

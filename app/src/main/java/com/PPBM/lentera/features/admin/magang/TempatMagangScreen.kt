@@ -50,12 +50,14 @@ import androidx.compose.ui.unit.sp
 import com.PPBM.lentera.backend.admin.model.LowonganEntity
 import com.PPBM.lentera.backend.admin.model.TempatMagangEntity
 import com.PPBM.lentera.R
+import coil.compose.AsyncImage
 
 @Composable
 fun TempatMagangScreen(
     mitraList: List<TempatMagangEntity> = emptyList(),
     lowonganList: List<LowonganEntity> = emptyList(),
     lamaranCount: Int = 0,
+    logoUrlMap: Map<String, String> = emptyMap(),
     onNavigateToDetailTempat: (TempatMagangEntity) -> Unit = {},
     onNavigateToTambahTempat: () -> Unit = {},
     onNavigateToLowongan: () -> Unit = {},
@@ -287,6 +289,7 @@ fun TempatMagangScreen(
                         badgeBg = if (isAktif) MagangActiveGreenBg else MagangCreamBox,
                         badgeColor = if (isAktif) MagangActiveGreenText else MagangNavyDark,
                         infoText = "${item.sistemKerja} · ${item.namaCabang}",
+                        logoUrl = item.logoPath?.let { logoUrlMap[it] },
                         onClick = { onNavigateToDetailTempat(item) }
                     )
                 }
@@ -370,6 +373,7 @@ fun TempatMagangItemCard(
     badgeBg: Color,
     badgeColor: Color,
     infoText: String,
+    logoUrl: String? = null,
     onClick: () -> Unit
 ) {
     Card(
@@ -393,14 +397,25 @@ fun TempatMagangItemCard(
                         .background(Color(0xFFEAF2F8)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_avatar_2),
-                        contentDescription = name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                    )
+                    if (!logoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = logoUrl,
+                            contentDescription = name,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_avatar_2),
+                            contentDescription = name,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(14.dp))

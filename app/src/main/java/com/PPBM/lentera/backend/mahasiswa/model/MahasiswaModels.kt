@@ -36,6 +36,10 @@ data class NotifikasiItem(
     val tautan: String? = null,
     @SerialName("is_dibaca")
     val isDibaca: Boolean = false,
+    @SerialName("push_terkirim_at")
+    val pushTerkirimAt: String? = null,
+    @SerialName("referensi_id")
+    val referensiId: String? = null,
     @SerialName("created_at")
     val createdAt: String
 )

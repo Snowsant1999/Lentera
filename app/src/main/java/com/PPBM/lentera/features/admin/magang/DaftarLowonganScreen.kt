@@ -54,6 +54,7 @@ import com.PPBM.lentera.features.admin.magang.components.*
 fun DaftarLowonganScreen(
     lowonganList: List<LowonganEntity> = emptyList(),
     companyNamesById: Map<String, String> = emptyMap(),
+    companyLogoUrlsById: Map<String, String> = emptyMap(),
     isUpdating: Boolean = false,
     onNavigateToDetailLowongan: (LowonganEntity) -> Unit = {},
     onNavigateToTambahLowongan: () -> Unit = {},
@@ -284,6 +285,7 @@ fun DaftarLowonganScreen(
                     LowonganItemCard(
                         title = item.posisi,
                         company = companyLabel,
+                        logoUrl = companyLogoUrlsById[item.tempatMagangId],
                         metaText = "Periode: ${item.periodeMagang} · Kuota: ${item.kuota}",
                         badgeText = item.status.replaceFirstChar { it.uppercase() },
                         badgeBg = if (isTerbit) MagangActiveGreenBg else MagangCreamBox,
@@ -398,6 +400,7 @@ fun DaftarLowonganScreen(
 fun LowonganItemCard(
     title: String,
     company: String,
+    logoUrl: String? = null,
     metaText: String,
     badgeText: String,
     badgeBg: Color,
@@ -423,22 +426,15 @@ fun LowonganItemCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFEAF2F8)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_avatar_2),
-                        contentDescription = company,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                    )
-                }
+                CompanyLogoBox(
+                    logoUrl = logoUrl,
+                    contentDescription = company,
+                    size = 44.dp,
+                    shape = CircleShape,
+                    fallbackDrawableRes = R.drawable.ic_avatar_2,
+                    fallbackTint = null,
+                    fallbackIconSize = 40.dp
+                )
 
                 Spacer(modifier = Modifier.width(14.dp))
 

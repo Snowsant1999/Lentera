@@ -2,17 +2,24 @@ package com.PPBM.lentera.features.mahasiswa.magang
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.PPBM.lentera.backend.core.SupabaseConfig
 import com.PPBM.lentera.backend.mahasiswa.model.*
 import com.PPBM.lentera.backend.mahasiswa.repository.MagangRepository
 import com.PPBM.lentera.backend.mahasiswa.repository.MahasiswaRepository
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+private const val LOGO_URL_REFRESH_MS = 8 * 60 * 1000L
+
 data class MagangUiState(
     val isLoading: Boolean = false,
     val lowonganList: List<LowonganTerbit> = emptyList(),
+    val logoUrlMap: Map<String, String> = emptyMap(),
     val lamaranSayaList: List<LamaranSaya> = emptyList(),
     val bookmarkedIds: Set<String> = emptySet(),
     val selectedLowongan: LowonganTerbit? = null,
@@ -32,19 +39,61 @@ class MagangViewModel(
     private val _uiState = MutableStateFlow(MagangUiState())
     val uiState: StateFlow<MagangUiState> = _uiState.asStateFlow()
 
+    private var loadDataJob: Job? = null
+    private val logoFetchedAtMs = mutableMapOf<String, Long>()
+
     init {
-        loadMagangData()
+        if (SupabaseConfig.client.auth.currentSessionOrNull() != null) {
+            loadMagangData()
+        }
     }
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 
+    private fun shouldFetchLogo(path: String): Boolean {
+        val existing = _uiState.value.logoUrlMap[path]
+        if (existing.isNullOrBlank()) return true
+        val fetchedAt = logoFetchedAtMs[path] ?: return true
+        return System.currentTimeMillis() - fetchedAt > LOGO_URL_REFRESH_MS
+    }
+
+    private suspend fun resolveLogoUrls(
+        paths: List<String>,
+        baseMap: Map<String, String>
+    ): Map<String, String> {
+        val updated = baseMap.toMutableMap()
+        val pathsToFetch = paths.filter { it.isNotBlank() && shouldFetchLogo(it) }.distinct()
+        for (path in pathsToFetch) {
+            try {
+                magangRepo.createSignedUrl("logo-perusahaan", path).onSuccess { url ->
+                    if (url.isNotBlank()) {
+                        updated[path] = url
+                        logoFetchedAtMs[path] = System.currentTimeMillis()
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Abaikan error per logo agar pemuatan lowongan tidak gagal
+            }
+        }
+        return updated
+    }
+
     /**
      * Memuat daftar lowongan terbit, lamaran mahasiswa, dan daftar bookmark
      */
     fun loadMagangData() {
-        viewModelScope.launch {
+        loadDataJob?.cancel()
+        loadDataJob = viewModelScope.launch {
+            runCatching { SupabaseConfig.client.auth.awaitInitialization() }
+            if (SupabaseConfig.client.auth.currentSessionOrNull() == null) {
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = null)
+                return@launch
+            }
+
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             val lowonganRes = magangRepo.getLowonganTerbit()
@@ -54,9 +103,16 @@ class MagangViewModel(
             val firstError = lowonganRes.exceptionOrNull()?.message
                 ?: lamaranRes.exceptionOrNull()?.message
 
+            val loadedLowongan = lowonganRes.getOrDefault(_uiState.value.lowonganList)
+            val updatedLogoMap = resolveLogoUrls(
+                paths = loadedLowongan.mapNotNull { it.logoPath },
+                baseMap = _uiState.value.logoUrlMap
+            )
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                lowonganList = lowonganRes.getOrDefault(_uiState.value.lowonganList),
+                lowonganList = loadedLowongan,
+                logoUrlMap = updatedLogoMap,
                 lamaranSayaList = lamaranRes.getOrDefault(_uiState.value.lamaranSayaList),
                 bookmarkedIds = bookmarkRes.getOrDefault(_uiState.value.bookmarkedIds),
                 errorMessage = firstError
@@ -92,8 +148,9 @@ class MagangViewModel(
     fun loadDetailLowongan(lowonganId: String) {
         viewModelScope.launch {
             val fromCache = _uiState.value.lowonganList.find { it.id == lowonganId }
-            if (fromCache != null) {
+            val resolvedLowongan = if (fromCache != null) {
                 _uiState.value = _uiState.value.copy(selectedLowongan = fromCache, errorMessage = null)
+                fromCache
             } else {
                 val res = magangRepo.getDetailLowongan(lowonganId)
                 res.onSuccess {
@@ -102,6 +159,18 @@ class MagangViewModel(
                     _uiState.value = _uiState.value.copy(
                         errorMessage = err.message ?: "Gagal memuat detail lowongan."
                     )
+                }
+                res.getOrNull()
+            }
+
+            val logoPath = resolvedLowongan?.logoPath
+            if (!logoPath.isNullOrBlank() && shouldFetchLogo(logoPath)) {
+                val updatedLogoMap = resolveLogoUrls(
+                    paths = listOf(logoPath),
+                    baseMap = _uiState.value.logoUrlMap
+                )
+                if (updatedLogoMap != _uiState.value.logoUrlMap) {
+                    _uiState.value = _uiState.value.copy(logoUrlMap = updatedLogoMap)
                 }
             }
         }

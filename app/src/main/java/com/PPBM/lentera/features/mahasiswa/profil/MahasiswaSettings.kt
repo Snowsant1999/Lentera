@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,7 @@ import android.net.Uri
 import com.PPBM.lentera.core.designsystem.components.ProfileAvatarImage
 import com.PPBM.lentera.R
 import com.PPBM.lentera.core.designsystem.components.LenteraBottomBar
+import com.PPBM.lentera.core.designsystem.components.LenteraDialogMaxWidth
 import com.PPBM.lentera.core.designsystem.components.LenteraTab
 import com.PPBM.lentera.core.designsystem.theme.LenteraBadgeBg
 import com.PPBM.lentera.core.designsystem.theme.LenteraBg
@@ -62,12 +64,14 @@ class MahasiswaSettings {
     fun mhsProfilScreen(
         modifier: Modifier = Modifier,
         photoUri: Uri? = null,
+        photoUrl: String? = null,
         namaLengkap: String = "Mahasiswa Lentera",
         nim: String = "2024010001",
         kampusProdi: String = "Universitas Lentera - Teknik Informatika",
         statusAkun: String = "Mahasiswa aktif",
         onNavigateToDataDiri: () -> Unit = {},
         onNavigateToDokumen: () -> Unit = {},
+        onNavigateToLowonganTersimpan: () -> Unit = {},
         onNavigateToNotifikasi: () -> Unit = {},
         onNavigateToBantuan: () -> Unit = {},
         onNavigateToTentang: () -> Unit = {},
@@ -126,6 +130,7 @@ class MahasiswaSettings {
                     ) {
                         ProfileAvatarImage(
                             photoUri = photoUri,
+                            photoUrl = photoUrl,
                             modifier = Modifier.size(88.dp)
                         )
                     }
@@ -206,6 +211,13 @@ class MahasiswaSettings {
                             title = "Dokumen Saya",
                             subtitle = "CV, transkrip, dan portofolio",
                             onClick = onNavigateToDokumen
+                        )
+
+                        ProfilMenuItem(
+                            iconRes = R.drawable.ic_menu_symbol_bookmark,
+                            title = "Lowongan Tersimpan",
+                            subtitle = "Peluang magang yang kamu bookmark",
+                            onClick = onNavigateToLowonganTersimpan
                         )
 
                         ProfilMenuItem(
@@ -366,6 +378,7 @@ class MahasiswaSettings {
         Dialog(onDismissRequest = onDismiss) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = LenteraDialogMaxWidth)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)

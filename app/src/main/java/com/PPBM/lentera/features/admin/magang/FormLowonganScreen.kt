@@ -1,7 +1,6 @@
 package com.PPBM.lentera.features.admin.magang
 
 import android.app.DatePickerDialog
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -61,6 +59,7 @@ import java.util.Locale
 @Composable
 fun FormLowonganScreen(
     tempatMagangList: List<TempatMagangEntity> = emptyList(),
+    logoUrlMap: Map<String, String> = emptyMap(),
     existingLowongan: LowonganEntity? = null,
     isSubmitting: Boolean = false,
     onSimpanLowongan: () -> Unit = {},
@@ -100,6 +99,10 @@ fun FormLowonganScreen(
 
     var posisi by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.posisi.orEmpty()) }
     var kategori by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.kategori.orEmpty()) }
+    val kategoriOptions = remember {
+        listOf("Teknologi", "Desain", "Bisnis", "Pemasaran", "Keuangan", "Pendidikan", "Kesehatan", "Lainnya")
+    }
+    var showKategoriMenu by remember { mutableStateOf(false) }
     var lokasi by remember(existingLowongan?.id) { mutableStateOf(existingLowongan?.lokasi.orEmpty()) }
     var sistemKerja by remember(existingLowongan?.id) {
         mutableStateOf(normalizeSistemKerja(existingLowongan?.sistemKerja ?: "On-site"))
@@ -260,13 +263,12 @@ fun FormLowonganScreen(
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                                    contentDescription = "Logo",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(CircleShape)
+                                CompanyLogoBox(
+                                    logoUrl = selectedTempat?.logoPath?.let { logoUrlMap[it] },
+                                    contentDescription = selectedTempat?.namaPerusahaan ?: "Logo Perusahaan",
+                                    size = 42.dp,
+                                    shape = CircleShape,
+                                    fallbackIconSize = 22.dp
                                 )
 
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -370,11 +372,27 @@ fun FormLowonganScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        FormInputField(
-                            label = "Kategori (opsional)",
-                            value = kategori,
-                            onValueChange = { kategori = it }
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            FormDropdownField(
+                                label = "Kategori (opsional)",
+                                value = if (kategori.isBlank()) "Pilih Kategori" else kategori,
+                                onClick = { showKategoriMenu = true }
+                            )
+                            DropdownMenu(
+                                expanded = showKategoriMenu,
+                                onDismissRequest = { showKategoriMenu = false }
+                            ) {
+                                kategoriOptions.forEach { opt ->
+                                    DropdownMenuItem(
+                                        text = { Text(opt) },
+                                        onClick = {
+                                            kategori = opt
+                                            showKategoriMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 

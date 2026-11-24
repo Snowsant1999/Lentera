@@ -1,5 +1,9 @@
 package com.PPBM.lentera.features.admin.magang.components
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.compose.foundation.Image
+import java.util.Locale
 
 import com.PPBM.lentera.core.designsystem.components.AdminBottomBar
 import com.PPBM.lentera.core.designsystem.components.LenteraNavItem
@@ -13,12 +17,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,19 +36,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.PPBM.lentera.R
 
 // ==========================================
 // COLOR SYSTEM - ADMIN MAGANG
 // ==========================================
-val MagangBgColor = Color(0xFFEFF5F9)
+val MagangBgColor = Color(0xFFF5F8FC)
 val MagangNavyDark = Color(0xFF173B57)
 val MagangNavyPrimary = Color(0xFF23496E)
 val MagangGoldenOrange = Color(0xFFE5A95C)
@@ -279,63 +289,75 @@ fun AdminMagangBottomBar(
     )
 }
 
-@Composable
-private fun MagangBottomNavItem(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    isHighlightPill: Boolean = false,
-    onClick: () -> Unit
-) {
-    if (isHighlightPill && isSelected) {
-        Box(
-            modifier = Modifier
-                .background(color = MagangNavyPrimary, shape = RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = PlusJakartaFont,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                )
-            }
+internal const val MAX_MITRA_LOGO_BYTES = 10L * 1024L * 1024L
+internal const val MAX_MITRA_DOC_BYTES = 20L * 1024L * 1024L
+
+internal fun readPickedMitraFile(
+    context: Context,
+    uri: Uri,
+    fallbackName: String
+): Triple<String, ByteArray, String>? {
+    var name = fallbackName
+    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (cursor.moveToFirst() && nameIndex != -1) {
+            name = cursor.getString(nameIndex) ?: fallbackName
         }
+    }
+    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+    val sizeStr = if (bytes.size >= 1024 * 1024) {
+        String.format(Locale.US, "%.1f MB", bytes.size / (1024.0 * 1024.0))
     } else {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .clickable { onClick() }
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = label,
-                tint = if (isSelected) MagangNavyDark else MagangNavyPrimary,
-                modifier = Modifier.size(22.dp)
+        "${(bytes.size / 1024).coerceAtLeast(1)} KB"
+    }
+    return Triple(name, bytes, sizeStr)
+}
+
+/**
+ * Menampilkan foto/logo perusahaan secara konsisten di seluruh layar Magang Admin (P3),
+ * dengan fallback ke ikon default apabila logoUrl kosong.
+ */
+@Composable
+fun CompanyLogoBox(
+    logoUrl: String?,
+    contentDescription: String,
+    size: Dp = 46.dp,
+    shape: Shape = RoundedCornerShape(12.dp),
+    fallbackDrawableRes: Int = R.drawable.ic_building_2,
+    fallbackTint: Color? = MagangNavyDark,
+    fallbackIconSize: Dp = 26.dp
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(shape)
+            .background(Color(0xFFEAF2F8)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!logoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = logoUrl,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(shape)
             )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    fontFamily = PlusJakartaFont,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) MagangNavyDark else MagangNavyPrimary
-                )
+        } else if (fallbackTint != null) {
+            Icon(
+                painter = painterResource(id = fallbackDrawableRes),
+                contentDescription = contentDescription,
+                tint = fallbackTint,
+                modifier = Modifier.size(fallbackIconSize)
+            )
+        } else {
+            Image(
+                painter = painterResource(id = fallbackDrawableRes),
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(fallbackIconSize)
+                    .clip(shape)
             )
         }
     }

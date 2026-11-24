@@ -297,6 +297,27 @@ fun TambahTempatMagangScreen(
                                     color = MagangTextSecondary
                                 )
                             )
+
+                            if (logoUri != null) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Hapus Logo",
+                                    style = TextStyle(
+                                        fontSize = 12.sp,
+                                        fontFamily = PlusJakartaFont,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFD32F2F)
+                                    ),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable {
+                                            logoUri = null
+                                            logoFileName = null
+                                            logoBytes = null
+                                        }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))

@@ -48,6 +48,7 @@ import com.PPBM.lentera.R
 fun DetailLowonganScreen(
     lowongan: LowonganEntity? = null,
     companyName: String? = null,
+    logoUrl: String? = null,
     isSubmitting: Boolean = false,
     onToggleStatus: (newStatus: String) -> Unit = {},
     onNavigateToFormLowongan: () -> Unit = {},
@@ -100,22 +101,15 @@ fun DetailLowonganScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFEAF2F8)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_avatar_2),
-                                    contentDescription = "Logo",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                )
-                            }
+                            CompanyLogoBox(
+                                logoUrl = logoUrl,
+                                contentDescription = companyName ?: posisi,
+                                size = 48.dp,
+                                shape = CircleShape,
+                                fallbackDrawableRes = R.drawable.ic_avatar_2,
+                                fallbackTint = null,
+                                fallbackIconSize = 44.dp
+                            )
 
                             Spacer(modifier = Modifier.width(14.dp))
 

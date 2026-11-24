@@ -9,12 +9,14 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 class AdminMahasiswaRepository {
     private val client = SupabaseConfig.client
+    private val storage = client.storage
 
     /**
      * Mengambil seluruh daftar mahasiswa terdaftar.
@@ -130,6 +132,7 @@ class AdminMahasiswaRepository {
         perguruanTinggi: String?,
         programStudi: String?,
         angkatan: String?,
+        noTelepon: String? = null,
         emailChanged: Boolean = true
     ): Result<Unit> {
         val cleanNama = namaLengkap.trim()
@@ -138,6 +141,7 @@ class AdminMahasiswaRepository {
         val cleanPt = perguruanTinggi?.trim()?.takeIf { it.isNotBlank() }
         val cleanProdi = programStudi?.trim()?.takeIf { it.isNotBlank() }
         val cleanAngkatan = angkatan?.trim()?.takeIf { it.isNotBlank() }
+        val cleanNoTelepon = noTelepon?.trim()?.takeIf { it.isNotBlank() }
 
         return try {
             val rpcParams = buildJsonObject {
@@ -148,6 +152,7 @@ class AdminMahasiswaRepository {
                 if (cleanPt != null) put("p_perguruan_tinggi", cleanPt) else put("p_perguruan_tinggi", JsonNull)
                 if (cleanProdi != null) put("p_program_studi", cleanProdi) else put("p_program_studi", JsonNull)
                 if (cleanAngkatan != null) put("p_angkatan", cleanAngkatan) else put("p_angkatan", JsonNull)
+                if (cleanNoTelepon != null) put("p_no_telepon", cleanNoTelepon) else put("p_no_telepon", JsonNull)
             }
             client.postgrest.rpc("admin_update_mahasiswa", rpcParams)
             Result.success(Unit)
@@ -171,6 +176,7 @@ class AdminMahasiswaRepository {
                         if (cleanPt != null) put("perguruan_tinggi", cleanPt) else put("perguruan_tinggi", JsonNull)
                         if (cleanProdi != null) put("program_studi", cleanProdi) else put("program_studi", JsonNull)
                         if (cleanAngkatan != null) put("angkatan", cleanAngkatan) else put("angkatan", JsonNull)
+                        if (cleanNoTelepon != null) put("no_telepon", cleanNoTelepon) else put("no_telepon", JsonNull)
                     }
                     client.from("profiles").update(payload) {
                         filter {
@@ -253,5 +259,77 @@ class AdminMahasiswaRepository {
             Result.failure(Exception(mapSupabaseError(e, "Gagal memperbarui profil admin.")))
         }
     }
-}
 
+    /**
+     * Mengunggah foto profil admin ke storage bucket `foto-profil` dan memperbarui `profiles.foto_profil_url`.
+     */
+    suspend fun uploadFotoProfilAdmin(
+        fileBytes: ByteArray,
+        extension: String = "jpg"
+    ): Result<String> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            if (fileBytes.isEmpty()) {
+                return Result.failure(Exception("Berkas foto profil kosong."))
+            }
+
+            val cleanExt = extension.removePrefix(".").trim().lowercase().ifBlank { "jpg" }
+            val storagePath = "$currentUserId/avatar_${System.currentTimeMillis()}.$cleanExt"
+
+            val bucket = storage.from("foto-profil")
+            bucket.upload(storagePath, fileBytes) {
+                upsert = true
+            }
+
+            val publicUrl = "${SupabaseConfig.SUPABASE_URL}/storage/v1/object/public/foto-profil/$storagePath"
+
+            val updatePayload = buildJsonObject {
+                put("foto_profil_url", publicUrl)
+            }
+            client.from("profiles").update(updatePayload) {
+                filter {
+                    eq("id", currentUserId)
+                }
+            }
+
+            Result.success(publicUrl)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal mengunggah foto profil admin.")))
+        }
+    }
+
+    /**
+     * Menghapus foto profil admin (B3): mengosongkan `profiles.foto_profil_url` dan membersihkan berkas di storage bucket `foto-profil`.
+     */
+    suspend fun deleteFotoProfilAdmin(): Result<Unit> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("Sesi login berakhir."))
+
+            val updatePayload = buildJsonObject {
+                put("foto_profil_url", JsonNull)
+            }
+            client.from("profiles").update(updatePayload) {
+                filter {
+                    eq("id", currentUserId)
+                }
+            }
+
+            // Bersihkan file avatar di storage jika ada
+            runCatching {
+                val bucket = storage.from("foto-profil")
+                val files = bucket.list(currentUserId)
+                val pathsToDelete = files.map { "$currentUserId/${it.name}" }
+                if (pathsToDelete.isNotEmpty()) {
+                    bucket.delete(pathsToDelete)
+                }
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(mapSupabaseError(e, "Gagal menghapus foto profil admin.")))
+        }
+    }
+}
